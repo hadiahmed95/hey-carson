@@ -145,7 +145,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/reviews', [\App\Http\Controllers\Expert\ReviewController::class, 'all']);
         Route::put('/reviews/{id}', [\App\Http\Controllers\NewDashboard\Expert\ReviewController::class, 'update']);
         Route::get('/leads', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'leads']);
-        Route::get('/leads/{id}', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'leads']);
         Route::get('/project-names', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'projectNames']);
         Route::get('/stats', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'stats']);
     });

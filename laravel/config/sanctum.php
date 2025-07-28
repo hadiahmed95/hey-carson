@@ -15,10 +15,9 @@ return [
     |
     */
 
-    // FIXED: Added localhost:5173 and 127.0.0.1:5173 for Vite frontend
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
         '%s%s',
-        'localhost,localhost:3000,localhost:5173,127.0.0.1,127.0.0.1:8000,127.0.0.1:3000,127.0.0.1:5173,::1,https://app.shopexperts.com,https://app.staging.shopexperts.com',
+        'localhost,localhost:3000,127.0.0.1,127.0.0.1:8000,::1,https://app.shopexperts.com,https://app.staging.shopexperts.com',
         Sanctum::currentApplicationUrlWithPort()
     ))),
 
