@@ -16,8 +16,9 @@ class ExpertService {
     return ApiService.get(`${this.base}/leads`, { ...params });
   }
 
-  async getLeadsDetails(params: Record<string, any> = {}) {
-    return ApiService.get(`${this.base}/leads`, { ...params });
+  // Fix: Handle leadId parameter properly
+  async getLeadsDetails(leadId: number) {
+    return ApiService.get(`${this.base}/leads/${leadId}`);
   }
 
   updateReview(id: number, data: any) {

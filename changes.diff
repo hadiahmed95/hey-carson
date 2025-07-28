@@ -1,0 +1,2178 @@
+diff --git a/laravel/app/Http/Controllers/NewDashboard/Expert/LeadController.php b/laravel/app/Http/Controllers/NewDashboard/Expert/LeadController.php
+index a70d7323..1feb5eb1 100644
+--- a/laravel/app/Http/Controllers/NewDashboard/Expert/LeadController.php
++++ b/laravel/app/Http/Controllers/NewDashboard/Expert/LeadController.php
+@@ -7,8 +7,12 @@
+ use App\Models\Request;
+ use App\Models\Review;
+ use App\Models\User;
++use App\Models\Project;
++use App\Models\Profile;
++use App\Models\Role;
+ use App\Repositories\ProjectRepository;
+ use Illuminate\Http\JsonResponse;
++use Illuminate\Support\Facades\Hash;
+ 
+ class LeadController extends Controller
+ {
+@@ -59,25 +63,178 @@ public function projectNames(): JsonResponse
+     {
+         $user = \Auth::user();
+ 
+-        $reviewedProjectIds = Review::where('expert_id', $user->id)
+-            ->pluck('project_id')
+-            ->toArray();
++        // Check if user_id parameter is provided
++        if (request()->has('user_id')) {
++            $userId = request('user_id');
++            
++            // Get projects for specific user
++            $projects = Project::where('client_id', $userId)
++                ->select('id', 'name')
++                ->latest()
++                ->limit(20)
++                ->get()
++                ->map(function ($project) {
++                    return [
++                        'id' => $project->id,
++                        'name' => $project->name,
++                    ];
++                });
++
++            return response()->json([
++                'project_names' => $projects,
++            ]);
++        }
++
++        // Get all projects for the expert's requests
++        $projects = Project::whereHas('requests', function($query) use ($user) {
++                $query->where('expert_id', $user->id);
++            })
++            ->select('id', 'name')
++            ->latest()
++            ->limit(20)
++            ->get()
++            ->map(function ($project) {
++                return [
++                    'id' => $project->id,
++                    'name' => $project->name,
++                ];
++            });
++
++        return response()->json([
++            'project_names' => $projects,
++        ]);
++    }
++
++    /**
++     * Search users by full name
++     *
++     * @return JsonResponse
++     */
++    public function searchUsers(): JsonResponse
++    {
++        $search = request('search', '');
+         
+-        $query = Request::query()
+-            ->where('expert_id', $user->id)
+-            ->whereNotIn('project_id', $reviewedProjectIds)
+-            ->with(['project:id,name'])
+-            ->latest();
++        if (empty($search)) {
++            return response()->json(['users' => []]);
++        }
++
++        $users = User::whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
++            ->where('role_id', Role::where('name', 'client')->first()->id)
++            ->select('id', 'first_name', 'last_name', 'email', 'url')
++            ->limit(20)
++            ->get()
++            ->map(function ($user) {
++                return [
++                    'id' => $user->id,
++                    'full_name' => $user->first_name . ' ' . $user->last_name,
++                    'email' => $user->email,
++                    'website' => $user->url ?? '',
++                ];
++            });
++
++        return response()->json(['users' => $users]);
++    }
++
++    /**
++     * Get user details by ID
++     *
++     * @return JsonResponse
++     */
++    public function getUserDetails(): JsonResponse
++    {
++        $userId = request('user_id');
++        
++        if (!$userId) {
++            return response()->json(['error' => 'User ID is required'], 400);
++        }
++
++        $user = User::where('id', $userId)
++            ->select('id', 'first_name', 'last_name', 'email', 'url')
++            ->first();
+ 
+-        $projectNames = $query->get()->map(function ($request) {
+-            return [
+-                'id' => $request->project?->id,
+-                'name' => $request->project?->name,
+-            ];
+-        })->filter(fn($p) => $p['id']); // filter null project
++        if (!$user) {
++            return response()->json(['error' => 'User not found'], 404);
++        }
++
++        return response()->json([
++            'user' => [
++                'id' => $user->id,
++                'full_name' => $user->first_name . ' ' . $user->last_name,
++                'email' => $user->email,
++                'website' => $user->url ?? '',
++            ]
++        ]);
++    }
++
++    /**
++     * Create new user
++     *
++     * @return JsonResponse
++     */
++    public function createUser(): JsonResponse
++    {
++        $request = request();
++        
++        // Validate required fields
++        $request->validate([
++            'full_name' => 'required|string|max:255',
++            'email' => 'required|email|unique:users,email',
++            'company_name' => 'nullable|string|max:255',
++            'website' => 'nullable|url',
++        ]);
++
++        // Split full name
++        $nameParts = explode(' ', trim($request->full_name), 2);
++        $firstName = $nameParts[0];
++        $lastName = $nameParts[1] ?? '';
++
++        // Create user
++        $user = User::create([
++            'first_name' => $firstName,
++            'last_name' => $lastName,
++            'email' => $request->email,
++            'password' => Hash::make('password123'), // Default password
++            'role_id' => Role::where('name', 'client')->first()->id,
++            'url' => $request->website,
++        ]);
++
++        return response()->json([
++            'user' => [
++                'id' => $user->id,
++                'full_name' => $user->first_name . ' ' . $user->last_name,
++                'email' => $user->email,
++                'website' => $user->url ?? '',
++            ]
++        ]);
++    }
++
++    /**
++     * Create new project
++     *
++     * @return JsonResponse
++     */
++    public function createProject(): JsonResponse
++    {
++        $request = request();
++        
++        // Validate required fields
++        $request->validate([
++            'name' => 'required|string|max:255',
++            'client_id' => 'required|exists:users,id',
++        ]);
++
++        // Create project
++        $project = Project::create([
++            'name' => $request->name,
++            'client_id' => $request->client_id,
++            'status' => Project::AVAILABLE,
++        ]);
+ 
+         return response()->json([
+-            'project_names' => $projectNames,
++            'project' => [
++                'id' => $project->id,
++                'name' => $project->name,
++            ]
+         ]);
+     }
+-}
++}
+\ No newline at end of file
+diff --git a/laravel/routes/api.php b/laravel/routes/api.php
+index 35b3d68d..703b5355 100755
+--- a/laravel/routes/api.php
++++ b/laravel/routes/api.php
+@@ -147,6 +147,11 @@
+         Route::get('/leads', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'leads']);
+         Route::get('/project-names', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'projectNames']);
+         Route::get('/stats', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'stats']);
++
++        Route::get('/search-users', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'searchUsers']);
++        Route::get('/user-details', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'getUserDetails']);
++        Route::post('/create-user', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'createUser']);
++        Route::post('/create-project', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'createProject']);
+     });
+ 
+     Route::middleware('auth.role:' . Role::EXPERT)->prefix('/expert')->group(function () {
+diff --git a/typescript/src/components/common/cards/ReviewCard.vue b/typescript/src/components/common/cards/ReviewCard.vue
+index 6b9c40e1..409290d1 100644
+--- a/typescript/src/components/common/cards/ReviewCard.vue
++++ b/typescript/src/components/common/cards/ReviewCard.vue
+@@ -1,17 +1,17 @@
+ <script setup lang="ts">
+-import { ref, watchEffect } from 'vue';
++import { ref, watchEffect, computed } from "vue";
+ import ExternalLink from "../../../assets/icons/externalLink.svg";
+-import Pencil from '../../../assets/icons/pencil.svg';
+-import Star from '../../../assets/icons/star.svg';
+-import ShopexpertMini from '../../../assets/icons/shopexpert-mini.svg';
+-import Recurring from '../../../assets/icons/recurring.svg';
++import Pencil from "../../../assets/icons/pencil.svg";
++import Star from "../../../assets/icons/star.svg";
++import ShopexpertMini from "../../../assets/icons/shopexpert-mini.svg";
++import Recurring from "../../../assets/icons/recurring.svg";
+ import Info from "../../../assets/icons/info-sm.svg";
+-import ReviewModal from '../../../components/client//modals/ReviewModal.vue';
++import ReviewModal from "../../../components/client//modals/ReviewModal.vue";
+ import { useClientStore } from "@/store/client.ts";
+ import type { IReview } from "@/types.ts";
+-import {getS3URL} from "@/utils/helpers.ts";
++import { getS3URL } from "@/utils/helpers.ts";
+ import ReviewResponse from "@/components/expert/cards/ReviewResponse.vue";
+-import {useExpertStore} from "@/store/expert.ts";
++import { useExpertStore } from "@/store/expert.ts";
+ 
+ const clientStore = useClientStore();
+ const expertStore = useExpertStore();
+@@ -28,6 +28,11 @@ const props = defineProps<{
+ const showModal = ref(false);
+ const showResponseBox = ref(false);
+ 
++// Check if expert already has a response
++const hasExistingResponse = computed(() => {
++  return props.review.response && props.review.response.trim().length > 0;
++});
++
+ // Optional: pre-fill existing values (not required for modal since state is handled inside ReviewModal)
+ watchEffect(() => {
+   if (props.isWrittenReview && props.review.reviewer?.comment) {
+@@ -39,10 +44,10 @@ async function handleModalSubmit(payload: any) {
+   try {
+     if (props.isWrittenReview && props.review.id) {
+       await clientStore.updateReview(props.review.id, payload);
+-      console.log('Review updated!');
++      console.log("Review updated!");
+     } else {
+       await clientStore.createReview(payload);
+-      console.log('Review created!');
++      console.log("Review created!");
+     }
+     showModal.value = false;
+   } catch (error) {
+@@ -54,7 +59,7 @@ async function handleWriteResponse(payload: any) {
+   try {
+     if (props.isExpert && props.review.id) {
+       await expertStore.updateReview(props.review.id, payload);
+-      console.log('Review updated!');
++      console.log("Review updated!");
+     }
+ 
+     showResponseBox.value = false;
+@@ -65,38 +70,52 @@ async function handleWriteResponse(payload: any) {
+ </script>
+ 
+ <template>
+-  <div class="mx-auto bg-card border rounded-md shadow-sm p-card-padding space-y-4 mb-4">
++  <div
++    class="mx-auto bg-card border rounded-md shadow-sm p-card-padding space-y-4 mb-4"
++  >
+     <!-- Header -->
+     <div class="flex justify-between items-start">
+       <div v-if="isAdmin || isExpert" class="flex items-center space-x-4">
+-        <img :src="getS3URL(review.reviewer.photo)" alt="Reviewer avatar" class="w-12 h-12 rounded-full object-cover" />
++        <img
++          :src="getS3URL(review.reviewer.photo)"
++          alt="Reviewer avatar"
++          class="w-12 h-12 rounded-full object-cover"
++        />
+         <div>
+           <div class="flex items-center space-x-2">
+             <p class="font-normal">{{ review.reviewer.name }}</p>
+             <Recurring v-if="review.reviewer.recurringClient" />
+             <div
+-                v-if="review.reviewer.isShopexpertUser"
+-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent bg-accent-light text-sm font-medium text-gray-900"
++              v-if="review.reviewer.isShopexpertUser"
++              class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent bg-accent-light text-sm font-medium text-gray-900"
+             >
+               <ShopexpertMini class="w-4 h-4" />
+               Hired on shopexperts
+             </div>
+           </div>
+-          <a v-if="review.reviewer.storeTitle" :href="review.reviewer.storeUrl ? review.reviewer.storeUrl : '#'" class="flex text-link text-h4 hover:underline items-center gap-1">
++          <a
++            v-if="review.reviewer.storeTitle"
++            :href="review.reviewer.storeUrl ? review.reviewer.storeUrl : '#'"
++            class="flex text-link text-h4 hover:underline items-center gap-1"
++          >
+             {{ review.reviewer.storeTitle }}
+             <ExternalLink />
+           </a>
+         </div>
+       </div>
+       <div v-else class="flex items-center space-x-4">
+-        <img :src="getS3URL(review?.expert?.photo)" alt="Expert avatar" class="w-12 h-12 rounded-full object-cover" />
++        <img
++          :src="getS3URL(review?.expert?.photo)"
++          alt="Expert avatar"
++          class="w-12 h-12 rounded-full object-cover"
++        />
+         <div>
+           <div class="flex items-center space-x-2">
+             <p class="font-normal">{{ review.expert.name }}</p>
+             <Recurring v-if="review.expert?.recurringExpert" />
+             <div
+-                v-if="review.expert?.isShopexpertUser"
+-                class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-accent bg-accent-light text-sm font-medium text-gray-900"
++              v-if="review.expert?.isShopexpertUser"
++              class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-accent bg-accent-light text-sm font-medium text-gray-900"
+             >
+               <ShopexpertMini class="w-5 h-5" />
+               <span>Hired on shopexperts</span>
+@@ -108,12 +127,15 @@ async function handleWriteResponse(payload: any) {
+       </div>
+       <div class="text-h5 font-light">
+         <div class="justify-items-end space-y-2">
+-          <h5 v-if="isAdmin"
+-              class="font-normal px-2 py-1 rounded-sm"
+-              :class="{
+-                'text-pending bg-pending-light': review.status === 'Pending Review',
+-                'text-success bg-success-light': review.status === 'Approved'
+-              }">
++          <h5
++            v-if="isAdmin"
++            class="font-normal px-2 py-1 rounded-sm"
++            :class="{
++              'text-pending bg-pending-light':
++                review.status === 'Pending Review',
++              'text-success bg-success-light': review.status === 'Approved',
++            }"
++          >
+             {{ review.status }}
+           </h5>
+           <h5>Requested: {{ review.postedAt }}</h5>
+@@ -131,9 +153,14 @@ async function handleWriteResponse(payload: any) {
+     <div v-else>
+       <div class="text-h4 flex items-center space-x-2 font-light mb-4">
+         <span>Rating:</span>
+-        <span class="font-semibold">{{ Number(review.reviewer.rating).toFixed(1) }}</span>
++        <span class="font-semibold">{{
++          Number(review.reviewer.rating).toFixed(1)
++        }}</span>
+         <div class="flex space-x-1 text-accent">
+-          <template v-for="(_, i) in Math.floor(review.reviewer.rating)" :key="i">
++          <template
++            v-for="(_, i) in Math.floor(review.reviewer.rating)"
++            :key="i"
++          >
+             <Star :index="i" />
+           </template>
+         </div>
+@@ -146,7 +173,9 @@ async function handleWriteResponse(payload: any) {
+       <div class="text-h4 flex flex-wrap divide-x divide-grey font-light mb-6">
+         <div class="pr-8">
+           <h6 class="block font-normal mb-1">Likely to recommend:</h6>
+-          <h4 class="text-success font-medium">{{ review.reviewer.recommendation }}</h4>
++          <h4 class="text-success font-medium">
++            {{ review.reviewer.recommendation }}
++          </h4>
+         </div>
+         <div class="px-8">
+           <h6 class="block font-normal mb-1">Project Value</h6>
+@@ -165,11 +194,18 @@ async function handleWriteResponse(payload: any) {
+     <!-- Footer -->
+     <div v-if="isAdmin" class="pt-6 border-t border-grey flex justify-between">
+       <div class="flex items-start gap-2">
+-        <img :src="review.expert.photo" alt="Reviewer avatar" class="w-12 h-12 rounded-full object-cover" />
++        <img
++          :src="review.expert.photo"
++          alt="Reviewer avatar"
++          class="w-12 h-12 rounded-full object-cover"
++        />
+         <div>
+           <h4 class="text-tertiary">Expert</h4>
+           <p class="text-primary font-medium">{{ review.expert.name }}</p>
+-          <a :href="review.expert.storeUrl" class="flex text-link text-h4 hover:underline items-center gap-1">
++          <a
++            :href="review.expert.storeUrl"
++            class="flex text-link text-h4 hover:underline items-center gap-1"
++          >
+             {{ review.expert.storeTitle }}
+             <ExternalLink />
+           </a>
+@@ -177,15 +213,21 @@ async function handleWriteResponse(payload: any) {
+       </div>
+       <div class="flex items-center space-x-4">
+         <div v-if="review.status === 'Pending Review'" class="space-x-4">
+-          <button class="rounded-sm bg-primary text-h4 text-white border py-1 px-2">
++          <button
++            class="rounded-sm bg-primary text-h4 text-white border py-1 px-2"
++          >
+             Approve Review
+           </button>
+-          <button class="rounded-sm bg-white text-h4 text-primary border py-1 px-2">
++          <button
++            class="rounded-sm bg-white text-h4 text-primary border py-1 px-2"
++          >
+             Decline Review
+           </button>
+         </div>
+         <div v-else>
+-          <button class="rounded-sm bg-white text-h4 text-primary border py-1 px-2">
++          <button
++            class="rounded-sm bg-white text-h4 text-primary border py-1 px-2"
++          >
+             Hide Review
+           </button>
+         </div>
+@@ -199,38 +241,55 @@ async function handleWriteResponse(payload: any) {
+     <!-- Review toggle button -->
+     <div v-if="isClient" class="pt-4 border-t border-grey">
+       <button
+-          @click="showModal = true"
+-          class="flex items-center space-x-2 font-medium text-h4 hover:underline"
++        @click="showModal = true"
++        class="flex items-center space-x-2 font-medium text-h4 hover:underline"
+       >
+         <Pencil />
+-        <span>{{ props.isWrittenReview ? 'Edit Your Review' : 'Write Your Review' }}</span>
++        <span>{{
++          props.isWrittenReview ? "Edit Your Review" : "Write Your Review"
++        }}</span>
+       </button>
+ 
+       <ReviewModal
+-          v-if="showModal"
+-          :review="props.review"
+-          :isEdit="props.isWrittenReview"
+-          @close="showModal = false"
+-          @submit="handleModalSubmit"
++        v-if="showModal"
++        :review="props.review"
++        :isEdit="props.isWrittenReview"
++        @close="showModal = false"
++        @submit="handleModalSubmit"
+       />
+     </div>
+ 
+-    <!-- Fallback for other roles -->
+-    <div v-if="isExpert" class="pt-4 border-t border-grey" >
+-      <button v-if="!showResponseBox" @click="showResponseBox = !showResponseBox" class="flex items-center space-x-2 font-medium text-h4 hover:underline">
++    <!-- Expert response section -->
++    <div v-if="isExpert" class="pt-4 border-t border-grey">
++      <!-- Show existing response if available -->
++      <div v-if="hasExistingResponse && !showResponseBox" class="mb-4">
++        <h6 class="block text-h4 font-medium text-greyExtraDark mb-2">
++          Your Response
++        </h6>
++        <p class="text-primary font-light mb-4">{{ review.response }}</p>
++      </div>
++
++      <!-- Toggle button -->
++      <button
++        v-if="!showResponseBox"
++        @click="showResponseBox = !showResponseBox"
++        class="flex items-center space-x-2 font-medium text-h4 hover:underline"
++      >
+         <Pencil />
+-        <span>Write Your Response</span>
++        <span>{{
++          hasExistingResponse ? "Update Response" : "Write Your Response"
++        }}</span>
+       </button>
++
++      <!-- Response form -->
+       <ReviewResponse
+-          :response="props.review.response"
+-          :showResponseBox="showResponseBox"
+-          @submit="handleWriteResponse"
+-          @cancel="showResponseBox = false"
++        :response="props.review.response"
++        :showResponseBox="showResponseBox"
++        @submit="handleWriteResponse"
++        @cancel="showResponseBox = false"
+       />
+     </div>
+-
+   </div>
+ </template>
+ 
+-<style scoped>
+-</style>
++<style scoped></style>
+diff --git a/typescript/src/components/expert/forms/RequestReviewForm.vue b/typescript/src/components/expert/forms/RequestReviewForm.vue
+index d2c60758..1a7b8a73 100644
+--- a/typescript/src/components/expert/forms/RequestReviewForm.vue
++++ b/typescript/src/components/expert/forms/RequestReviewForm.vue
+@@ -1,140 +1,98 @@
+-<script setup lang="ts">
+-import {onMounted, reactive} from 'vue'
+-import {ref} from "vue";
+-import Arrow from '@/assets/icons/arrow.svg';
+-import {validateEmail} from "@/utils/helpers.ts";
+-import {useExpertStore} from "@/store/expert.ts";
+-import type {IProjectName} from "@/types.ts";
+-import { ModelListSelect } from 'vue-search-select'
+-import {useAuthStore} from "@/store/auth.ts";
+-import FormStatusMessage from "@/components/common/FormStatusMessage.vue";
+-
+-const expertStore = useExpertStore();
+-const authStore = useAuthStore();
+-
+-const emit = defineEmits<{
+-  (e: 'close'): void
+-}>()
+-
+-const form = reactive({
+-  fullName: '',
+-  clientEmail: '',
+-  companyName: '',
+-  website: '',
+-  projectId: null as number | null,
+-  hiredOnShopexperts: 'Yes',
+-  repeatedClient: 'Yes',
+-  projectValue: '',
+-  message: `Hey [Client Name],
+-
+-I hope you’re pleased with how [Project Name] turned out. Could you take 2-3 minutes to leave a quick review? Your feedback helps me improve and build my shopexperts profile so future clients can find me more easily.
+-
+-Thank you so much for your support!`
+-})
+-
+-const errors = ref<Record<string, string>>({})
+-const projectNames = ref<IProjectName[]>()
+-const generalErrorMessage = ref('')
+-
+-const validateForm = () => {
+-  errors.value = {}
+-
+-  if (!form.fullName.trim()) {
+-    errors.value.fullName = 'Client name is required.'
+-  }
+-
+-  if (!form.clientEmail.trim()) {
+-    errors.value.clientEmail = 'Client\'s Email is required.'
+-  } else if (!validateEmail(form.clientEmail.trim())) {
+-    errors.value.clientEmail = 'Please enter a valid email.'
+-  }
+-
+-  if (!form.projectId) {
+-    errors.value.projectName = 'Please select a Project name.'
+-  }
+-
+-  if (!form.message.trim() || form.message.length < 10) {
+-    errors.value.message = 'Message must be at least 10 characters.'
+-  }
+-
+-  return Object.keys(errors.value).length === 0
+-}
+-
+-onMounted(async () => {
+-  projectNames.value = await expertStore.fetchProjectNames()
+-})
+-
+-const resetStatus = () => {
+-  if (generalErrorMessage.value === 'success') {
+-    emit('close');
+-    generalErrorMessage.value = '';
+-  }
+-  generalErrorMessage.value = '';
+-}
+-
+-const sendRequest = () => {
+-  if (!validateForm()) return
+-
+-  try {
+-    const projectName = projectNames?.value?.find((proj) => proj.id === form.projectId)?.name ?? ''
+-    expertStore.createReviewRequest({
+-      expert_id: authStore.user.id,
+-      client_full_name: form.fullName,
+-      client_email: form.clientEmail,
+-      client_company_name: form.companyName,
+-      client_company_website: form.website,
+-      project_id: form.projectId,
+-      project_name: projectName,
+-      hired_on_shopexperts: form.hiredOnShopexperts === 'Yes',
+-      repeated_client: form.repeatedClient === 'Yes',
+-      is_client_reviewed: false,
+-      project_value_range: form.projectValue,
+-      message: form.message
+-    })
+-
+-    generalErrorMessage.value = 'success';
+-  } catch (error: any) {
+-    if (error.response) {
+-      const status = error.response.status;
+-      const serverMessage = error.response.data?.message || '';
+-      const validationErrors = error.response.data?.errors || {};
+-
+-      if (status === 422 && validationErrors) {
+-        Object.entries(validationErrors).forEach(([key, messages]) => {
+-          errors.value[key] = Array.isArray(messages) ? messages[0] : messages;
+-        });
+-      } else if (status === 400) {
+-        generalErrorMessage.value = 'Invalid input. Please check your data.';
+-      } else if (status === 401) {
+-        generalErrorMessage.value = 'Authentication required. Please login again.';
+-      } else if (status === 403) {
+-        generalErrorMessage.value = 'You do not have permission to perform this action.';
+-      } else if (status === 409) {
+-        generalErrorMessage.value = 'This value already exists. Please choose a different one.';
+-      } else {
+-        generalErrorMessage.value = serverMessage || 'An unexpected error occurred.';
+-      }
+-    } else if (error.request) {
+-      generalErrorMessage.value = 'No response from server. Please check your internet connection.';
+-    } else {
+-      generalErrorMessage.value = 'Unexpected error occurred.';
+-    }
+-  }
+-}
+-</script>
+-
+ <template>
+   <form @submit.prevent="sendRequest" class="space-y-4">
+     <div class="mb-5">
+-      <label class="block text-h4 font-light mb-1" for="fullName">Client Full Name</label>
++      <label class="block text-h4 font-light mb-1" for="fullName"
++        >Client Full Name</label
++      >
+       <input
+-          id="fullName"
+-          v-model="form.fullName"
+-          type="text"
+-          placeholder="Enter Client full name"
+-          class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        id="fullName"
++        v-model="form.fullName"
++        type="text"
++        placeholder="Enter Client full name"
++        class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        @input="handleClientNameInput"
+       />
+-      <h5 v-if="errors.fullName" class="text-red-600 mt-2">{{ errors.fullName }}</h5>
++
++      <!-- Styled User List -->
++      <div
++        v-if="showUserDropdown && users.length > 0"
++        class="mt-2 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
++      >
++        <div class="p-2 text-sm text-gray-600 bg-gray-50 border-b">
++          Select existing user or continue typing...
++        </div>
++        <div
++          v-for="user in users"
++          :key="user.id"
++          @click="handleUserSelect(user)"
++          class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
++          :class="{ 'bg-blue-50': selectedUser?.id === user.id }"
++        >
++          <!-- Avatar -->
++          <div
++            class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-medium text-sm mr-3"
++          >
++            {{ getInitials(user.full_name) }}
++          </div>
++
++          <!-- User Info -->
++          <div class="flex-1">
++            <div class="font-medium text-gray-900">{{ user.full_name }}</div>
++            <div class="text-sm text-gray-500">{{ user.email }}</div>
++            <div v-if="user.company_name" class="text-xs text-gray-400">
++              {{ user.company_name }}
++            </div>
++          </div>
++
++          <!-- Selection Indicator -->
++          <div
++            v-if="selectedUser?.id === user.id"
++            class="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center"
++          >
++            <svg
++              class="w-3 h-3 text-white"
++              fill="currentColor"
++              viewBox="0 0 20 20"
++            >
++              <path
++                fill-rule="evenodd"
++                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
++                clip-rule="evenodd"
++              ></path>
++            </svg>
++          </div>
++        </div>
++      </div>
++
++      <h5 v-if="errors.fullName" class="text-red-600 mt-2">
++        {{ errors.fullName }}
++      </h5>
++      <p
++        v-if="loadingUsers"
++        class="text-blue-600 mt-1 text-sm flex items-center"
++      >
++        <svg
++          class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600"
++          xmlns="http://www.w3.org/2000/svg"
++          fill="none"
++          viewBox="0 0 24 24"
++        >
++          <circle
++            class="opacity-25"
++            cx="12"
++            cy="12"
++            r="10"
++            stroke="currentColor"
++            stroke-width="4"
++          ></circle>
++          <path
++            class="opacity-75"
++            fill="currentColor"
++            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
++          ></path>
++        </svg>
++        Searching users...
++      </p>
+     </div>
+ 
+     <div class="mb-5">
+@@ -142,52 +100,51 @@ const sendRequest = () => {
+         Client Email
+       </label>
+       <input
+-          id="clientEmail"
+-          v-model="form.clientEmail"
+-          type="email"
+-          placeholder="example@gmail.com"
+-          class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        id="clientEmail"
++        v-model="form.clientEmail"
++        type="email"
++        placeholder="example@gmail.com"
++        class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        :readonly="selectedUser !== null"
++        :class="{ 'bg-gray-50': selectedUser !== null }"
+       />
+-      <h5 v-if="errors.clientEmail" class="text-red-600 mt-2">{{ errors.clientEmail }}</h5>
++      <h5 v-if="errors.clientEmail" class="text-red-600 mt-2">
++        {{ errors.clientEmail }}
++      </h5>
+     </div>
+ 
+     <div class="mb-5">
+-      <label class="block text-h4 font-light mb-1" for="clientEmail">
++      <label class="block text-h4 font-light mb-1" for="companyName">
+         Client Company Name
+       </label>
+       <input
+-          id="companyName"
+-          v-model="form.companyName"
+-          type="text"
+-          placeholder="Company Name"
+-          class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        id="companyName"
++        v-model="form.companyName"
++        type="text"
++        placeholder="Company Name"
++        class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
+       />
+-      <h5 v-if="errors.companyName" class="text-red-600 mt-2">{{ errors.companyName }}</h5>
++      <h5 v-if="errors.companyName" class="text-red-600 mt-2">
++        {{ errors.companyName }}
++      </h5>
+     </div>
+ 
+     <div class="mb-5">
+-      <label class="block text-h4 font-light mb-1" for="website">Client Company Website</label>
++      <label class="block text-h4 font-light mb-1" for="website"
++        >Client Company Website</label
++      >
+       <input
+-          id="website"
+-          v-model="form.website"
+-          type="url"
+-          placeholder="https://companywebsite.com"
+-          class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        id="website"
++        v-model="form.website"
++        type="url"
++        placeholder="https://companywebsite.com"
++        class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        :readonly="selectedUser !== null"
++        :class="{ 'bg-gray-50': selectedUser !== null }"
+       />
+-      <h5 v-if="errors.website" class="text-red-600 mt-2">{{ errors.website }}</h5>
+-    </div>
+-
+-    <div class="mb-5" v-if="projectNames">
+-      <label class="block text-h4 font-light mb-1" for="projectId">Project Name</label>
+-      <ModelListSelect
+-          v-model="form.projectId"
+-          :list="projectNames"
+-          option-value="id"
+-          option-text="name"
+-          placeholder="Search or select a project"
+-          class="w-full"
+-      />
+-      <h5 v-if="errors.projectName" class="text-red-600 mt-2">{{ errors.projectName }}</h5>
++      <h5 v-if="errors.website" class="text-red-600 mt-2">
++        {{ errors.website }}
++      </h5>
+     </div>
+ 
+     <div class="mb-5">
+@@ -195,14 +152,120 @@ const sendRequest = () => {
+         Hired on Shopexperts
+       </label>
+       <select
+-          id="hiredOnShopexperts"
+-          v-model="form.hiredOnShopexperts"
+-          class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        id="hiredOnShopexperts"
++        v-model="form.hiredOnShopexperts"
++        class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
+       >
+         <option>Yes</option>
+         <option>No</option>
+       </select>
+-      <h5 v-if="errors.hiredOnShopexperts" class="text-red-600 mt-2">{{ errors.hiredOnShopexperts }}</h5>
++      <h5 v-if="errors.hiredOnShopexperts" class="text-red-600 mt-2">
++        {{ errors.hiredOnShopexperts }}
++      </h5>
++    </div>
++
++    <div class="mb-5">
++      <label class="block text-h4 font-light mb-1" for="projectName">
++        Project Name
++      </label>
++
++      <input
++        id="projectName"
++        v-model="form.projectName"
++        type="text"
++        placeholder="Enter project name"
++        class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        @input="handleProjectNameInput"
++      />
++
++      <!-- Project dropdown -->
++      <div
++        v-if="showProjectDropdown && projects.length > 0"
++        class="mt-2 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
++      >
++        <div class="p-2 text-sm text-gray-600 bg-gray-50 border-b">
++          Select existing project or continue typing...
++        </div>
++        <div
++          v-for="project in projects"
++          :key="project.id"
++          @click="handleProjectSelect(project)"
++          class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
++          :class="{ 'bg-blue-50': selectedProject?.id === project.id }"
++        >
++          <!-- Project Icon -->
++          <div
++            class="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center text-white font-medium text-sm mr-3"
++          >
++            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
++              <path
++                d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
++              ></path>
++            </svg>
++          </div>
++
++          <!-- Project Info -->
++          <div class="flex-1">
++            <div class="font-medium text-gray-900">{{ project.name }}</div>
++          </div>
++
++          <!-- Selection Indicator -->
++          <div
++            v-if="selectedProject?.id === project.id"
++            class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
++          >
++            <svg
++              class="w-3 h-3 text-white"
++              fill="currentColor"
++              viewBox="0 0 20 20"
++            >
++              <path
++                fill-rule="evenodd"
++                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
++                clip-rule="evenodd"
++              ></path>
++            </svg>
++          </div>
++        </div>
++      </div>
++
++      <div
++        v-if="form.hiredOnShopexperts === 'No'"
++        class="mt-2 text-gray-600 p-2 bg-yellow-50 rounded-md text-sm"
++      >
++        Note: A new project will be created automatically since this is not
++        hired on Shopexperts.
++      </div>
++
++      <h5 v-if="errors.projectName" class="text-red-600 mt-2">
++        {{ errors.projectName }}
++      </h5>
++      <p
++        v-if="loadingProjects"
++        class="text-blue-600 mt-1 text-sm flex items-center"
++      >
++        <svg
++          class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600"
++          xmlns="http://www.w3.org/2000/svg"
++          fill="none"
++          viewBox="0 0 24 24"
++        >
++          <circle
++            class="opacity-25"
++            cx="12"
++            cy="12"
++            r="10"
++            stroke="currentColor"
++            stroke-width="4"
++          ></circle>
++          <path
++            class="opacity-75"
++            fill="currentColor"
++            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
++          ></path>
++        </svg>
++        Loading projects...
++      </p>
+     </div>
+ 
+     <div class="mb-5">
+@@ -210,14 +273,16 @@ const sendRequest = () => {
+         Repeated Client
+       </label>
+       <select
+-          id="repeatedClient"
+-          v-model="form.repeatedClient"
+-          class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        id="repeatedClient"
++        v-model="form.repeatedClient"
++        class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
+       >
+         <option>Yes</option>
+         <option>No</option>
+       </select>
+-      <h5 v-if="errors.repeatedClient" class="text-red-600 mt-2">{{ errors.repeatedClient }}</h5>
++      <h5 v-if="errors.repeatedClient" class="text-red-600 mt-2">
++        {{ errors.repeatedClient }}
++      </h5>
+     </div>
+ 
+     <div class="mb-5">
+@@ -225,44 +290,424 @@ const sendRequest = () => {
+         Project Value
+       </label>
+       <select
+-          id="projectValue"
+-          v-model="form.projectValue"
+-          class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
++        id="projectValue"
++        v-model="form.projectValue"
++        class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
+       >
+-        <option disabled value="" class="text-gray-100">Select project value range</option>
++        <option disabled value="" class="text-gray-100">
++          Select project value range
++        </option>
+         <option>less than 100</option>
+         <option>100 - 200</option>
+         <option>200 - 300</option>
+         <option>300 - 400</option>
+         <option>greater than 400</option>
+       </select>
+-      <h5 v-if="errors.projectValue" class="text-red-600 mt-2">{{ errors.projectValue }}</h5>
++      <h5 v-if="errors.projectValue" class="text-red-600 mt-2">
++        {{ errors.projectValue }}
++      </h5>
+     </div>
+ 
+     <div class="mb-5">
+-      <label class="block text-h4 font-light mb-1" for="message">Request a Review Message</label>
++      <label class="block text-h4 font-light mb-1" for="message"
++        >Request a Review Message</label
++      >
+       <textarea
+-          id="message"
+-          v-model="form.message"
+-          rows="8"
+-          class="w-full border border-grey rounded-md px-4 py-2 text-paragraph text-gray-500"
++        id="message"
++        v-model="form.message"
++        rows="8"
++        class="w-full border border-grey rounded-md px-4 py-2 text-paragraph text-gray-500"
+       />
+-      <h5 v-if="errors.message" class="text-red-600 mt-2">{{ errors.message }}</h5>
++      <h5 v-if="errors.message" class="text-red-600 mt-2">
++        {{ errors.message }}
++      </h5>
+     </div>
++
+     <FormStatusMessage
+-        :trigger="Date.now()"
+-        @updateStatus="resetStatus"
+-        :status="generalErrorMessage"
+-        message="Review requested successfully."
+-        class="mt-2"
++      :trigger="Date.now()"
++      @updateStatus="resetStatus"
++      :status="generalErrorMessage"
++      message="Review requested successfully."
++      class="mt-2"
+     />
+ 
+     <button
+-        type="submit"
+-        class="w-full bg-primary text-white text-paragraph font-normal rounded-md py-3 flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
++      type="submit"
++      class="w-full bg-primary text-white text-paragraph font-normal rounded-md py-3 flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
+     >
+       Send Request
+       <Arrow />
+     </button>
+   </form>
+ </template>
++
++<script setup lang="ts">
++import { onMounted, reactive, watch, computed } from "vue";
++import { ref } from "vue";
++import Arrow from "@/assets/icons/arrow.svg";
++import { validateEmail } from "@/utils/helpers.ts";
++import { useExpertStore } from "@/store/expert.ts";
++import type { IProjectName } from "@/types.ts";
++import { useAuthStore } from "@/store/auth.ts";
++import FormStatusMessage from "@/components/common/FormStatusMessage.vue";
++
++const expertStore = useExpertStore();
++const authStore = useAuthStore();
++
++const emit = defineEmits<{
++  (e: "close"): void;
++}>();
++
++const form = reactive({
++  fullName: "",
++  clientEmail: "",
++  companyName: "",
++  website: "",
++  projectName: "",
++  projectId: null as number | null,
++  hiredOnShopexperts: "Yes",
++  repeatedClient: "Yes",
++  projectValue: "",
++  message: `Hey [Client Name],
++
++I hope you're pleased with how [Project Name] turned out. Could you take 2-3 minutes to leave a quick review? Your feedback helps me improve and build my shopexperts profile so future clients can find me more easily.
++
++Thank you so much for your support!`,
++});
++
++const errors = ref<Record<string, string>>({});
++const projects = ref<IProjectName[]>([]);
++const users = ref<any[]>([]);
++const selectedUser = ref<any>(null);
++const selectedProject = ref<any>(null);
++const generalErrorMessage = ref("");
++const loadingUsers = ref(false);
++const loadingProjects = ref(false);
++const userSearchTimeout = ref<NodeJS.Timeout | null>(null);
++const projectSearchTimeout = ref<NodeJS.Timeout | null>(null);
++const showUserDropdown = ref(false);
++const showProjectDropdown = ref(false);
++
++// Helper function to get initials for avatar
++const getInitials = (name: string) => {
++  return name
++    .split(" ")
++    .map((n) => n[0])
++    .join("")
++    .toUpperCase()
++    .slice(0, 2);
++};
++
++// Handle client name input with debounced search
++const handleClientNameInput = (event: Event) => {
++  const target = event.target as HTMLInputElement;
++  const searchTerm = target.value;
++
++  // Clear previous timeout
++  if (userSearchTimeout.value) {
++    clearTimeout(userSearchTimeout.value);
++  }
++
++  // If user clears the input or it's too short, clear results immediately
++  if (!searchTerm || searchTerm.length < 2) {
++    users.value = [];
++    selectedUser.value = null;
++    showUserDropdown.value = false;
++    clearUserFields();
++    return;
++  }
++
++  // Start debounced search
++  userSearchTimeout.value = setTimeout(async () => {
++    await searchUsers(searchTerm);
++  }, 300); // 300ms debounce
++};
++
++// Handle project name input with debounced search
++const handleProjectNameInput = (event: Event) => {
++  const target = event.target as HTMLInputElement;
++  const searchTerm = target.value;
++
++  // Clear previous timeout
++  if (projectSearchTimeout.value) {
++    clearTimeout(projectSearchTimeout.value);
++  }
++
++  // If hired on shopexperts is "No", don't search projects
++  if (form.hiredOnShopexperts === "No") {
++    projects.value = [];
++    selectedProject.value = null;
++    showProjectDropdown.value = false;
++    return;
++  }
++
++  // If no client selected or search term is too short, clear results
++  if (!selectedUser.value || !searchTerm || searchTerm.length < 2) {
++    projects.value = [];
++    selectedProject.value = null;
++    showProjectDropdown.value = false;
++    return;
++  }
++
++  // Start debounced search
++  projectSearchTimeout.value = setTimeout(async () => {
++    await searchProjects(searchTerm);
++  }, 300); // 300ms debounce
++};
++
++// Watch for hired on shopexperts changes
++watch(
++  () => form.hiredOnShopexperts,
++  (newValue) => {
++    if (newValue === "No") {
++      // Clear project data when hired on shopexperts is No
++      projects.value = [];
++      selectedProject.value = null;
++      showProjectDropdown.value = false;
++      form.projectId = null;
++    }
++  }
++);
++
++const clearUserFields = () => {
++  form.clientEmail = "";
++  form.website = "";
++  form.projectId = null;
++  form.projectName = "";
++  projects.value = [];
++  selectedProject.value = null;
++  showProjectDropdown.value = false;
++};
++
++const searchUsers = async (searchTerm: string) => {
++  try {
++    loadingUsers.value = true;
++    showUserDropdown.value = true;
++    const response = await expertStore.searchUsers(searchTerm);
++    users.value = response.users || [];
++
++    // Auto-select if exact match found
++    const exactMatch = users.value.find(
++      (user) => user.full_name.toLowerCase() === searchTerm.toLowerCase()
++    );
++
++    if (exactMatch) {
++      handleUserSelect(exactMatch);
++    }
++  } catch (error) {
++    console.error("Error searching users:", error);
++    users.value = [];
++  } finally {
++    loadingUsers.value = false;
++  }
++};
++
++const searchProjects = async (searchTerm: string) => {
++  if (!selectedUser.value || form.hiredOnShopexperts === "No") return;
++
++  try {
++    loadingProjects.value = true;
++    showProjectDropdown.value = true;
++    const response = await expertStore.fetchProjectNames(selectedUser.value.id);
++
++    // Filter projects based on search term
++    const filteredProjects = response.filter((project: any) =>
++      project.name.toLowerCase().includes(searchTerm.toLowerCase())
++    );
++
++    projects.value = filteredProjects;
++
++    // Auto-select if exact match found
++    const exactMatch = projects.value.find(
++      (project) => project.name.toLowerCase() === searchTerm.toLowerCase()
++    );
++
++    if (exactMatch) {
++      handleProjectSelect(exactMatch);
++    }
++  } catch (error) {
++    console.error("Error searching projects:", error);
++    projects.value = [];
++  } finally {
++    loadingProjects.value = false;
++  }
++};
++
++const validateForm = () => {
++  errors.value = {};
++
++  if (!form.fullName.trim()) {
++    errors.value.fullName = "Client name is required.";
++  }
++
++  if (!form.clientEmail.trim()) {
++    errors.value.clientEmail = "Client's Email is required.";
++  } else if (!validateEmail(form.clientEmail.trim())) {
++    errors.value.clientEmail = "Please enter a valid email.";
++  }
++
++  if (!form.projectName.trim()) {
++    errors.value.projectName = "Project name is required.";
++  }
++
++  if (!form.message.trim() || form.message.length < 10) {
++    errors.value.message = "Message must be at least 10 characters.";
++  }
++
++  return Object.keys(errors.value).length === 0;
++};
++
++const resetStatus = () => {
++  if (generalErrorMessage.value === "success") {
++    emit("close");
++    generalErrorMessage.value = "";
++  }
++  generalErrorMessage.value = "";
++};
++
++const createUserAndProject = async () => {
++  try {
++    // Create user if doesn't exist
++    let userId = selectedUser.value?.id;
++    let projectId = selectedProject.value?.id;
++
++    if (!userId) {
++      // Create new user
++      const userData = {
++        full_name: form.fullName,
++        email: form.clientEmail,
++        company_name: form.companyName,
++        website: form.website,
++      };
++
++      const userResponse = await expertStore.createUser(userData);
++      userId = userResponse.user.id;
++    }
++
++    // Create project if doesn't exist or hired on shopexperts is No
++    if (!projectId || form.hiredOnShopexperts === "No") {
++      const projectData = {
++        name: form.projectName,
++        client_id: userId,
++      };
++
++      const projectResponse = await expertStore.createProject(projectData);
++      projectId = projectResponse.project.id;
++    }
++
++    return { userId, projectId };
++  } catch (error) {
++    throw error;
++  }
++};
++
++const sendRequest = async () => {
++  if (!validateForm()) return;
++
++  try {
++    let userId = selectedUser.value?.id;
++    let projectId = selectedProject.value?.id;
++    let projectName = form.projectName;
++
++    // Create user/project if needed
++    if (!userId || !projectId || form.hiredOnShopexperts === "No") {
++      const created = await createUserAndProject();
++      userId = created.userId;
++      projectId = created.projectId;
++    }
++
++    await expertStore.createReviewRequest({
++      expert_id: authStore.user.id,
++      client_full_name: form.fullName,
++      client_email: form.clientEmail,
++      client_company_name: form.companyName,
++      client_company_website: form.website,
++      project_id: projectId,
++      project_name: projectName,
++      hired_on_shopexperts: form.hiredOnShopexperts === "Yes",
++      repeated_client: form.repeatedClient === "Yes",
++      is_client_reviewed: false,
++      project_value_range: form.projectValue,
++      message: form.message,
++    });
++
++    generalErrorMessage.value = "success";
++  } catch (error: any) {
++    if (error.response) {
++      const status = error.response.status;
++      const serverMessage = error.response.data?.message || "";
++      const validationErrors = error.response.data?.errors || {};
++
++      if (status === 422 && validationErrors) {
++        Object.entries(validationErrors).forEach(([key, messages]) => {
++          errors.value[key] = Array.isArray(messages) ? messages[0] : messages;
++        });
++      } else if (status === 400) {
++        generalErrorMessage.value = "Invalid input. Please check your data.";
++      } else if (status === 401) {
++        generalErrorMessage.value =
++          "Authentication required. Please login again.";
++      } else if (status === 403) {
++        generalErrorMessage.value =
++          "You do not have permission to perform this action.";
++      } else if (status === 409) {
++        generalErrorMessage.value =
++          "This value already exists. Please choose a different one.";
++      } else {
++        generalErrorMessage.value =
++          serverMessage || "An unexpected error occurred.";
++      }
++    } else if (error.request) {
++      generalErrorMessage.value =
++        "No response from server. Please check your internet connection.";
++    } else {
++      generalErrorMessage.value = "Unexpected error occurred.";
++    }
++  }
++};
++
++const handleUserSelect = (user: any) => {
++  selectedUser.value = user;
++  form.fullName = user.full_name;
++  form.clientEmail = user.email;
++  form.website = user.website || "";
++
++  // Clear user search results and hide dropdown
++  users.value = [];
++  showUserDropdown.value = false;
++
++  // Clear any existing timeouts
++  if (userSearchTimeout.value) {
++    clearTimeout(userSearchTimeout.value);
++    userSearchTimeout.value = null;
++  }
++};
++
++const handleProjectSelect = (project: any) => {
++  selectedProject.value = project;
++  form.projectName = project.name;
++  form.projectId = project.id;
++
++  // Clear project search results and hide dropdown
++  projects.value = [];
++  showProjectDropdown.value = false;
++
++  // Clear any existing timeouts
++  if (projectSearchTimeout.value) {
++    clearTimeout(projectSearchTimeout.value);
++    projectSearchTimeout.value = null;
++  }
++};
++
++// Cleanup timeouts on component unmount
++onMounted(() => {
++  return () => {
++    if (userSearchTimeout.value) {
++      clearTimeout(userSearchTimeout.value);
++    }
++    if (projectSearchTimeout.value) {
++      clearTimeout(projectSearchTimeout.value);
++    }
++  };
++});
++</script>
+diff --git a/typescript/src/services/expert.service.ts b/typescript/src/services/expert.service.ts
+index 666e5761..0de25f26 100644
+--- a/typescript/src/services/expert.service.ts
++++ b/typescript/src/services/expert.service.ts
+@@ -1,36 +1,55 @@
+-import ApiService from '@/services/api.service';
++import ApiService from "@/services/api.service";
+ 
+ class ExpertService {
+-    private base = '/v2/expert';
+-
+-    async getExperts(params: Record<string, any>) {
+-        const queryString = new URLSearchParams(params).toString();
+-        return ApiService.get(`/expert-list?${queryString}`);
+-    }
+-
+-    async getReviews() {
+-        return ApiService.get(`${this.base}/reviews`);
+-    }
+-
+-    async getLeads(params: Record<string, any> = {}) {
+-        return ApiService.get(`${this.base}/leads`, { ...params });
+-    }
+-
+-    updateReview(id: number, data: any) {
+-        return ApiService.put(`${this.base}/reviews/${id}`, data);
+-    }
+-
+-    createReviewRequest(payload: any) {
+-        return ApiService.post(`${this.base}/review-requests`, payload);
+-    }
+-
+-    fetchProjectNames() {
+-        return ApiService.get(`${this.base}/project-names`);
+-    }
+-
+-    async getStats() {
+-        return ApiService.get(`${this.base}/stats`);
+-    }
++  private base = "/v2/expert";
++
++  async getExperts(params: Record<string, any>) {
++    const queryString = new URLSearchParams(params).toString();
++    return ApiService.get(`/expert-list?${queryString}`);
++  }
++
++  async getReviews() {
++    return ApiService.get(`${this.base}/reviews`);
++  }
++
++  async getLeads(params: Record<string, any> = {}) {
++    return ApiService.get(`${this.base}/leads`, { ...params });
++  }
++
++  async getStats() {
++    return ApiService.get(`${this.base}/stats`);
++  }
++
++  updateReview(id: number, data: any) {
++    return ApiService.put(`${this.base}/reviews/${id}`, data);
++  }
++
++  createReviewRequest(payload: any) {
++    return ApiService.post(`${this.base}/review-requests`, payload);
++  }
++
++  fetchProjectNames(userId?: number) {
++    const params = userId ? `?user_id=${userId}` : "";
++    return ApiService.get(`${this.base}/project-names${params}`);
++  }
++
++  searchUsers(searchTerm: string) {
++    return ApiService.get(
++      `${this.base}/search-users?search=${encodeURIComponent(searchTerm)}`
++    );
++  }
++
++  getUserDetails(userId: number) {
++    return ApiService.get(`${this.base}/user-details?user_id=${userId}`);
++  }
++
++  createUser(userData: any) {
++    return ApiService.post(`${this.base}/create-user`, userData);
++  }
++
++  createProject(projectData: any) {
++    return ApiService.post(`${this.base}/create-project`, projectData);
++  }
+ }
+ 
+-export default new ExpertService();
+\ No newline at end of file
++export default new ExpertService();
+diff --git a/typescript/src/store/client.ts b/typescript/src/store/client.ts
+index 57f10572..1c3129fe 100644
+--- a/typescript/src/store/client.ts
++++ b/typescript/src/store/client.ts
+@@ -1,174 +1,217 @@
+-import { defineStore } from 'pinia';
+-import { withLoader } from '@/utils/helpers.ts';
+-import ClientService from '@/services/client.service';
++import { defineStore } from "pinia";
++import { withLoader } from "@/utils/helpers.ts";
++import ClientService from "@/services/client.service";
+ import type {
+-    IRequest,
+-    IPackagedService,
+-    IShopifyProductUpdate,
+-    IExpertt,
+-    ReviewRequestsResponse,
+-    ClientReviewsResponse,
+-    ITranscationn
++  IRequest,
++  IPackagedService,
++  IShopifyProductUpdate,
++  IExpertt,
++  ReviewRequestsResponse,
++  ClientReviewsResponse,
++  ITranscationn,
+ } from "@/types";
+-import {useAuthStore} from "@/store/auth.ts";
+-
+-export const useClientStore = defineStore('client', {
+-    state: () => ({
+-        latestRequests: {} as {
+-            latest_requests: IRequest[]
+-        },
+-        featuredServicesAndExperts: {} as {
+-            'featured_services': IPackagedService[],
+-            'featured_experts': IExpertt[],
+-            'shopify_product_updates': IShopifyProductUpdate[]
+-        },
+-        requests: {} as {
+-            requests: IRequest[]
+-        },
+-        packagedServices: {} as {
+-            packaged_services: IPackagedService[]
+-        },
+-        reviewRequests: {
+-            pending_review_requests: []
+-        } as ReviewRequestsResponse,
+-        reviews: null as ClientReviewsResponse | null,
+-        request: {} as {
+-            request: IRequest
+-        },
+-        transactions: {} as {
+-            transactions: ITranscationn[]
+-        },
+-        user: null as any,
+-        error: null as string | null
+-    }),
+-
+-    actions: {
+-        async fetchLatestRequests() {
+-            await withLoader(async () => {
+-                this.latestRequests = (await ClientService.getLatestRequests()).data;
+-            });
+-        },
+-
+-        async fetchFeaturedServicesAndExperts() {
+-            await withLoader(async () => {
+-                this.featuredServicesAndExperts = (await ClientService.getFeaturedServicesAndExperts()).data;
+-            });
+-        },
+-
+-        async fetchRequests() {
+-            await withLoader(async () => {
+-                this.requests = (await ClientService.getRequests()).data;
+-            });
+-        },
+-
+-        async fetchTransactions() {
+-            await withLoader(async () => {
+-                this.transactions = (await ClientService.getTransactions()).data;
+-            });
+-        },
+-
+-        async fetchPackagedServices() {
+-            await withLoader(async () => {
+-                this.packagedServices = (await ClientService.getPackagedServices()).data;
+-            });
+-        },
+-
+-        async fetchReviewRequests() {
+-            await withLoader(async () => {
+-                this.reviewRequests = (await ClientService.getReviewRequests()).data;
+-            });
+-        },
+-
+-        async fetchReviews() {
+-            await withLoader(async () => {
+-                this.reviews = (await ClientService.getReviews()).data as ClientReviewsResponse;
+-            });
+-        },
+-
+-        async createReview(data: any) {
+-            await withLoader(async () => {
+-                await ClientService.postReview(data);
+-                await this.fetchReviews();
+-            });
+-        },
+-
+-        async getMatched(data: any) {
+-            await withLoader(async () => {
+-                const res = await ClientService.getMatched(data);
+-                if (res.data.status) {
+-                    const authStore = useAuthStore()
+-                    authStore.setCurrentUser( res.data.user, res.data.token );
+-                }
+-            });
+-        },
+-
+-        async freeQuote(data: any) {
+-            await withLoader(async () => {
+-                const res = await ClientService.freeQuote(data);
+-                if (res.data.status) {
+-                    const authStore = useAuthStore()
+-                    authStore.setCurrentUser( res.data.user, res.data.token );
+-                }
+-            });
+-        },
+-
+-        async createRequest(data: any, myRequestsPage = false) {
+-            await withLoader(async () => {
+-                await ClientService.createRequest(data);
+-                if (myRequestsPage) {
+-                    await this.fetchRequests();
+-                }
+-                else {
+-                    await this.fetchLatestRequests();
+-                }
+-            });
+-        },
+-
+-        async updateReview(id: number, data: any) {
+-            await withLoader(async () => {
+-                await ClientService.updateReview(id, data);
+-                await this.fetchReviews();
+-            });
+-        },
+-
+-        async fetchRequest(requestId: string) {
+-            await withLoader(async () => {
+-                this.request = (await ClientService.getRequest(requestId)).data;
+-            });
+-        },
+-
+-        async fetchClient() {
+-            try {
+-                const response = await ClientService.fetchClient()
+-                this.user = response.data.user
+-            } catch (error) {
+-                console.log(error)
+-                this.error = 'Failed to fetch user data'
+-            }
+-        },
+-
+-        async updateProfile(data: Partial<any>) {
+-            try {
+-                const response = await ClientService.updateProfile(data)
+-                this.user = response.data.user
+-                return { success: true, user: response.data.user };
+-            } catch (error) {
+-                console.log(error)
+-                this.error = 'Failed to update profile'
+-                return { success: false, error };
+-            }
+-        },
+-
+-        async addCreditCard(cardData: any) {
+-            return await ClientService.addCreditCard(cardData)
+-        },
+-
+-        async setDefaultCard(cardId: number) {
+-            return this.updateProfile({ default_card_id: cardId })
+-        },
+-
+-        async deleteCard(cardId: number) {
+-            return this.updateProfile({ remove_card: cardId })
++import { useAuthStore } from "@/store/auth.ts";
++
++export const useClientStore = defineStore("client", {
++  state: () => ({
++    latestRequests: {} as {
++      latest_requests: IRequest[];
++    },
++    featuredServicesAndExperts: {} as {
++      featured_services: IPackagedService[];
++      featured_experts: IExpertt[];
++      shopify_product_updates: IShopifyProductUpdate[];
++    },
++    requests: {} as {
++      requests: IRequest[];
++    },
++    packagedServices: {} as {
++      packaged_services: IPackagedService[];
++    },
++    reviewRequests: {
++      pending_review_requests: [],
++    } as ReviewRequestsResponse,
++    reviews: null as ClientReviewsResponse | null,
++    request: {} as {
++      request: IRequest;
++    },
++    transactions: {} as {
++      transactions: ITranscationn[];
++    },
++    user: null as any,
++    error: null as string | null,
++  }),
++
++  actions: {
++    async fetchLatestRequests() {
++      await withLoader(async () => {
++        this.latestRequests = (await ClientService.getLatestRequests()).data;
++      });
++    },
++
++    async fetchFeaturedServicesAndExperts() {
++      await withLoader(async () => {
++        this.featuredServicesAndExperts = (
++          await ClientService.getFeaturedServicesAndExperts()
++        ).data;
++      });
++    },
++
++    async fetchRequests() {
++      await withLoader(async () => {
++        this.requests = (await ClientService.getRequests()).data;
++      });
++    },
++
++    async fetchTransactions() {
++      await withLoader(async () => {
++        this.transactions = (await ClientService.getTransactions()).data;
++      });
++    },
++
++    async fetchPackagedServices() {
++      await withLoader(async () => {
++        this.packagedServices = (
++          await ClientService.getPackagedServices()
++        ).data;
++      });
++    },
++
++    async fetchReviewRequests() {
++      await withLoader(async () => {
++        this.reviewRequests = (await ClientService.getReviewRequests()).data;
++      });
++    },
++
++    async fetchReviews() {
++      await withLoader(async () => {
++        this.reviews = (await ClientService.getReviews())
++          .data as ClientReviewsResponse;
++      });
++    },
++
++    async createReview(data: any) {
++      await withLoader(async () => {
++        const response = await ClientService.postReview(data);
++        // Update state directly with the created review
++        if (response.data.review && this.reviews) {
++          this.reviews.written_reviews.push(response.data.review);
+         }
++        // If reviews not loaded yet, fetch them
++        if (!this.reviews) {
++          await this.fetchReviews();
++        }
++      });
++    },
++
++    async getMatched(data: any) {
++      await withLoader(async () => {
++        const res = await ClientService.getMatched(data);
++        if (res.data.status) {
++          const authStore = useAuthStore();
++          authStore.setCurrentUser(res.data.user, res.data.token);
++        }
++      });
++    },
++
++    async freeQuote(data: any) {
++      await withLoader(async () => {
++        const res = await ClientService.freeQuote(data);
++        if (res.data.status) {
++          const authStore = useAuthStore();
++          authStore.setCurrentUser(res.data.user, res.data.token);
++        }
++      });
++    },
++
++    async createRequest(data: any, myRequestsPage = false) {
++      await withLoader(async () => {
++        const response = await ClientService.createRequest(data);
++        // Update state directly with the created request
++        if (response.data.request) {
++          if (myRequestsPage && this.requests.requests) {
++            this.requests.requests.unshift(response.data.request);
++          } else if (this.latestRequests.latest_requests) {
++            this.latestRequests.latest_requests.unshift(response.data.request);
++          }
++        }
++        // Fallback to fetch if state not initialized
++        if (myRequestsPage && !this.requests.requests) {
++          await this.fetchRequests();
++        } else if (!myRequestsPage && !this.latestRequests.latest_requests) {
++          await this.fetchLatestRequests();
++        }
++      });
++    },
++
++    async updateReview(id: number, data: any) {
++      await withLoader(async () => {
++        const response = await ClientService.updateReview(id, data);
++        // Update the specific review in state using the returned data
++        if (response.data.review && this.reviews) {
++          const reviewIndex = this.reviews.written_reviews.findIndex(
++            (r) => r.id === id
++          );
++          if (reviewIndex !== -1) {
++            // Update the review with new data, preserving existing structure
++            this.reviews.written_reviews[reviewIndex] = {
++              ...this.reviews.written_reviews[reviewIndex],
++              reviewer: {
++                ...this.reviews.written_reviews[reviewIndex].reviewer,
++                comment: response.data.review.comment,
++                rating: response.data.review.rate,
++                communication: response.data.review.communication,
++                quality: response.data.review.quality,
++                recommendation: response.data.review.recommendation,
++                valueForMoney: response.data.review.valueForMoney,
++                timeToStart: response.data.review.timeToStart,
++                valueRange: response.data.review.valueRange,
++              },
++              id: response.data.review.id,
++            };
++          }
++        }
++      });
++    },
++
++    async fetchRequest(requestId: string) {
++      await withLoader(async () => {
++        this.request = (await ClientService.getRequest(requestId)).data;
++      });
++    },
++
++    async fetchClient() {
++      try {
++        const response = await ClientService.fetchClient();
++        this.user = response.data.user;
++      } catch (error) {
++        console.log(error);
++        this.error = "Failed to fetch user data";
++      }
++    },
++
++    async updateProfile(data: Partial<any>) {
++      try {
++        const response = await ClientService.updateProfile(data);
++        this.user = response.data.user;
++        return { success: true, user: response.data.user };
++      } catch (error) {
++        console.log(error);
++        this.error = "Failed to update profile";
++        return { success: false, error };
++      }
++    },
++
++    async addCreditCard(cardData: any) {
++      return await ClientService.addCreditCard(cardData);
++    },
++
++    async setDefaultCard(cardId: number) {
++      return this.updateProfile({ default_card_id: cardId });
++    },
++
++    async deleteCard(cardId: number) {
++      return this.updateProfile({ remove_card: cardId });
+     },
++  },
+ });
+diff --git a/typescript/src/store/expert.ts b/typescript/src/store/expert.ts
+index d05f196d..80956c6a 100644
+--- a/typescript/src/store/expert.ts
++++ b/typescript/src/store/expert.ts
+@@ -1,109 +1,152 @@
+-import { defineStore } from 'pinia';
+-import {withLoader} from "@/utils/helpers.ts";
+-import type {ExpertReviewsResponse, ILeadd, IExpertStat, IProjectName} from "@/types.ts";
++import { defineStore } from "pinia";
++import { withLoader } from "@/utils/helpers.ts";
++import type {
++  ExpertReviewsResponse,
++  ILeadd,
++  IExpertStat,
++  IProjectName,
++} from "@/types.ts";
+ import ExpertService from "@/services/expert.service.ts";
+ 
+-export const useExpertStore = defineStore('expert', {
+-    state: ()=> ({
+-        reviews: null as ExpertReviewsResponse | null,
+-        leads: {} as {
+-            'leads': ILeadd[]
+-        },
+-        stats: {} as {
+-            expert_stats: IExpertStat
+-        } | null,
+-        user: null as any,
+-    }),
++export const useExpertStore = defineStore("expert", {
++  state: () => ({
++    reviews: null as ExpertReviewsResponse | null,
++    leads: {} as {
++      leads: ILeadd[];
++    },
++    stats: {} as {
++      expert_stats: IExpertStat;
++    } | null,
++    user: null as any,
++  }),
++
++  actions: {
++    async fetchReviews() {
++      await withLoader(async () => {
++        this.reviews = (await ExpertService.getReviews())
++          .data as ExpertReviewsResponse;
++      });
++    },
++
++    async fetchLeads(params: { type?: string } = {}) {
++      await withLoader(async () => {
++        this.leads = (await ExpertService.getLeads(params)).data;
++      });
++    },
++
++    async fetchStats() {
++      await withLoader(async () => {
++        this.stats = (await ExpertService.getStats()).data as any;
++      });
++    },
++
++    async updateReview(id: number, data: any) {
++      await withLoader(async () => {
++        const response = await ExpertService.updateReview(id, data);
++        // Update the specific review in state using the returned data
++        if (response.data.review && this.reviews) {
++          const reviewIndex = this.reviews.reviews.findIndex(
++            (r) => r.id === id
++          );
++          if (reviewIndex !== -1) {
++            // Update the review with the new expert response
++            this.reviews.reviews[reviewIndex] = {
++              ...this.reviews.reviews[reviewIndex],
++              response:
++                response.data.review.expert_response ||
++                response.data.review.response,
++            };
++          }
++        }
++      });
++    },
++
++    async createReviewRequest(payload: any) {
++      await withLoader(async () => {
++        await ExpertService.createReviewRequest(payload);
++      });
++    },
++
++    async fetchProjectNames(userId?: number) {
++      const response = await ExpertService.fetchProjectNames(userId);
++      return response.data.project_names as IProjectName[];
++    },
++
++    async fetchClient() {
++      try {
++        this.user = {
++          id: 2,
++          program_id: null,
++          partner_id: null,
++          click_id: null,
++          role_id: 2,
++          usertype: "paid",
++          first_name: "Client",
++          last_name: "User",
++          email: "client.user@example.com",
++          url: "client.example.com",
++          is_featured_expert: null,
++          company_type: null,
++          shopify_plan: null,
++          email_verified_at: null,
++          timezone: null,
++          new_messages: "instant",
++          project_notifications: "instant",
++          photo: "profile-photo/2/avatar.jpg",
++          password_changed: null,
++          created_at: "2024-06-23T18:04:33.000000Z",
++          updated_at: "2024-11-04T07:53:49.000000Z",
++          is_tester: 1,
++          deleted_at: null,
++          is_migrated: 0,
++          source: "Website Direct",
++          availability_status: "available",
++          business_address: null,
++          phone_number: null,
++          languages: null,
++          is_disable: 0,
++          saved_cards: [
++            {
++              id: 1,
++              card_type: "visa",
++              last_digits: "4242",
++              exp_date: "12/26",
++              last_used: "2025-06-28T14:35:00Z",
++              default: true,
++            },
++            {
++              id: 2,
++              card_type: "mastercard",
++              last_digits: "5100",
++              exp_date: "11/25",
++              last_used: "2025-05-19T10:22:00Z",
++              default: false,
++            },
++          ],
++        };
++      } catch (error) {
++        console.log(error);
++      }
++    },
+ 
+-    actions: {
+-        async fetchReviews() {
+-            await withLoader(async () => {
+-                this.reviews = (await ExpertService.getReviews()).data as ExpertReviewsResponse;
+-            });
+-        },
+-        async fetchLeads(params: { type?: string } = {}) {
+-            await withLoader(async () => {
+-                this.leads = (await ExpertService.getLeads(params)).data;
+-            });
+-        },
+-        async fetchStats() {
+-            await withLoader(async () => {
+-                this.stats = (await ExpertService.getStats()).data as any;
+-            });
+-        },
+-        async updateReview(id: number, data: any) {
+-            await withLoader(async () => {
+-                await ExpertService.updateReview(id, data);
+-                await this.fetchReviews();
+-            });
+-        },
+-        async createReviewRequest(payload: any) {
+-            await withLoader(async () => {
+-                await ExpertService.createReviewRequest(payload);
++    async searchUsers(searchTerm: string) {
++      const response = await ExpertService.searchUsers(searchTerm);
++      return response.data;
++    },
++
++    async getUserDetails(userId: number) {
++      const response = await ExpertService.getUserDetails(userId);
++      return response.data;
++    },
++
++    async createUser(userData: any) {
++      const response = await ExpertService.createUser(userData);
++      return response.data;
++    },
+ 
+-            });
+-        },
+-        async fetchProjectNames() {
+-            return await withLoader(async () => {
+-                return (await ExpertService.fetchProjectNames()).data.project_names as IProjectName[];
+-            });
+-        },
+-        async fetchClient() {
+-            try {
+-                // const response = await
+-                this.user = {
+-                    id: 2,
+-                    program_id: null,
+-                    partner_id: null,
+-                    click_id: null,
+-                    role_id: 2,
+-                    usertype: "paid",
+-                    first_name: "Client",
+-                    last_name: "User",
+-                    email: "client.user@example.com",
+-                    url: "client.example.com",
+-                    is_featured_expert: null,
+-                    company_type: null,
+-                    shopify_plan: null,
+-                    email_verified_at: null,
+-                    timezone: null,
+-                    new_messages: "instant",
+-                    project_notifications: "instant",
+-                    photo: "profile-photo/2/avatar.jpg",
+-                    password_changed: null,
+-                    created_at: "2024-06-23T18:04:33.000000Z",
+-                    updated_at: "2024-11-04T07:53:49.000000Z",
+-                    is_tester: 1,
+-                    deleted_at: null,
+-                    is_migrated: 0,
+-                    source: "Website Direct",
+-                    availability_status: "available",
+-                    business_address: null,
+-                    phone_number: null,
+-                    languages: null,
+-                    is_disable: 0,
+-                    saved_cards: [
+-                        {
+-                            id: 1,
+-                            card_type: "visa",
+-                            last_digits: "4242",
+-                            exp_date: "12/26",
+-                            last_used: "2025-06-28T14:35:00Z",
+-                            default: true,
+-                        },
+-                        {
+-                            id: 2,
+-                            card_type: "mastercard",
+-                            last_digits: "5100",
+-                            exp_date: "11/25",
+-                            last_used: "2025-05-19T10:22:00Z",
+-                            default: false,
+-                        }
+-                    ]
+-            }
+-            } catch (error) {
+-                console.log(error)
+-            }
+-        },
++    async createProject(projectData: any) {
++      const response = await ExpertService.createProject(projectData);
++      return response.data;
+     },
++  },
+ });

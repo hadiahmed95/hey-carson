@@ -32,9 +32,10 @@ export const useExpertStore = defineStore("expert", {
         this.leads = (await ExpertService.getLeads(params)).data;
       });
     },
-    async fetchLeadsDetails(params: { id?: number } = {}) {
+    async fetchLeadsDetails(leadId: number) {
       await withLoader(async () => {
-        this.leadsDetails = (await ExpertService.getLeadsDetails(params)).data;
+        const response = await ExpertService.getLeadsDetails(leadId);
+        return response;
       });
     },
     async fetchStats() {

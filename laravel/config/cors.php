@@ -19,11 +19,27 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    // FIXED: Cannot use '*' with credentials, must specify exact origins
+    'allowed_origins' => [
+        'http://localhost:3000',
+        'http://localhost:5173',  // Vite default port
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:5173',  // Vite default port with 127.0.0.1
+        'http://127.0.0.1:8000',  // Laravel default
+        'https://app.shopexperts.com',
+        'https://app.staging.shopexperts.com'
+    ],
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['*'],
+    'allowed_headers' => [
+        'Accept',
+        'Authorization',
+        'Content-Type',
+        'X-Requested-With',
+        'X-CSRF-TOKEN',
+        'X-XSRF-TOKEN',
+    ],
 
     'exposed_headers' => [],
 
