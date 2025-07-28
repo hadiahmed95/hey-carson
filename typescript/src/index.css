@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@100;200;300;400;500;600;700;800;900&display=swap'); /* ./src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Besley:ital,wght@0,400..900;1,400..900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #1F2125;
+    --color-secondary: #F8F8F8;
+    --color-tertiary: #6e6f71;
+    --color-tertiary-dark: #6d6f71;
+    --color-accent: #ACE46F;
+    --color-accent-light: #F0FBE4;
+    --color-success: #319E3A;
+    --color-success-light: #319E3A4D;
+    --color-link: #1797ff;
+    --color-link-light: #1797FF4D;
+    --color-link-blue: #b9e0ff;
+    --color-link-dark: #2697ff;
+    --color-card: #FFFFFF;
+    --color-pending: #946A00;
+    --color-pending-light: #FFEDC0;
+    --color-danger: #ef4d2f;
+    --color-grey: #d6d6d6;
+    --color-grey-dark: #696a6c;
+    --color-grey-extra-dark: #6b6c6f;
+    --color-grey-light: #f1f1f1;
+    --color-softpink: #FFC0C0;
+    --color-darkpink: #8c3737;
+    --color-softgreen: #c1e2c4;
+    --font-archivo: 'Archivo', sans-serif;
+    --font-besley: 'Besley', sans-serif;
+    --color-info: #1a72cf;
+    --color-darkGreen: #50653f;
+    --color-lightGray: #d6d6d6;
+    --color-light-green: #00C7004D;
+    --color-extra-dark-green: #0C5132;
+    --color-gainsboro: #D8D8D8;
+    --color-darkGray: #66676a;
+    --color-brandBlue: #0f5bd3;
+    --color-veryLightGray: #e9e9e9;
+    --color-coolGray: #606164;
+    --color-graniteGray: #5f6063;
+    --color-apricot-light: #FFD8A1;
+    --color-orange-brown: #8c5402;
+    --color-baby-blue: #bae1ff;
+    --color-deep-blue: #0b6593;
+    --color-slate-gray: #797a7c;
+    --color-light-purple: #dcbcff;
+    --color-earthy-orange-brown: #8c5402;
+    --color-deep-violet: #633f8b;
+    --color-light-blue: #0072CF;
+  }
+}
