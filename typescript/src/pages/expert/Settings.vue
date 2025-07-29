@@ -34,14 +34,18 @@ onMounted(async () => {
       />
     </div>
 
-    <!-- Email preferences -->
+    <!-- Email preferences - ✅ FIXED: Added userType="expert" -->
     <div class="flex gap-40 justify-between mb-16">
       <SettingsInfo
           title="Email Preferences"
           description="Customize notifications to fit your workflow. Get <br>
           instant updates or daily summaries for crucial<br> project information"
       />
-      <EmailPreferences v-if="expertStore.user" :user="expertStore.user"/>
+      <EmailPreferences 
+          v-if="expertStore.user" 
+          :user="expertStore.user"
+          userType="expert"
+      />
     </div>
 
     <!-- Billing Details -->

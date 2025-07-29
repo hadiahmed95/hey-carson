@@ -13,35 +13,13 @@ use Illuminate\Http\JsonResponse;
 class LeadController extends Controller
 {
     /**
-     * Get leads - either all leads or a specific lead by ID
      *
-     * @param int|null $id Optional lead ID
      * @return JsonResponse
      */
-    public function leads($id = null): JsonResponse
+    public function leads(): JsonResponse
     {
         $user = \Auth::user();
 
-        // If ID is provided, return single lead
-        if ($id) {
-            $lead = Request::query()
-                ->where('expert_id', $user->id)
-                ->where('id', $id)
-                ->with(['project', 'client'])
-                ->first();
-
-            if (!$lead) {
-                return response()->json([
-                    'message' => 'Lead not found'
-                ], 404);
-            }
-
-            return response()->json([
-                'lead' => $lead,
-            ]);
-        }
-
-        // If no ID provided, return all leads (existing functionality)
         $query = Request::query()
             ->where('expert_id', $user->id)
             ->with(['project', 'client'])

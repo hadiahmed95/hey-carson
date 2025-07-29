@@ -15,14 +15,7 @@
         <h5 class="text-primary font-normal">Submitted on {{ submittedDate }}</h5>
       </div>
 
-      <!-- ONLY CHANGE: Make project name clickable while keeping exact same styling -->
-      <router-link 
-        :to="`/expert/lead/${leadId}`"
-        class="font-semibold text-current hover:text-current"
-        style="text-decoration: none;"
-      >
-        {{ projectName }}
-      </router-link>
+      <p class="font-semibold">{{ projectName }}</p>
     </div>
 
     <div class="flex justify-between gap-4">
@@ -65,12 +58,11 @@
       <div class="flex items-center justify-center gap-2 mt-4">
         <select v-model="status" class="border rounded px-1 w-36 py-2 text-h4 hover:bg-gray-100">
           <option value="In Progress">In Progress</option>
-          <option value="Pending">Pending</option>
           <option value="Completed">Completed</option>
           <option value="Closed">Closed</option>
         </select>
         <router-link
-            :to="`/expert/lead/${leadId}/chatroom`"
+            :to="`/expert/lead/${1}/chatroom`"
             class="bg-primary text-white px-4 py-2 rounded text-h4 flex items-center gap-2 hover:bg-gray-800"
         >
           <Chat />
@@ -95,7 +87,6 @@ import ExternalLink from '../../../assets/icons/externalLink.svg';
 import {getS3URL, handleImgError} from "@/utils/helpers.ts";
 
 const props = defineProps<{
-  leadId: number  // Added leadId prop
   name: string
   email: string
   projectName: string
@@ -113,10 +104,5 @@ const status = ref(props.initialStatus || 'In Progress')
 </script>
 
 <style scoped>
-/* Ensure the router-link doesn't change the original styling */
-.router-link-active,
-.router-link-exact-active {
-  color: inherit !important;
-  text-decoration: none !important;
-}
+
 </style>
