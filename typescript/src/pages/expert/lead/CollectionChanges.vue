@@ -135,10 +135,6 @@ watch(
   { immediate: true }
 );
 
-onMounted(() => {
-  fetchLeadData();
-});
-
 // Cleanup on unmount
 onUnmounted(() => {
   leadDetail.value = null;

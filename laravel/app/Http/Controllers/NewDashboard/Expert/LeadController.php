@@ -13,39 +13,15 @@ use Illuminate\Http\JsonResponse;
 class LeadController extends Controller
 {
     /**
-     * Get leads - either all leads or a specific lead by ID
+     * Get all leads for the authenticated expert
      *
-     * @param int|null $id Optional lead ID
      * @return JsonResponse
      */
-    public function leads($id = null): JsonResponse
+    public function leads(): JsonResponse
     {
         $user = \Auth::user();
 
-        // If ID is provided, return single lead
-        if ($id) {
-            $lead = Request::query()
-                ->where('expert_id', $user->id)
-                ->where('id', $id)
-                ->with(['project', 'client'])
-                ->first();
-
-            if (!$lead) {
-                return response()->json([
-                    'message' => 'Lead not found'
-                ], 404);
-            }
-
-            return response()->json([
-                'lead' => $lead,
-            ]);
-        }
-
-        // If no ID provided, return all leads (existing functionality)
-        $query = Request::query()
-            ->where('expert_id', $user->id)
-            ->with(['project', 'client'])
-            ->latest();
+        $query = $this->getBaseLeadQuery($user->id);
 
         if (request()->has('type')) {
             $query->where('type', request('type'));
@@ -57,6 +33,46 @@ class LeadController extends Controller
     }
 
     /**
+     * Get a single lead by ID
+     *
+     * @param int $id Lead ID
+     * @return JsonResponse
+     */
+    public function show(int $id): JsonResponse
+    {
+        $user = \Auth::user();
+
+        $lead = $this->getBaseLeadQuery($user->id)
+            ->where('id', $id)
+            ->first();
+
+        if (!$lead) {
+            return response()->json([
+                'message' => 'Lead not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'lead' => $lead,
+        ]);
+    }
+
+    /**
+     * Get base query for leads with common conditions and relationships
+     *
+     * @param int $expertId
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    private function getBaseLeadQuery(int $expertId)
+    {
+        return Request::query()
+            ->where('expert_id', $expertId)
+            ->with(['project', 'client'])
+            ->latest();
+    }
+
+    /**
+     * Get expert statistics
      *
      * @return JsonResponse
      */
@@ -74,6 +90,7 @@ class LeadController extends Controller
     }
 
     /**
+     * Get project names for leads that haven't been reviewed
      *
      * @return JsonResponse
      */

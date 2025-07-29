@@ -1,5 +1,4 @@
 <template>
-  <!-- Wrap the entire card in router-link instead of just the project name -->
   <router-link 
     :to="`/expert/lead/${leadId}`"
     class="block border rounded-md shadow-sm bg-white mb-4 p-card-padding hover:shadow-md transition-shadow duration-200 cursor-pointer"
@@ -20,7 +19,6 @@
         <h5 class="text-primary font-normal">Submitted on {{ submittedDate }}</h5>
       </div>
 
-      <!-- Project name - no longer needs router-link as entire card is clickable -->
       <h3 class="font-semibold">
         {{ projectName }}
       </h3>
@@ -43,7 +41,6 @@
 
           <div class="border-l h-8 mx-2"></div>
 
-          <!-- Store URL link - needs @click.stop to prevent card navigation -->
           <a 
             v-if="storeUrl" 
             :href="storeUrl" 
@@ -71,7 +68,6 @@
       </div>
 
       <div class="flex items-center justify-center gap-2 mt-4">
-        <!-- Status select - needs @click.stop to prevent card navigation -->
         <select 
           v-model="status" 
           class="border rounded px-1 w-36 py-2 text-h4 hover:bg-gray-100"
@@ -84,7 +80,6 @@
           <option value="Closed">Closed</option>
         </select>
         
-        <!-- Chat button - needs @click.stop and separate navigation -->
         <button
           class="bg-primary text-white px-4 py-2 rounded text-h4 flex items-center gap-2 hover:bg-gray-800"
           @click.stop="navigateToChat"
@@ -93,7 +88,6 @@
           <span>Chat Now</span>
         </button>
         
-        <!-- Quote button - needs @click.stop to prevent card navigation -->
         <button 
           class="border px-4 py-2 rounded text-h4 hover:bg-gray-100 flex items-center gap-2"
           @click.stop="handleQuote"
@@ -112,7 +106,7 @@ import { useRouter } from 'vue-router'
 import Chat from '../../../assets/icons/chat.svg';
 import Quote from '../../../assets/icons/quote-dark.svg';
 import ExternalLink from '../../../assets/icons/externalLink.svg';
-import { getS3URL, handleImgError } from "@/utils/helpers.ts";
+import {getS3URL, handleImgError} from "@/utils/helpers.ts";
 
 const props = defineProps<{
   leadId: number
