@@ -1,36 +1,41 @@
-import ApiService from '@/services/api.service';
+import ApiService from "@/services/api.service";
 
 class ExpertService {
-    private base = '/v2/expert';
+  private base = "/v2/expert";
 
-    async getExperts(params: Record<string, any>) {
-        const queryString = new URLSearchParams(params).toString();
-        return ApiService.get(`/expert-list?${queryString}`);
-    }
+  async getExperts(params: Record<string, any>) {
+    const queryString = new URLSearchParams(params).toString();
+    return ApiService.get(`/expert-list?${queryString}`);
+  }
 
-    async getReviews() {
-        return ApiService.get(`${this.base}/reviews`);
-    }
+  async getReviews() {
+    return ApiService.get(`${this.base}/reviews`);
+  }
 
-    async getLeads(params: Record<string, any> = {}) {
-        return ApiService.get(`${this.base}/leads`, { ...params });
-    }
+  async getLeads(params: Record<string, any> = {}) {
+    return ApiService.get(`${this.base}/leads`, { ...params });
+  }
 
-    updateReview(id: number, data: any) {
-        return ApiService.put(`${this.base}/reviews/${id}`, data);
-    }
+  // UPDATED: Now properly handles single lead fetching
+  async getLeadsDetails(leadId: number) {
+    return ApiService.get(`${this.base}/leads/${leadId}`);
+  }
 
-    createReviewRequest(payload: any) {
-        return ApiService.post(`${this.base}/review-requests`, payload);
-    }
+  updateReview(id: number, data: any) {
+    return ApiService.put(`${this.base}/reviews/${id}`, data);
+  }
 
-    fetchProjectNames() {
-        return ApiService.get(`${this.base}/project-names`);
-    }
+  createReviewRequest(payload: any) {
+    return ApiService.post(`${this.base}/review-requests`, payload);
+  }
 
-    async getStats() {
-        return ApiService.get(`${this.base}/stats`);
-    }
+  fetchProjectNames() {
+    return ApiService.get(`${this.base}/project-names`);
+  }
+
+  async getStats() {
+    return ApiService.get(`${this.base}/stats`);
+  }
 }
 
 export default new ExpertService();

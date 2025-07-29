@@ -26,6 +26,12 @@ export const useExpertStore = defineStore('expert', {
                 this.leads = (await ExpertService.getLeads(params)).data;
             });
         },
+        // ADDED: New method to fetch single lead details
+        async fetchLeadsDetails(leadId: number) {
+            return await withLoader(async () => {
+                return await ExpertService.getLeadsDetails(leadId);
+            });
+        },
         async fetchStats() {
             await withLoader(async () => {
                 this.stats = (await ExpertService.getStats()).data as any;
@@ -98,11 +104,11 @@ export const useExpertStore = defineStore('expert', {
                             exp_date: "11/25",
                             last_used: "2025-05-19T10:22:00Z",
                             default: false,
-                        }
-                    ]
-            }
+                        },
+                    ],
+                };
             } catch (error) {
-                console.log(error)
+                console.log(error);
             }
         },
     },

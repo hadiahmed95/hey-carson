@@ -1,11 +1,12 @@
 <template>
   <div>
     <LoadingCard v-if="isLoading" />
-    <EmptyDataPlaceholder title="Looks like you don’t have any leads yet" v-else-if="expertStore.leads?.leads?.length === 0"/>
+    <EmptyDataPlaceholder title="Looks like you don't have any leads yet" v-else-if="expertStore.leads?.leads?.length === 0"/>
     <div v-else class="mb-14">
       <LeadCard
         v-for="lead in expertStore.leads?.leads"
         :key="lead.id"
+        :lead-id="lead.id"
         :project-name="lead.project.name"
         :name="lead.client.first_name + ' ' + lead.client.last_name"
         :email="lead.client.email"

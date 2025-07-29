@@ -7,8 +7,7 @@ const props = defineProps<{
   user: {
     new_messages: string,
     project_notifications: string,
-  },
-  userType?: string // Add userType to determine which API to call
+  }
 }>()
 
 const form = ref({
@@ -31,12 +30,7 @@ const resetErrors = () => {
 async function handleFieldChange(field: keyof typeof form.value, value: string) {
   try {
     const payload = { [field]: value };
-    
-    // ✅ Use correct API endpoint based on userType
-    const endpoint = props.userType === 'expert' ? '/expert/settings' : '/client/settings';
-    console.log('Making API call to:', endpoint); // Debug log
-    
-    const res = await ApiService.post(endpoint, payload);
+    const res = await ApiService.post(`/client/settings`, payload);
     form.value[field] = res.data.user[field];
     errors.value[field] = 'success';
   } catch (error: any) {
@@ -68,7 +62,6 @@ async function handleFieldChange(field: keyof typeof form.value, value: string) 
       message = 'An unexpected error occurred.';
     }
 
-    console.error('API Error:', error); // Debug log
     errors.value[field] = message;
   }
 }
@@ -81,9 +74,7 @@ async function handleFieldChange(field: keyof typeof form.value, value: string) 
       <div class="flex items-center justify-between">
         <div>
           <p class="mb-1">Project Notifications</p>
-          <p class="text-h4 text-coolGray mb-4">
-            {{ form.project_notifications === 'instant' ? 'Instant Notifications' : 'Daily Summary' }}
-          </p>
+          <p class="text-h4 text-coolGray mb-4">Instant Notifications</p>
         </div>
 
         <div class="flex gap-2 font-semibold">
@@ -115,14 +106,13 @@ async function handleFieldChange(field: keyof typeof form.value, value: string) 
       />
     </div>
 
+
     <!-- New Messages -->
     <div>
       <div class="flex items-center justify-between">
         <div>
           <p class="mb-1">New Messages</p>
-          <p class="text-h4 text-coolGray mb-4">
-            {{ form.new_messages === 'instant' ? 'Instant Notifications' : 'Daily Summary' }}
-          </p>
+          <p class="text-h4 text-coolGray mb-4">Instant Notifications</p>
         </div>
 
         <div class="flex gap-2 font-semibold">
