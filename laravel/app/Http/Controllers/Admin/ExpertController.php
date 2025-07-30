@@ -19,20 +19,24 @@ class ExpertController extends Controller
     private ExpertUserService $expertUserService;
     private PayoutRepository $payoutRepository;
     private ExpertFundRepository $expertFundRepository;
+    
     public function __construct(ExpertUserService $expertUserService, PayoutRepository $payoutRepository, ExpertFundRepository $expertFundRepository)
     {
         $this->expertUserService = $expertUserService;
         $this->payoutRepository = $payoutRepository;
         $this->expertFundRepository = $expertFundRepository;
     }
+    
     public function all(Request $request)
     {
         $search = $request->get('search');
         $filters = $request->get('filter');
         $status = $request->get('status');
-        $period =  $request->get('period');
+        $period = $request->get('period');
         $projectId = $request->get('projectId');
         $date = null;
+
+        $version = $request->get('version', 'v1');
 
         if ($period === 'week') {
             $date = Carbon::now()->subWeek();
@@ -92,19 +96,66 @@ class ExpertController extends Controller
             });
         }
 
+        if ($version === 'v2' && $request->has('role_filter')) {
+            $experts->whereHas('profile', function($query) use ($request) {
+                $query->where('role', $request->get('role_filter'));
+            });
+        }
+
         $expertsCount = $experts->count('id');
         $experts = $experts->latest()->paginate(15);
 
-        $experts->getCollection()->transform(function ($expert) {
+        $experts->getCollection()->transform(function ($expert) use ($version) {
             $totalEarnings = $this->expertFundRepository->getTotalEarnings($expert->id);
             $expert->totalEarnings = $totalEarnings;
+            
+            if ($version === 'v2') {
+                $expert->display_name = $expert->first_name . ' ' . $expert->last_name;
+                $expert->avatar_url = $expert->photo ? asset('storage/' . $expert->photo) : null;
+                $expert->hourly_rate_formatted = '$' . number_format($expert->profile->hourly_rate ?? 0, 2) . '/hour';
+                
+                $expert->account_type = 'freelancer';
+                $expert->company_type = 'Individual';
+                $expert->services_offered = [];
+                
+                $expert->status_info = [
+                    'status' => $expert->profile->status ?? 'pending',
+                    'updated_at' => $expert->updated_at ? $expert->updated_at->format('j M, Y') : 'N/A',
+                ];
+
+                $expert->stats = [
+                    'total_reviews' => $expert->reviews ? $expert->reviews->count() : 0,
+                    'average_rating' => $expert->reviews && $expert->reviews->count() > 0 ? round($expert->reviews->avg('rate'), 1) : 0,  // ✅ Correct column
+                    'total_projects' => $expert->activeAssignments ? $expert->activeAssignments->count() : 0,
+                ];
+            }
+            
             return $expert;
         });
 
-        return response()->json([
+        $response = [
             'experts' => $experts,
             'experts_count' => $expertsCount
-        ]);
+        ];
+
+        if ($version === 'v2') {
+            $response['meta'] = [
+                'version' => 'v2',
+                'total_pages' => $experts->lastPage(),
+                'current_page' => $experts->currentPage(),
+                'per_page' => $experts->perPage(),
+                'total_items' => $expertsCount,
+            ];
+            
+            $response['available_filters'] = [
+                'status' => ['pending', 'active', 'inactive'],
+                'roles' => $this->getAvailableRoles(),
+                'experience_levels' => $this->getExperienceLevels(),
+                'english_levels' => $this->getEnglishLevels(),
+            ];
+        }
+
+        return response()->json($response);
     }
 
     public function show(Request $request, User $user)
@@ -116,9 +167,7 @@ class ExpertController extends Controller
         }, 'activeAssignments.project.activeAssignment.expert.profile']);
 
         $withdrawAmount = $this->payoutRepository->getWithdrawAmount($user->id);
-
         $totalEarnings = $this->expertFundRepository->getTotalEarnings($user->id);
-
         $currentBalance = $this->expertFundRepository->getCurrentBalance($user->id, $withdrawAmount);
 
         return response()->json([
@@ -130,7 +179,6 @@ class ExpertController extends Controller
 
     public function update(Request $request, User $user)
     {
-
         if ($request->get('status') === 'active') {
             $this->expertUserService->activate($user->id);
             SendEmail::dispatch($user, new ApprovedMail($user));
@@ -142,5 +190,37 @@ class ExpertController extends Controller
         }
 
         return response()->json(['message' => 'OK']);
+    }
+
+    private function getAvailableRoles()
+    {
+        return [
+            'developer',
+            'designer', 
+            'consultant',
+            'marketing_specialist',
+            'project_manager'
+        ];
+    }
+
+    private function getExperienceLevels()
+    {
+        return [
+            '0-1 years',
+            '1-3 years', 
+            '3-5 years',
+            '5-10 years',
+            '10+ years'
+        ];
+    }
+
+    private function getEnglishLevels()
+    {
+        return [
+            'basic',
+            'intermediate',
+            'advanced',
+            'native'
+        ];
     }
 }

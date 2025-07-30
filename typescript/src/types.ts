@@ -40,7 +40,11 @@ export interface ILead {
 export interface IListing {
     id: number,
     name: string
-    displayUrl: string
+    displayUrl: string | null
+    avatarInfo?: {             // Added optional property for initials
+        initials: string
+        bgColor: string
+    }
     type: string
     email: string
     storeTitle: string

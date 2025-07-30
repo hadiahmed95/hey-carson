@@ -227,3 +227,4 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/login-as/{user}', [\App\Http\Controllers\AuthController::class, 'loginAsUser']);
     });
 });
+Route::get('/test-experts', [\App\Http\Controllers\Admin\ExpertController::class, 'all']);
