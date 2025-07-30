@@ -3,7 +3,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { computed, watchEffect } from "vue";
 import LockIcon from "../assets/icons/lock.svg";
 
-// Add `props` to the tab definition
 const props = defineProps<{
   tabs: {
     value: string,
@@ -18,7 +17,6 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 
-// Set default tab if not present in query
 watchEffect(() => {
   if (!route.query.page && props.tabs.length > 0 && props.tabs[0]?.value) {
     router.replace({
@@ -32,10 +30,10 @@ const activeTab = computed(() => {
   return (typeof route.query.page === 'string' && route.query.page) || (props.tabs[0]?.value ?? '')
 })
 
-// Utility to check active tab
-const isActive = (page: { value: string }) => route.query.page === page.value
+const isActive = (page: { value: string }) => {
+  return typeof route.query.page === 'string' && route.query.page === page.value
+}
 
-// Get the full active tab object with component and props
 const activeTabObj = computed(() => {
   return props.tabs.find(tab => tab.value === activeTab.value)
 })

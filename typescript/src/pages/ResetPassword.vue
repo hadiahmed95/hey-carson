@@ -1,7 +1,7 @@
 <template>
   <ResetPassword
       title="Reset Account Password"
-      :subtitle="`for the account ${email}`"
+      subtitle="for the account denis@develope@gmail.com"
       :backgroundImage="background"
       :step="step"
   >

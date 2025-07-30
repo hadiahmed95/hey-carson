@@ -12,6 +12,7 @@ import {debounce} from "@/directives/debounce";
 import common from "@/mixins/common";
 import refApi from '@/util/referrals';
 import socket from "@/mixins/socket";
+import recaptchaMixin from '@/mixins/recaptchaMixin';
 
 export default {
   name: "RegisterPage",
@@ -21,7 +22,7 @@ export default {
     AvatarFrame
   },
 
-  mixins: [common, socket],
+  mixins: [common, socket, recaptchaMixin],
 
   data() {
     return {
@@ -80,7 +81,9 @@ export default {
       loading: false,
 
       userType: 'expert', //expert|client
-      refId: ''
+      refId: '',
+      recaptchaSiteKey: process.env.VUE_APP_RECAPTCHA_SITE_KEY,
+      recaptchaToken: null,
     }
   },
 
@@ -108,6 +111,7 @@ export default {
     if (this.$route.query.ref) {
       this.postClickData();
     }
+    this.initReCapcha();
   },
 
   methods: {
@@ -124,6 +128,10 @@ export default {
     },
     nextPage(back = false, check = false) {
       if (check) {
+        if (!this.recaptchaToken) {
+          this.error = 'Please complete the reCAPTCHA verification';
+          return;
+        }
         this.loading = true;
 
         let data = {
@@ -204,9 +212,14 @@ export default {
     },
 
     async register() {
-      this.loading = true;
+      if (!this.recaptchaToken) {
+        this.error = 'Please complete the reCAPTCHA verification';
+        return;
+      }
 
       const form = new FormData();
+      form.append('recaptcha_token', this.recaptchaToken);
+      this.loading = true;
 
       form.append('user_type', 'client');
       if (this.$route.query.ref) {
@@ -419,6 +432,14 @@ export default {
 
         </FormLayout>
         <div>
+          <div class="recaptcha-wrapper">
+            <div id="recaptcha-container"
+                 ref="recaptchaContainer"
+                 :data-sitekey="recaptchaSiteKey"></div>
+            <div v-if="errors?.recaptcha_token" class="error-message">
+              {{ errors.recaptcha_token[0] }}
+            </div>
+          </div>
           <div class='pro-cta'>
              <div style='font-size: 14px; color:#1F2125; font-weight: 600'>
                Need help?
@@ -726,6 +747,12 @@ export default {
   .main-button-back-container {
     width: 100%;
     justify-content: center;
+  }
+
+  .error-message {
+    color: #d92d20;
+    font-size: 14px;
+    margin-top: 8px;
   }
 
 }

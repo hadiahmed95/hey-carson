@@ -54,7 +54,7 @@ const clientStore = useClientStore();
 
 const selectedType = computed(() => {
   const typeParam = route.query.type
-  if (typeParam === 'Quote Request' || typeParam === 'Matched' || typeParam === 'Direct') {
+  if (typeParam === 'Quote Request' || typeParam === 'Matched' || typeParam === 'Direct Message') {
     return typeParam
   }
   return 'Quote Request'

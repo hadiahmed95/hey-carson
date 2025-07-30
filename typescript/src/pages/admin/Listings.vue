@@ -138,7 +138,7 @@ const listing = [
       </div>
     </div>
 
-    <p class="mt-1 space-x-3">
+    <div class="mt-1 text-paragraph space-x-3">
       <select v-model="status" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Status: All</option>
         <option value="In Progress">In Progress</option>
@@ -187,7 +187,7 @@ const listing = [
         <option value="store_management">Store Management</option>
         <option value="store_marketing">Store Marketing</option>
       </select>
-    </p>
+    </div>
 
     <div>
       <ListingCard

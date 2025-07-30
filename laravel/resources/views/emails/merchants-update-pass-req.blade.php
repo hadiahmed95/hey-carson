@@ -19,7 +19,7 @@
     >
         <span style="flex-grow: 1; text-align: center;">Update your account credentials</span>
         <span style="margin-left: auto;">
-            <img style="width: 20px; height: 20px;" src="{{ url('api/assets/email-resources/icons/arrow.png')  }}" alt="Arrow" />
+            <img style="width: 20px; height: 20px;" src="{{ url('assets/email-resources/icons/arrow.png')  }}" alt="Arrow" />
         </span>
     </a>
 

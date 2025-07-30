@@ -84,7 +84,14 @@ Route::get('/client-list', [AuthController::class, 'clientList']);
 Route::post('/generate-click/{slug}', [\App\Http\Controllers\ClickController::class, 'create']);
 Route::get('/partner-projects/{partnerId}', [\App\Http\Controllers\PartnersDashController::class, 'fetchPartnerProjects']);
 
+Route::get('/experts-profiles', [\App\Http\Controllers\ExpertProfileController::class, 'fetchAllExperts']);
+Route::get('/experts-reviews', [\App\Http\Controllers\ExpertProfileController::class, 'getReviews']);
+Route::get('/service-categories', [\App\Http\Controllers\ExpertProfileController::class, 'fetchServiceCategories']);
+Route::get('/countries-with-experts', [\App\Http\Controllers\ExpertProfileController::class, 'fetchCountryExperts']);
+Route::get('/cities-with-experts', [\App\Http\Controllers\ExpertProfileController::class, 'fetchCityExperts']);
+
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/payment/save-card', [\App\Http\Controllers\PaymentController::class, 'saveCard']);
     Route::post('/payment/buy-hours', [\App\Http\Controllers\PaymentController::class, 'buyHours']);
     Route::post('/payment/prepaid', [\App\Http\Controllers\PaymentController::class, 'prepaid']);
@@ -98,6 +105,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('auth.role:' . Role::CLIENT)->prefix('/client')->group(function () {
         Route::get('/', \App\Http\Controllers\Client\DashboardController::class);
+        Route::get('/dashboard', \App\Http\Controllers\Client\NewDashboardController::class);
+        Route::get('/requests', [\App\Http\Controllers\Client\RequestController::class, 'all']);
+        Route::get('/reviews', [\App\Http\Controllers\Client\ReviewController::class, 'all']);
         Route::get('/hours', [\App\Http\Controllers\AuthController::class, 'hours']);
         Route::post('/events', [\App\Http\Controllers\Client\EventController::class, 'updateBulk']);
         Route::get('/events', [\App\Http\Controllers\Client\EventController::class, 'all']);
@@ -141,17 +151,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('auth.role:' . Role::EXPERT)->prefix('/v2/expert')->group(function () {
 //        Route::get('/review-requests', [\App\Http\Controllers\Expert\ReviewController::class, 'reviewRequests']);
 //        Route::post('/reviews', [\App\Http\Controllers\Expert\ReviewController::class, 'store']);
-        Route::post('/review-requests', [\App\Http\Controllers\NewDashboard\Expert\ReviewController::class, 'store']);
         Route::get('/reviews', [\App\Http\Controllers\Expert\ReviewController::class, 'all']);
-        Route::put('/reviews/{id}', [\App\Http\Controllers\NewDashboard\Expert\ReviewController::class, 'update']);
+//        Route::put('/reviews/{id}', [\App\Http\Controllers\Expert\ReviewController::class, 'update']);
         Route::get('/leads', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'leads']);
-        Route::get('/leads/{id}', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'show']);
-        Route::get('/project-names', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'projectNames']);
         Route::get('/stats', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'stats']);
     });
 
     Route::middleware('auth.role:' . Role::EXPERT)->prefix('/expert')->group(function () {
         Route::get('/', \App\Http\Controllers\Expert\DashboardController::class);
+        Route::get('/dashboard/{expertStat}', \App\Http\Controllers\Expert\NewDashboardController::class);
+        Route::get('/leads', [\App\Http\Controllers\Expert\LeadController::class, 'all']);
+        Route::get('/my-listing', [\App\Http\Controllers\Expert\LeadController::class, 'all']);
+        Route::get('/reviews', [\App\Http\Controllers\Expert\ReviewController::class, 'all']);
         Route::get('/profile', [\App\Http\Controllers\Expert\SettingsController::class, 'profile']);
         Route::get('/stats', [\App\Http\Controllers\Expert\SettingsController::class, 'all']);
         Route::get('/settings', [\App\Http\Controllers\Expert\SettingsController::class, 'show']);

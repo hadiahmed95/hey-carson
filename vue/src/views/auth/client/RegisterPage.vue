@@ -11,6 +11,7 @@ import common from '@/mixins/common';
 import {debounce} from "@/directives/debounce";
 import refApi from "@/util/referrals";
 import socket from "@/mixins/socket";
+import recaptchaMixin from '@/mixins/recaptchaMixin';
 
 export default {
   name: "RegisterPage",
@@ -46,6 +47,8 @@ export default {
 
       errors: null,
       error: null,
+      recaptchaSiteKey: process.env.VUE_APP_RECAPTCHA_SITE_KEY,
+      recaptchaToken: null,
 
       form: {
         first_name: '',
@@ -68,9 +71,10 @@ export default {
     if (emailParam) {
       this.form.email = emailParam;
     }
+    this.initReCapcha();
   },
 
-  mixins: [common, socket],
+  mixins: [common, socket, recaptchaMixin],
 
   methods: {
     showPass() {
@@ -78,10 +82,15 @@ export default {
     },
 
     register: debounce(async function() {
+      if (!this.recaptchaToken) {
+        this.error = 'Please complete the reCAPTCHA verification.';
+        return;
+      }
       this.loading = true;
 
       const form = new FormData();
 
+      form.append('recaptcha_token', this.recaptchaToken);
       form.append('user_type', 'client');
       form.append('click_id', refApi.getClickId());
       form.append('client[first_name]', this.form.first_name);
@@ -193,6 +202,15 @@ export default {
           </template>
         </TextField>
       </FormLayout>
+
+      <div class="recaptcha-wrapper">
+        <div id="recaptcha-container"
+             ref="recaptchaContainer"
+             :data-sitekey="recaptchaSiteKey"></div>
+        <div v-if="errors?.recaptcha_token" class="error-message">
+          {{ errors.recaptcha_token[0] }}
+        </div>
+      </div>
 
       <BlockStack gap="600">
         <InputBtn @click="register" :loading="loading">Sign up</InputBtn>

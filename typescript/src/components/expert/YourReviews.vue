@@ -28,7 +28,6 @@ import EmptyDataPlaceholder from "@/components/common/EmptyDataPlaceholder.vue";
 const loader = useLoaderStore();
 const isLoading = computed(() => loader.isLoadingState);
 const expertStore = useExpertStore();
-
 onMounted(async () => {
   await expertStore.fetchReviews();
 })

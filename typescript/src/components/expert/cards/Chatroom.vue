@@ -463,7 +463,7 @@ const currentSelectedLead = ref(leads[0])
               </span>
               <DownArrow/>
             </div>
-            <h6 class="text-tertiary">You are actively working on this project.</h6>
+            <span class="text-h6 text-tertiary">You are actively working on this project.</span>
           </div>
         </div>
       </div>

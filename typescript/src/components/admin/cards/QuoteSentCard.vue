@@ -25,7 +25,7 @@ const statusStyle = computed(() => {
 
     <div class="flex justify-between items-start">
       <div>
-        <p class="font-semibold text-primary">{{ quote.title }}</p>
+        <div class="text-paragraph font-semibold text-primary">{{ quote.title }}</div>
         <a :href="quote.link" target="_blank" class="flex items-center gap-1 text-h4 text-link hover:underline">
           {{ quote.link }}
           <ExternalLink />
@@ -66,7 +66,7 @@ const statusStyle = computed(() => {
             class="w-[64px] h-[64px] rounded-full object-cover"
         />
         <div>
-          <h4 class="text-tertiary">Client</h4>
+          <div class="text-h4 text-tertiary">Client</div>
           <p class="text-primary font-medium">{{ quote.client.name }}</p>
           <a :href="`mailto:${quote.client.email}`" class="flex items-center gap-1 text-h4 text-link hover:underline">
             {{ quote.client.email }}
@@ -82,7 +82,7 @@ const statusStyle = computed(() => {
             class="w-[64px] h-[64px] rounded-full object-cover"
         />
         <div>
-          <h4 class="text-tertiary">Expert</h4>
+          <div class="text-h4 text-tertiary">Expert</div>
           <p class="text-primary font-medium">{{ quote.expert.name }}</p>
           <h4 class="text-primary">Freelancer</h4>
           <a :href="`mailto:${quote.expert.email}`" class="flex items-center gap-1 text-h4 text-link hover:underline">

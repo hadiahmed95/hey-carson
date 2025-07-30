@@ -37,7 +37,7 @@ class RequestController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name'            => 'required|string|max:255',
             'last_name'             => 'required|string|max:255',
-            'email'                 => 'required|email|unique:users,email',
+            'email'                 => 'required|email|max:255',
             'password'              => 'required|max:255',
             'store_url'             => 'required|url|max:255',
             'store_name'            => 'required|string|max:255', //Todo: Need to save the store name somewhere
@@ -66,7 +66,7 @@ class RequestController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name'            => 'required|string|max:255',
             'last_name'             => 'required|string|max:255',
-            'email'                 => 'required|email|unique:users,email',
+            'email'                 => 'required|email|max:255',
             'password'              => 'required|max:255',
             'store_url'             => 'required|url|max:255',
             'store_name'            => 'required|string|max:255', //Todo: Need to save the store name somewhere

@@ -2,59 +2,23 @@
 import QuoteLightIcon from "../../../assets/icons/quote-light.svg";
 import DownArrow from "../../../assets/icons/down-arrow.svg";
 import ExternalLink from "../../../assets/icons/externalLink.svg";
-import { computed } from "vue";
-import { getS3URL, handleImgError } from "@/utils/helpers.ts";
-import { formatDate } from "@/utils/date.ts";
-import type { ILeadDetail } from "@/types.ts";
-
-const props = defineProps<{
-  leadDetail?: ILeadDetail | null;
-}>();
-
+import {ref} from "vue";
 const emit = defineEmits<{
   (e: 'showProjectQuote'): void
-}>();
+}>()
 
-const formatStatusText = (status: string | undefined): string => {
-  if (!status) return 'In Progress';
-  
-  return status
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-};
-
-const currentSelectedLead = computed(() => {
-  if (!props.leadDetail) {
-    return {
-      leadName: 'Loading...',
-      email: 'Loading...',
-      avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-      shopifyPlan: 'Loading...',
-      websiteUrl: '#',
-      leadType: 'Loading...',
-      budget: '0.00',
-      conversationStarted: 'Loading...',
-      leadId: 0,
-      leadStatus: 'Loading...',
-    };
-  }
-
-  const { client, project, type, created_at, id } = props.leadDetail;
-  
-  return {
-    leadName: client ? `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Client' : 'Client',
-    email: client?.email || 'No email provided',
-    avatar: client?.photo ? getS3URL(client.photo) : 'https://randomuser.me/api/portraits/men/1.jpg',
-    shopifyPlan: client?.shopify_plan || 'Not specified',
-    websiteUrl: client?.url ? (client.url.startsWith('http') ? client.url : `https://${client.url}`) : '#',
-    leadType: type || 'Quote Request',
-    budget: 'Not specified',
-    conversationStarted: created_at ? formatDate(created_at) : 'Not available',
-    leadId: id || 0,
-    leadStatus: formatStatusText(project?.status) || 'In Progress',
-  };
-});
+const currentSelectedLead = ref({
+  leadName: 'Jessica R.',
+  email: 'jessica@kitty.com',
+  avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+  shopifyPlan: 'Basic',
+  websiteUrl: 'https://www.kittyshop.com',
+  leadType: 'Free Quote Request',
+  budget: '2500.00',
+  conversationStarted: '18 May, 2025',
+  leadId: 182910,
+  leadStatus: 'In Progress',
+})
 </script>
 
 <template>
@@ -66,61 +30,45 @@ const currentSelectedLead = computed(() => {
       </svg>
     </h4>
     <div class="flex flex-col items-left gap-3 mb-4">
-      <img 
-        :src="currentSelectedLead.avatar" 
-        alt="avatar" 
-        class="w-14 h-14 rounded-full object-cover" 
-        @error="handleImgError"
-      />
+      <img :src="currentSelectedLead.avatar" alt="avatar" class="w-14 h-14 rounded-full object-cover" />
       <div>
         <h3 class="font-medium text-primary">{{ currentSelectedLead.leadName }}</h3>
-        <a 
-          :href="`mailto:${currentSelectedLead.email}`" 
-          class="text-h4 text-link underline"
-        >
-          {{ currentSelectedLead.email }}
-        </a>
+        <a href="mailto:jessica@kitty.com" class="text-h4 text-link underline">{{ currentSelectedLead.email }}</a>
       </div>
     </div>
 
     <div class="text-gray-500 space-y-2">
       <div class="flex items-center justify-between">
         <h4>Store: </h4>
-        <a 
-          v-if="currentSelectedLead.websiteUrl !== '#'" 
-          :href="currentSelectedLead.websiteUrl" 
-          target="_blank" 
-          class="text-h4 text-link hover:underline flex items-center gap-1"
-        >
-          {{ props.leadDetail?.client?.url || 'N/A' }}
+        <a :href="currentSelectedLead.websiteUrl" target="_blank" class="text-h4 text-link hover:underline flex items-center gap-1">
+          {{currentSelectedLead.websiteUrl}}
           <ExternalLink />
         </a>
-        <span v-else class="text-h4 text-primary">N/A</span>
       </div>
 
       <div class="flex items-center justify-between">
         <h4 class="text-tertiary font-normal">Shopify Plan: </h4>
-        <h4 class="text-primary font-normal">{{ currentSelectedLead.shopifyPlan }}</h4>
+        <h4 class="text-primary font-normal">{{currentSelectedLead.shopifyPlan}}</h4>
       </div>
 
       <div class="flex items-center justify-between">
         <h4 class="text-tertiary font-normal">Lead Type: </h4>
-        <h4 class="text-primary font-normal">{{ currentSelectedLead.leadType }}</h4>
+        <h4 class="text-primary font-normal">{{currentSelectedLead.leadType}}</h4>
       </div>
 
       <div class="flex items-center justify-between">
         <h4 class="text-tertiary font-normal">Budget: </h4>
-        <h4 class="text-primary font-normal">${{ currentSelectedLead.budget }}</h4>
+        <h4 class="text-primary font-normal">${{currentSelectedLead.budget}}</h4>
       </div>
 
       <div class="flex items-center justify-between">
         <h4 class="text-tertiary font-normal">Conversation Started: </h4>
-        <h4 class="text-primary font-normal">{{ currentSelectedLead.conversationStarted }}</h4>
+        <h4 class="text-primary font-normal">{{currentSelectedLead.conversationStarted}}</h4>
       </div>
 
       <div class="flex items-center justify-between">
         <h4 class="text-tertiary ">Lead ID: </h4>
-        <h4 class="text-primary font-normal">#{{ currentSelectedLead.leadId }}</h4>
+        <h4 class="text-primary font-normal">#{{currentSelectedLead.leadId}}</h4>
       </div>
 
       <div class="pt-2 text-h4 text-tertiary">
@@ -129,11 +77,11 @@ const currentSelectedLead = computed(() => {
           <div class="flex items-center justify-between">
               <span class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
-                <h4 class="font-medium text-primary">{{ currentSelectedLead.leadStatus }}</h4>
+                <span class="font-medium text-h4 text-primary">{{currentSelectedLead.leadStatus}}</span>
               </span>
             <DownArrow/>
           </div>
-          <h6 class="text-tertiary">You are actively working on this project.</h6>
+          <span class="text-h6 text-tertiary">You are actively working on this project.</span>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
     <div class="flex flex-row mb-6 justify-between">
       <div>
         <h1>
-          Welcome back, <span class="font-serif italic">{{ authStore.user.first_name }}!</span>
+          Welcome back, <span class="font-serif italic">Jonathan!</span>
         </h1>
         <p class="mt-1">
           This is overview of your shopexperts expert dashboard.
@@ -42,9 +42,7 @@ import TabNav from "../../components/TabNav.vue";
 import { ref } from "vue";
 import PendingListings from "../../components/admin/PendingListings.vue";
 import PendingReviews from "../../components/admin/PendingReviews.vue";
-import {useAuthStore} from "@/store/auth.ts";
 
-const authStore = useAuthStore();
 const range = ref('last_30_days')
 const tabs = [
   { value: 'pending-listings', label: 'Pending Listings', component: PendingListings, count: 3 },

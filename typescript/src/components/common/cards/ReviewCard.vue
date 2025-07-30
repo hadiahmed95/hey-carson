@@ -11,10 +11,8 @@ import { useClientStore } from "@/store/client.ts";
 import type { IReview } from "@/types.ts";
 import {getS3URL} from "@/utils/helpers.ts";
 import ReviewResponse from "@/components/expert/cards/ReviewResponse.vue";
-import {useExpertStore} from "@/store/expert.ts";
 
 const clientStore = useClientStore();
-const expertStore = useExpertStore();
 
 const props = defineProps<{
   review: IReview;
@@ -45,19 +43,6 @@ async function handleModalSubmit(payload: any) {
       console.log('Review created!');
     }
     showModal.value = false;
-  } catch (error) {
-    console.error("Review submission failed:", error);
-  }
-}
-
-async function handleWriteResponse(payload: any) {
-  try {
-    if (props.isExpert && props.review.id) {
-      await expertStore.updateReview(props.review.id, payload);
-      console.log('Review updated!');
-    }
-
-    showResponseBox.value = false;
   } catch (error) {
     console.error("Review submission failed:", error);
   }
@@ -124,8 +109,8 @@ async function handleWriteResponse(payload: any) {
     <!-- Body -->
     <div v-if="isClient && isReviewRequest" class="space-y-6">
       <div class="p-4 space-y-2 border border-grey rounded-md bg-greyLight">
-        <p class="text-greyDark font-normal">Expert message</p>
-        <p class="text-primary font-normal" v-html="review.response"></p>
+        <div class="text-greyDark text-paragraph font-normal">Expert message</div>
+        <div class="text-primary text-paragraph font-normal" v-html="review.response"></div>
       </div>
     </div>
     <div v-else>
@@ -145,19 +130,19 @@ async function handleWriteResponse(payload: any) {
 
       <div class="text-h4 flex flex-wrap divide-x divide-grey font-light mb-6">
         <div class="pr-8">
-          <h6 class="block font-normal mb-1">Likely to recommend:</h6>
+          <span class="block text-h6 font-normal mb-1">Likely to recommend:</span>
           <h4 class="text-success font-medium">{{ review.reviewer.recommendation }}</h4>
         </div>
         <div class="px-8">
-          <h6 class="block font-normal mb-1">Project Value</h6>
-          <h4 class="font-medium">{{ review.projectValue }}</h4>
+          <span class="block text-h6 font-normal mb-1">Project Value</span>
+          <span class="font-medium text-h4">{{ review.projectValue }}</span>
         </div>
         <div class="pl-8">
           <div class="flex items-center gap-1 mb-1">
-            <h6 class="block font-normal">Review Source</h6>
+            <span class="block text-h6 font-normal">Review Source</span>
             <Info />
           </div>
-          <h4 class="font-medium">{{ review.reviewSource }}</h4>
+          <span class="font-medium text-h4">{{ review.reviewSource }}</span>
         </div>
       </div>
     </div>
@@ -167,7 +152,7 @@ async function handleWriteResponse(payload: any) {
       <div class="flex items-start gap-2">
         <img :src="review.expert.photo" alt="Reviewer avatar" class="w-12 h-12 rounded-full object-cover" />
         <div>
-          <h4 class="text-tertiary">Expert</h4>
+          <div class="text-h4 text-tertiary">Expert</div>
           <p class="text-primary font-medium">{{ review.expert.name }}</p>
           <a :href="review.expert.storeUrl" class="flex text-link text-h4 hover:underline items-center gap-1">
             {{ review.expert.storeTitle }}
@@ -216,15 +201,13 @@ async function handleWriteResponse(payload: any) {
     </div>
 
     <!-- Fallback for other roles -->
-    <div v-if="isExpert" class="pt-4 border-t border-grey" >
+    <div class="pt-4 border-t border-grey" >
       <button v-if="!showResponseBox" @click="showResponseBox = !showResponseBox" class="flex items-center space-x-2 font-medium text-h4 hover:underline">
         <Pencil />
         <span>Write Your Response</span>
       </button>
       <ReviewResponse
-          :response="props.review.response"
           :showResponseBox="showResponseBox"
-          @submit="handleWriteResponse"
           @cancel="showResponseBox = false"
       />
     </div>

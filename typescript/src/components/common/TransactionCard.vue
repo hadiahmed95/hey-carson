@@ -2,7 +2,6 @@
 import type {ITranscationn} from '@/types.ts'
 import Download from "../../assets/icons/download.svg";
 import {formatDate} from "../../utils/date.ts";
-import {getS3URL} from "@/utils/helpers.ts";
 
 defineProps<{
   transaction: ITranscationn
@@ -32,7 +31,7 @@ defineProps<{
         </div>
         <div class="flex flex-col">
           <span>Total Amount</span>
-          <h3 class="font-medium">${{ transaction.total.toFixed(2) }}</h3>
+          <h3 class="font-medium">{{ transaction.total }}</h3>
         </div>
       </div>
     </div>
@@ -42,7 +41,7 @@ defineProps<{
       <div class="grid grid-flow-col auto-cols-fr">
         <div v-if="transaction.expert" class="w-96 flex items-start space-x-3">
           <img
-              :src="getS3URL(transaction.expert.photo)"
+              :src="transaction.expert.photo"
               alt="Expert avatar"
               class="w-[64px] h-[64px] rounded-full object-cover"
           />

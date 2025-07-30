@@ -10,6 +10,8 @@ use App\Models\ReviewRequest;
 use Illuminate\Http\Request;
 use App\Repositories\ReviewRequestRepository;
 use Illuminate\Http\JsonResponse;
+use App\Models\Lead;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
@@ -117,7 +119,6 @@ class ReviewController extends Controller
             'timeToStart' => 'nullable|integer',
             'valueForMoney' => 'nullable|integer',
             'valueRange' => 'nullable|string|max:255',
-            'expert_response' => 'nullable|string'
         ]);
 
         $review->fill($validated);

@@ -134,6 +134,11 @@ export default {
   },
 
   async mounted() {
+    setInterval(() => {
+      window.location.reload();
+    }, 3300000);
+
+    await this.handleUnsentMessages();
     if (this.userType !== 'admin' && this.project?.id) {
       let url = `api/${this.userType}/projects/${this.project.id}/message/seen`;
       await axios.post(url, {type: this.userType}).then(() => {
@@ -194,6 +199,60 @@ export default {
   },
 
   methods: {
+    //Send failed messages from localstorage
+    async handleUnsentMessages() {
+      try {
+        const failedMessages = this.getFailedMessagesFromLocalStorage();
+
+        if (!failedMessages || failedMessages.length === 0) {
+          return;
+        }
+
+        const ONE_HOUR_IN_MS = 60 * 60 * 1000;
+        const currentTime = Date.now();
+
+        for (const message of failedMessages) {
+          if (currentTime - message.timestamp <= ONE_HOUR_IN_MS) {
+            try {
+              const url = `api/${this.userType}/projects/${this.project.id}/message`;
+
+              if (message.content.type === 'text') {
+                await axios.post(url, {
+                  content: message.content.content,
+                  id: message.content.id,
+                  is_receiver_online: this.isReceiverOnlineInChat
+                });
+              } else {
+                const form = new FormData();
+                form.append('file', message.content.project_file);
+                form.append('data', JSON.stringify({
+                  id: message.content.id,
+                  is_receiver_online: this.isReceiverOnlineInChat,
+                }));
+
+                await axios.post(url, form, {
+                  headers: {
+                    'Content-Type': 'multipart/form-data'
+                  }
+                });
+              }
+
+              this.removeMessageFromLocalStorage(message.content.id);
+            } catch (err) {
+              console.error('Failed to resend message:', err);
+            }
+          } else {
+            this.removeMessageFromLocalStorage(message.content.id);
+          }
+        }
+
+        localStorage.setItem('failedMessages' + '-' + this.getCurrentUser().id + '-' + this.project.id, JSON.stringify([]));
+
+      } catch (error) {
+        console.error('Error handling unsent messages:', error);
+      }
+    },
+
     filterMessages(chatMessages, searchText){
       let filteredMessages = chatMessages;
 
@@ -483,11 +542,11 @@ export default {
     },
 
     sendMessage: debounce(async function (isFailedMessage = false) {
-      if (this.enterIsSend) {
-        const newEmptyLine = "<p><br></p>"
-        if (this.chatText.endsWith(newEmptyLine))
-          this.chatText = this.chatText.slice(0, -newEmptyLine.length)
-      }
+    if (this.enterIsSend) {
+      const newEmptyLine = "<p><br></p>"
+      if (this.chatText.endsWith(newEmptyLine))
+        this.chatText = this.chatText.slice(0, -newEmptyLine.length)
+    }
 
       let content = !isFailedMessage ? this.chatText : this.failedMessageText
 

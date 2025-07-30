@@ -85,7 +85,7 @@ const action = ref('')
       <h4 class="text-gray-500 font-normal pb-2">Services Offered</h4>
       <div class="flex flex-row">
         <h4
-            class="font-normal py-1 px-2 border mr-2 rounded-full"
+            class="text-h4 font-normal py-1 px-2 border mr-2 rounded-full"
             v-for="(service, index) in listing.servicesOffered"
             :key="index"
         >

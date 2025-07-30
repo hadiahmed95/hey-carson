@@ -74,15 +74,13 @@
           <RatingInput label="Value for Money" v-model="ratings.valueForMoney" />
         </div>
 
-
         <div class="border-t"></div>
 
-        <p v-if="errors.rating" class="text-red-600 text-sm">{{ errors.rating }}</p>
         <div class="flex justify-between items-center">
           <span class="text-h4 text-primary w-32">Total Score:</span>
-          <h2 class="font-semibold text-primary">
+          <span class="text-h2 font-semibold text-primary">
             {{ totalScore }}
-          </h2>
+          </span>
         </div>
       </div>
 
@@ -119,7 +117,6 @@
         <h5 class="text-tertiary-dark font-normal">
           This feedback is public and will be shared on the expert's profile.
         </h5>
-        <p v-if="errors.comment" class="text-red-600 text-sm">{{ errors.comment }}</p>
       </div>
 
       <!-- Anonymous Checkbox -->
@@ -136,7 +133,7 @@
       </div>
 
       <!-- Footer Buttons -->
-      <p class="bg-primary text-white rounded-md py-2 font-semibold hover:bg-success hover:cursor-pointer"
+      <div class="bg-primary text-white rounded-md py-2 text-paragraph font-semibold hover:bg-success hover:cursor-pointer"
          :class="[isLoading  && 'opacity-50 cursor-not-allowed']"
       >
         <Spinner v-if="isLoading" />
@@ -147,7 +144,7 @@
           <span>Submit Review</span>
           <Arrow class="w-4 h-4" />
         </button>
-      </p>
+      </div>
 
       <h5 class="text-tertiary-dark font-normal">
         This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.
@@ -182,16 +179,11 @@ const comment = ref(props.review.reviewer?.comment || '');
 const recommendation = ref(props.review.reviewer?.recommendation || '');
 const anonymous = ref(false);
 
-const errors = ref<Record<string, string>>({
-  comment: '',
-  rating: '',
-});
-
 const ratings = ref({
-  quality: props.review.reviewer?.quality ?? 3,
-  communication: props.review.reviewer?.communication ?? 3,
-  turnaroundTime: props.review.reviewer?.timeToStart ?? 3,
-  valueForMoney: props.review.reviewer?.valueForMoney ?? 3,
+  quality: props.review.reviewer?.quality ?? null,
+  communication: props.review.reviewer?.communication ?? null,
+  turnaroundTime: props.review.reviewer?.timeToStart ?? null,
+  valueForMoney: props.review.reviewer?.valueForMoney ?? null,
 });
 
 const totalScore = computed(() => {
@@ -213,16 +205,7 @@ const totalScore = computed(() => {
 const recommendationOptions = ['Very Likely', 'Neutral', 'Not Very Likely'];
 
 function submit() {
-  errors.value = {};
-  if (!comment.value.trim()) {
-    errors.value.comment = 'Review comment is required.';
-    return;
-  }
-
-  if (totalScore.value == '0.00') {
-    errors.value.rating = 'Review rating is required.';
-    return;
-  }
+  if (!comment.value.trim()) return;
 
   const payload = {
     expert_id: props.review.expert.id,

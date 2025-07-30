@@ -36,8 +36,8 @@ class ReviewRequestResource extends JsonResource
             'projectId' => $this->project_id,
             'projectTitle' => $this->project->name,
             'postedAt' => $this->created_at->toDateString(),
-            'response' => $this->message,
-            'projectValue' => $this->project_value_range ?? '',
+            'responses' => [$this->message],
+            'projectValue' => $this->value_range ?? '',
             'reviewSource' => '',
             'status' => 'Pending Review',
         ];

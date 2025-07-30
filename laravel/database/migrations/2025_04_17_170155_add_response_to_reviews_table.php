@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('review_requests', function (Blueprint $table) {
-            $table->string('client_email')->after('client_full_name');
+        Schema::table('reviews', function (Blueprint $table) {
+            $table->text('response')->nullable()->after('comment');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('review_requests', function (Blueprint $table) {
-            $table->dropColumn('client_email');
+        Schema::table('reviews', function (Blueprint $table) {
+            $table->dropColumn('response');
         });
     }
 };

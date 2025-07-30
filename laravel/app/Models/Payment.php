@@ -21,16 +21,6 @@ class Payment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function client(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'client_id');
-    }
-
-    public function expert(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'expert_id');
-    }
-
     public function project()
     {
         return $this->belongsTo(Project::class);

@@ -29,7 +29,7 @@ const statusStyle = computed(() => {
             class="w-[64px] h-[64px] rounded-full object-cover"
         />
         <div>
-          <h4 class="text-tertiary">Referred by</h4>
+          <div class="text-h4 text-tertiary">Referred by</div>
           <p class="text-primary font-medium">{{ referral.referrer.name }}</p>
           <h4 class="text-primary">Freelancer</h4>
           <a :href="`mailto:${referral.referrer.email}`" class="flex items-center gap-1 text-h4 text-link hover:underline">

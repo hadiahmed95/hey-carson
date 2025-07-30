@@ -59,7 +59,7 @@
       </div>
 
       <div class="flex flex-col gap-1">
-        <h5 class="text-tertiary-dark font-normal">Preferred Expert</h5>
+        <p class="text-h5 text-tertiary-dark font-normal">Preferred Expert</p>
         <div class="relative w-full">
           <!-- Input -->
           <input
@@ -123,9 +123,9 @@
           <p class="text-h4 text-primary font-semibold">
             Send this quote request to 3 additional experts
           </p>
-          <h5 class="text-primary font-normal">
+          <p class="text-h5 text-primary font-normal">
             We'll automatically forward your quote request to three additional experts who match your criteria, so you can compare multiple quotes.
-          </h5>
+          </p>
         </div>
       </div>
 
@@ -136,14 +136,14 @@
             class="translate-y-[2px] rounded-[4px] border border-lightGray accent-primary hover:accent-primary cursor-pointer"
         />
         <div>
-          <h4 class="text-primary font-semibold">This project is urgent</h4>
-          <h5 class="text-primary font-normal">
+          <p class="text-h4 text-primary font-semibold">This project is urgent</p>
+          <p class="text-h5 text-primary font-normal">
             If you need a fast turnaround, let experts know your project is urgent.
-          </h5>
+          </p>
         </div>
       </div>
 
-      <p class="bg-primary text-white rounded-md py-2 font-semibold hover:bg-success hover:cursor-pointer"
+      <div class="bg-primary text-white rounded-md py-2 text-paragraph font-semibold hover:bg-success hover:cursor-pointer"
            :class="[isLoading  && 'opacity-50 cursor-not-allowed']"
       >
         <Spinner v-if="isLoading" />
@@ -151,10 +151,10 @@
           v-else
           @click="submit"
         >
-          <span>Submit Request</span>
+          <span>Submit Review</span>
           <Arrow class="w-4 h-4" />
         </button>
-      </p>
+      </div>
 
       <h5 class="text-tertiary-dark font-normal">
         This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.
@@ -281,21 +281,8 @@ async function submit() {
     send_to_more_experts: sendToMore.value,
   }
 
-  try {
-    await clientStore.createRequest(payload, props.myRequestsPage);
-    closeModal();
-  } catch (error: any) {
-    if (error?.response?.status === 422) {
-      const serverErrors = error.response.data.errors;
-
-      errors.value.website = serverErrors.store_url?.[0] || '';
-      errors.value.title = serverErrors.project_name?.[0] || '';
-      errors.value.description = serverErrors.project_description?.[0] || '';
-      errors.value.expert = serverErrors.preferred_expert_id?.[0] || '';
-    } else {
-      console.error('Unexpected error:', error);
-    }
-  }
+  await clientStore.createRequest(payload, props.myRequestsPage)
+  closeModal()
 }
 
 function closeModal() {

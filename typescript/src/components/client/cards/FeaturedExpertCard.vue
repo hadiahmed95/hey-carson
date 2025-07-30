@@ -21,7 +21,7 @@
               <img :src="getS3URL(expert.photo)" alt="Avatar" class="w-16 h-16 rounded-full" />
               <div class="text-h4 text-right text-tertiary font-sm">
                 <p>Starting price:</p>
-                <h2 class="text-primary font-semibold">${{ expert.profile.hourly_rate }}</h2>
+                <p class="text-h2 text-primary font-semibold">${{ expert.profile.hourly_rate }}</p>
               </div>
             </div>
             <div class="flex flex-col gap-2">
@@ -37,13 +37,13 @@
             <div class="flex flex-col gap-2">
               <h6 class="text-primary font-semibold">Service categories:</h6>
               <div v-if="expert?.service_categories?.length" class="flex flex-wrap gap-2">
-              <h4
+              <span
                   v-for="category in expert.service_categories"
                   :key="category"
-                  class="px-3 py-1 rounded-full text-primary border"
+                  class="px-3 py-1 text-h4 rounded-full text-primary border"
               >
                 {{ category }}
-              </h4>
+              </span>
               </div>
             </div>
           </div>

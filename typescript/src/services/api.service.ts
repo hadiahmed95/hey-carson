@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAlertStore } from '@/store/alert'
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api`; // update as needed
 
@@ -9,6 +10,23 @@ const api = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
+api.interceptors.response.use(
+    response => response,
+    error => {
+        if (error.response) {
+            const alert = useAlertStore()
+
+            const message =
+                error.response.data?.message ||
+                error.response.data?.error ||
+                'Something went wrong. Please try again.'
+
+            alert.show(message, 'error')
+        }
+        return Promise.reject(error);
+    }
+);
 
 export { api };
 

@@ -30,9 +30,9 @@ const emit = defineEmits<{
               placeholder="$125.00"
               class="w-full border border-grey text-h4 text-primary rounded-md px-4 py-2"
           />
-          <h5 class="text-tertiary mt-1">
+          <p class="text-h5 text-tertiary mt-1">
             This is your default hourly rate from your profile. You can adjust it up or down for this specific project.
-          </h5>
+          </p>
         </div>
 
         <!-- Estimated Time -->
@@ -44,9 +44,9 @@ const emit = defineEmits<{
               placeholder="10"
               class="w-full border border-grey text-h4 text-primary rounded-md px-4 py-2"
           />
-          <h5 class="text-tertiary mt-1">
+          <p class="text-h5 text-tertiary mt-1">
             Enter the estimated number of hours required to complete the project.
-          </h5>
+          </p>
         </div>
 
         <!-- Deadline -->
@@ -58,15 +58,15 @@ const emit = defineEmits<{
               placeholder="17 Dec, 2025"
               class="w-full border border-grey text-h4 text-primary rounded-md px-4 py-2"
           />
-          <h5 class="text-tertiary mt-1">
+          <p class="text-h5 text-tertiary mt-1">
             Set a deadline that's achievable, considering the project scope.
-          </h5>
+          </p>
         </div>
 
         <!-- Project Quote -->
         <div>
-          <h5 class="text-primary">Project quote</h5>
-          <h2 class="font-semibold mt-1">$1250.00</h2>
+          <p class="text-primary text-h5">Project quote</p>
+          <p class="text-h2 font-semibold mt-1">$1250.00</p>
         </div>
 
         <!-- Submit Button -->

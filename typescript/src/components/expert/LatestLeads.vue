@@ -6,7 +6,6 @@
       <LeadCard
         v-for="lead in expertStore.leads?.leads"
         :key="lead.id"
-        :lead-id="lead.id"
         :project-name="lead.project.name"
         :name="lead.client.first_name + ' ' + lead.client.last_name"
         :email="lead.client.email"

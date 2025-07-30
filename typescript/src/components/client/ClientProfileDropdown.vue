@@ -43,11 +43,10 @@
           Transactions
         </button>
       </router-link>
-<!--      Todo: We do not need My Team page in v1 -->
-<!--      <button class="w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 gap-2">-->
-<!--        <TeamIcon class="w-5 h-5" />-->
-<!--        My Team-->
-<!--      </button>-->
+      <button class="w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 gap-2">
+        <TeamIcon class="w-5 h-5" />
+        My Team
+      </button>
       <button @click="logout()" class="w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 gap-2">
         <LogoutIcon class="w-5 h-5" />
         Logout
@@ -63,6 +62,7 @@ import { useAuthStore } from '@/store/auth.ts'
 import { onClickOutside } from '@vueuse/core'
 import SettingsIcon from '../../assets/icons/settings.svg'
 import TransactionsIcon from '../../assets/icons/transactions.svg'
+import TeamIcon from '../../assets/icons/team.svg'
 import LogoutIcon from '../../assets/icons/logout.svg'
 import Overview from "@/assets/icons/overview.svg";
 import SwitchOn from "@/assets/icons/switch-on.svg";

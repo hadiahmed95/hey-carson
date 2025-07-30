@@ -15,9 +15,6 @@
           Describe your project or the challenge you're facing to receive a free project quote from one or more experts.
         </p>
       </div>
-      <h5 v-if="errors.expertSlug" class="text-red-600 mt-2">
-        {{ errors.expertSlug }}
-      </h5>
 
       <div class="flex flex-col gap-8">
         <BaseInput
@@ -46,10 +43,10 @@
               class="translate-y-[2px] rounded-[4px] border border-lightGray accent-primary hover:accent-primary cursor-pointer"
           />
           <div>
-            <h4 class="text-primary font-semibold">This project is urgent</h4>
-            <h5 class="text-primary font-normal">
+            <p class="text-h4 text-primary font-semibold">This project is urgent</p>
+            <p class="text-h5 text-primary font-normal">
               If you need a fast turnaround, let experts know your project is urgent.
-            </h5>
+            </p>
           </div>
         </div>
 
@@ -83,29 +80,15 @@ const formData = ref({
 const errors = ref({
   storeName: '',
   storeUrl: '',
-  projectTitle: '',
-  expertSlug: ''
+  projectTitle: ''
 })
 
 onMounted(() => {
   const saved = localStorage.getItem('matchDetails')
   if (saved) formData.value = JSON.parse(saved)
 
-  const serverErrors = localStorage.getItem('matchServerErrors');
-  if (serverErrors) {
-    const parsed = JSON.parse(serverErrors);
-    errors.value.storeName = parsed.store_name?.[0] || '';
-    errors.value.storeUrl = parsed.store_url?.[0] || '';
-    errors.value.projectTitle = parsed.project_name?.[0] || '';
-    errors.value.expertSlug = parsed.expert_slug?.[0] || '';
-    localStorage.removeItem('matchServerErrors');
-  }
-
   formData.value.expertSlug = route.query.expert as string
-  if (!errors.value.expertSlug && !formData.value.expertSlug) {
-    errors.value.expertSlug = 'Expert\'s slug is required in the url (/client/get-matched?expert=expert-name)'
-  }
-
+  console.log('Expert slug:', formData.value.expertSlug)
 })
 
 const validate = () => {
@@ -113,8 +96,7 @@ const validate = () => {
   errors.value = {
     storeName: '',
     storeUrl: '',
-    projectTitle: '',
-    expertSlug: ''
+    projectTitle: ''
   }
 
   if (!formData.value.storeName.trim()) {
@@ -132,11 +114,6 @@ const validate = () => {
 
   if (!formData.value.projectTitle.trim()) {
     errors.value.projectTitle = 'Project title is required.'
-    isValid = false
-  }
-
-  if (!formData.value.expertSlug) {
-    errors.value.expertSlug = 'Expert\'s slug is required in the url (/client/get-matched?expert=expert-name)'
     isValid = false
   }
 

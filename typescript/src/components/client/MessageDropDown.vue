@@ -18,7 +18,7 @@
     >
       <!-- Header -->
       <div class="flex justify-between items-center">
-        <p class="font-semibold">Latest Messages</p>
+        <p class="text-paragraph font-semibold">Latest Messages</p>
         <button v-if="messages.length" class="text-h4 font-normal text-blue-600 hover:underline">
           Mark all as Read
         </button>

@@ -61,9 +61,9 @@
 <!--            <option value="Closed">Closed</option>-->
 <!--          </select>-->
           <router-link
-              to=""
+              :to="`/expert/lead/${request.expert.id}/chatroom`"
               @click.stop
-              class="px-4 py-2 border rounded text-h4 flex items-center gap-2 opacity-60"
+              class="px-4 py-2 border rounded text-h4 flex items-center gap-2"
               :class="{
                   'text-black bg-white hover:bg-gray-100': request?.pendingQuote === 'Submitted',
                   'text-white bg-primary hover:bg-gray-800': request?.pendingQuote !== 'Submitted',
@@ -75,8 +75,8 @@
             <span>Chat Now</span>
           </router-link>
           <router-link v-if="request?.pendingQuote === 'Submitted'"
-                       to=""
-                       class="px-4 py-2 rounded text-h4 flex items-center gap-2 text-white bg-primary hover:bg-gray-800 opacity-60"
+                       :to="`/expert/lead/${1}/chatroom`"
+                       class="px-4 py-2 rounded text-h4 flex items-center gap-2 text-white bg-primary hover:bg-gray-800"
           >
             <span>Accept Quote</span>
           </router-link>
@@ -87,7 +87,6 @@
 </template>
 
 <script setup lang="ts">
-// import { ref } from 'vue'
 import Chat from '@/assets/icons/chat.svg';
 import ChatBlack from '@/assets/icons/chatBlack.svg';
 import Star from '@/assets/icons/star.svg'

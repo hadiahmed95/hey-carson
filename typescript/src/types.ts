@@ -428,36 +428,3 @@ export interface IExpertStat {
     listing_page_visits: number
     unique_visits: number
 }
-
-export interface IProjectName {
-    id: number
-    name: string
-}
-
-export interface ILeadDetail {
-    id: number;
-    type: string;
-    created_at: string;
-    project?: {
-        id: number;
-        name: string;
-        description?: string;
-        status?: string;
-        messages?: any[];
-    };
-    client?: {
-        id: number;
-        first_name: string;
-        last_name: string;
-        email: string;
-        url?: string;
-        photo?: string;
-        shopify_plan?: string;
-    };
-    expert?: {
-        id: number;
-        first_name: string;
-        last_name: string;
-        email: string;
-    };
-}

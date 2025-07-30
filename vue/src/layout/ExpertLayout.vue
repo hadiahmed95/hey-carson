@@ -252,12 +252,20 @@ export default {
     },
 
     logout() {
-      window.localStorage.removeItem('CURRENT_USER')
-      window.localStorage.removeItem('CURRENT_TOKEN')
+      const token = window.localStorage.getItem('CURRENT_TOKEN')
 
-      delete axios.defaults.headers.common['Authorization'];
-
-      this.$router.push('/expert/login')
+      axios.post('api/logout', {}, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }).catch(error => {
+        console.error('Logout error:', error.response?.data || error.message)
+      }).finally(() => {
+        window.localStorage.removeItem('CURRENT_USER')
+        window.localStorage.removeItem('CURRENT_TOKEN')
+        delete axios.defaults.headers.common['Authorization']
+        this.$router.push('/expert/login')
+      })
     },
 
     toProject: debounce(async function(data) {

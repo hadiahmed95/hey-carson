@@ -11,7 +11,7 @@
         />
         <div class="flex flex-col">
           <div class="flex items-center gap-2">
-            <h4 class="text-primary font-medium">{{ expert.first_name }} {{ expert.last_name }}</h4>
+            <p class="text-primary font-medium text-h4">{{ expert.first_name }} {{ expert.last_name }}</p>
             <span
                 v-if="request_type === 'Quote Request'"
                 class="text-xs font-medium px-2 py-0.5 rounded-sm"
@@ -24,7 +24,7 @@
             </span>
           </div>
           <p class="text-gray-700 text-sm">{{ expert.company_type }}</p>
-          <h4 class="text-primary font-normal">{{ expert.profile.role }}</h4>
+          <p class="text-primary text-h4 font-normal">{{ expert.profile.role }}</p>
           <div class="flex items-center gap-1 text-h5">
             <Star />
             <p class="font-semibold">
@@ -63,8 +63,8 @@
         <!-- Action Buttons (Always Shown) -->
         <div class="flex gap-2 items-center min-w-[180px] justify-end">
           <router-link
-              to=""
-              class="px-4 py-2 border rounded text-h4 flex items-center gap-2 opacity-60"
+              :to="`/expert/lead/${1}/chatroom`"
+              class="px-4 py-2 border rounded text-h4 flex items-center gap-2"
               :class="{
                 'text-black bg-white hover:bg-gray-100': expert.quotes?.length,
                 'text-white bg-primary hover:bg-gray-800': !expert.quotes?.length,
@@ -78,7 +78,7 @@
           <button
               v-if="expert.quotes?.length"
               @click.stop="acceptQuote()"
-              class="px-4 py-2 rounded text-h4 flex items-center gap-2 text-white bg-primary hover:bg-gray-800 opacity-60"
+              class="px-4 py-2 rounded text-h4 flex items-center gap-2 text-white bg-primary hover:bg-gray-800"
           >
             <span>Accept Quote</span>
           </button>

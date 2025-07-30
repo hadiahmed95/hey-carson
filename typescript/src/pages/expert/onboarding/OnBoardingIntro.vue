@@ -6,7 +6,7 @@
       <div class="flex flex-col gap-3">
         <div>
           <h2 class="font-semibold italic font-besley text-primary">Congratulations!</h2>
-          <h2 class="font-semibold text-primary">You’re now an official shopexperts member.</h2>
+          <p class="text-h2 font-semibold text-primary">You’re now an official shopexperts member.</p>
         </div>
         <p class="font-normal text-primary">
           After these steps your profile will be visible inside experts directory. <br />
@@ -45,18 +45,18 @@
       <div class="bg-veryLightGray border border-primary rounded-md p-3 flex flex-col gap-3">
         <div class="flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <h4 class="font-semibold text-primary">
+            <span class="text-h4 font-semibold text-primary">
               Why some fields are locked inside your listing?
-            </h4>
-            <h5 class="flex items-center gap-2 bg-primary text-white rounded-md px-3 py-1 font-normal">
+            </span>
+            <div class="flex items-center gap-2 bg-primary text-white rounded-md px-3 py-1 text-h5 font-normal">
               <Lock />
-              <span class="text-h6 font-semibold">LOCKED</span>
-            </h5>
+              <h6 class="font-semibold">LOCKED</h6>
+            </div>
           </div>
-          <h4 class="text-darkGray">
+          <p class="text-darkGray text-h4">
             Some fields are only available to Premium members. <br />
             Upgrade to shopexperts Premium to unlock every option and showcase your full capabilities and experience.
-          </h4>
+          </p>
         </div>
         <a href="#" class="text-primary font-semibold underline hover:text-primary/80 transition">
           Upgrade to Pro ($499/year)

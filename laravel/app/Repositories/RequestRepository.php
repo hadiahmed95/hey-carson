@@ -19,7 +19,10 @@ class RequestRepository
      */
     public function createRequest(HttpRequest $request, string $requestType, $user = null): JsonResponse
     {
-        //Todo: Has to validate the expert here(if it has invalid slug then throw appropriate error on the frontend)
+        if(!$user && $request->has('email')) {
+            $user = User::query()->where('email', $request->email)->first();
+        }
+
         $preferred_expert_id = null;
         if($request->has('expert_slug')) {
             $preferred_expert = User::query()->where('role_id', 3)
@@ -29,15 +32,6 @@ class RequestRepository
                     $query->where('status', 'active');
                 })
                 ->first();
-
-
-            if (!$preferred_expert) {
-                return response()->json([
-                    'errors' => [
-                        'expert_slug' => ['The expert slug in the url is invalid or not available.']
-                    ]
-                ], 422);
-            }
 
             $preferred_expert_id = $preferred_expert->id;
         }

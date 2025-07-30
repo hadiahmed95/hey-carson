@@ -10,6 +10,7 @@ import InputBtn from "@/components/misc/InputBtn.vue";
 import common from "@/mixins/common";
 import refApi from "@/util/referrals";
 import socket from "@/mixins/socket";
+import recaptchaMixin from '@/mixins/recaptchaMixin';
 export default {
   name: "RegisterPage",
 
@@ -71,6 +72,9 @@ export default {
         hourly_rate: '',
         subscribe: true,
       },
+
+      recaptchaSiteKey: process.env.VUE_APP_RECAPTCHA_SITE_KEY,
+      recaptchaToken: null,
 
       selectOptions: {
         role: [
@@ -147,11 +151,22 @@ export default {
     }
   },
 
-  mixins: [common, socket],
+  mixins: [common, socket, recaptchaMixin],
+
+  mounted() {
+    this.initReCapcha();
+  },
 
   methods: {
     nextPage(back = false, check = false) {
-
+      if (!back && this.page === 1) {
+        if (!this.recaptchaToken) {
+          this.error = 'Please complete the reCAPTCHA verification';
+          return;
+        } else if (this.recaptchaToken) {
+          this.error = null
+        }
+      }
       if (check) {
         this.loading = true;
 
@@ -194,10 +209,16 @@ export default {
       this.error = null
       this.errors = null
 
+      if (!this.recaptchaToken) {
+        this.error = 'Security verification expired. Please complete the reCAPTCHA again.';
+        return;
+      }
+
       this.loading = true;
 
       let data = {
         user_type: 'expert',
+        recaptcha_token: this.recaptchaToken,
         expert: this.expertForm
       }
 
@@ -248,6 +269,13 @@ export default {
           Before proceeding, ensure your technical and communication skills are proficient. We only accept freelancers with a <strong>minimum of 3 years of professional experience</strong> in development or design.
         </Text>
       </BlockStack>
+
+      <div class="recaptcha-wrapper">
+        <div id="recaptcha-container"></div>
+        <div v-if="error?.includes('reCAPTCHA')" class="error-message">
+          {{ error }}
+        </div>
+      </div>
 
       <InputBtn @click="nextPage()" style="margin-top: 16px">Next</InputBtn>
     </template>
@@ -461,4 +489,9 @@ export default {
 </template>
 
 <style scoped>
+.error-message {
+  color: #d92d20;
+  font-size: 14px;
+  margin-top: 8px;
+}
 </style>

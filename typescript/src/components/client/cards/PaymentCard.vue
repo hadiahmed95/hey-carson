@@ -2,8 +2,6 @@
 import { defineProps, defineEmits } from 'vue'
 import {formatDate} from "@/utils/date.ts";
 import type {Card} from "@/types.ts";
-import Visa from "@/assets/icons/visa.svg"
-import Mastercard from "@/assets/icons/mastercard.svg"
 
 defineProps<{
   card: Card
@@ -22,19 +20,19 @@ const emit = defineEmits<{
     <div class="flex items-center space-x-4">
       <!-- Card Logo -->
       <div class="w-12 h-8 flex items-center justify-center">
-        <div v-if="card.card_type === 'mastercard'" class="w-8 h-5 flex items-center justify-center">
-          <Mastercard />
+        <div v-if="card.card_type === 'mastercard'" class="w-8 h-5 bg-red-500 rounded-sm flex items-center justify-center">
+          <div class="w-6 h-4 bg-orange-400 rounded-sm opacity-80"></div>
         </div>
-        <div v-else-if="card.card_type === 'visa'" class="w-10 h-6 flex items-center justify-center">
-          <Visa />
+        <div v-else-if="card.card_type === 'visa'" class="w-10 h-6 bg-blue-600 rounded-sm flex items-center justify-center text-white text-3xs font-bold">
+          VISA
         </div>
       </div>
 
       <!-- Card Details -->
       <div class="text-h4">
         <div class="flex items-center space-x-2 mb-1">
-          <span class="font-medium">{{ card.card_type.toUpperCase() }} ({{ card.last_digits }})</span>
-          <span v-if="card.default" class="bg-light-green text-extra-dark-green text-xs px-2 py-1 rounded-sm font-medium">
+          <span class="font-medium">{{ card.card_type }} ({{ card.last_digits }})</span>
+          <span v-if="card.default" class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-sm font-medium">
             Primary
           </span>
         </div>
