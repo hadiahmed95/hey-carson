@@ -12,7 +12,7 @@
 
       <div class="flex flex-col gap-8">
         <div class="flex flex-col gap-2">
-          <h1 class="text-h2 font-semibold text-primary">{{ title }}</h1>
+          <h2 class="font-semibold text-primary">{{ title }}</h2>
           <p class="font-sm text-primary">{{ subtitle }}</p>
         </div>
         <slot name="form" />

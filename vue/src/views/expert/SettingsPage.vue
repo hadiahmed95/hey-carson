@@ -27,19 +27,6 @@ export default {
       selectedTimezone: "gmt-6",
 
       selectOptions: {
-        shopify_categories: [
-          { label: 'Shopify Store Setup & Management', value: 1 },
-          { label: 'Shopify Development & Troubleshooting', value: 2 },
-          { label: 'Shopify Marketing & Sales', value: 3 },
-          { label: 'Shopify Branding & Design', value: 4 },
-          { label: 'Shopify Copywriting & Content', value: 5 },
-          { label: 'Shopify Consulting & Strategy', value: 6 },
-          { label: 'Shopify Accounting & Financial Services', value: 7 },
-          { label: 'Shopify AI & Tech Solutions', value: 8 },
-          { label: 'Shopify Operations & Management', value: 9 },
-          { label: 'Shopify Technical Support & Maintenance', value: 10 },
-          { label: 'Shopify Training & Support', value: 11 }
-        ],
         role: [
           { "label": "Designer", "value": "Designer" },
           { "label": "Frontend Developer", "value": "Frontend Developer" },
@@ -125,11 +112,7 @@ export default {
         project_notifications: false,
         timezone: false,
         wise_email: false,
-        paypal_email: false,
-        business_address: false,
-        phone_number: false,
-        languages: false,
-        categories: false,
+        paypal_email: false
       },
 
       success: null,
@@ -141,11 +124,6 @@ export default {
   methods: {
     async getUser() {
       await axios.get('api/expert/settings').then(res => {
-        if (res.data.user.service_categories) {
-          res.data.user.service_categories = res.data.user.service_categories.map(cat => cat.id);
-        } else {
-          res.data.user.service_categories = [];
-        }
         window.localStorage.setItem('CURRENT_USER', JSON.stringify(res.data.user));
 
         this.user = JSON.parse(JSON.stringify(res.data.user));
@@ -174,19 +152,6 @@ export default {
       })
     }, 200),
 
-    handleCategoryChange(selected) {
-      const maxCategories = this.user.usertype === 'paid' ? 3 : Infinity;
-
-      if (selected.length > maxCategories) {
-        this.errors = { categories: ['Paid experts can select up to 3 categories.'] };
-        this.form.service_categories = selected.slice(0, maxCategories);
-      } else {
-        this.errors = null;
-        this.form.service_categories = selected;
-      }
-      this.updateUser('categories');
-    },
-
     async updateProfile(field) {
       if (this.user.profile[field] !== this.form.profile[field]) {
         this.loading[field] = true;
@@ -213,33 +178,6 @@ export default {
     },
 
     async updateUser(field) {
-
-      if (field === 'categories') {
-        this.loading.categories = true;
-        try {
-          const res = await axios.post('api/expert/settings', {
-            categories: this.form.service_categories || []
-          });
-
-          // Process categories to IDs before updating form
-          const updatedUser = {
-            ...res.data.user,
-            service_categories: res.data.user.service_categories.map(cat => cat.id)
-          };
-
-          window.localStorage.setItem('CURRENT_USER', JSON.stringify(updatedUser));
-          this.user = updatedUser;
-          this.form = JSON.parse(JSON.stringify(updatedUser));
-
-          this.errors = null;
-        } catch (err) {
-          this.errors = err.response.data.errors;
-        } finally {
-          this.loading.categories = false;
-        }
-        return;
-      }
-
       if (this.user[field] !== this.form[field]) {
         this.loading[field] = true;
         let data = {}
@@ -430,51 +368,6 @@ export default {
                   :loading="loading.about"
                   :error="errors?.about?.[0]"
               />
-
-              <TextField
-                  label="Business Address"
-                  autoComplete="off"
-                  @focusout="updateUser('business_address')"
-                  v-model="form.business_address"
-                  :loading="loading.business_address"
-                  :error="errors?.business_address?.[0]"
-              />
-
-              <TextField
-                  label="Phone Number"
-                  autoComplete="off"
-                  @focusout="updateUser('phone_number')"
-                  v-model="form.phone_number"
-                  :loading="loading.phone_number"
-                  :error="errors?.phone_number?.[0]"
-              />
-
-              <TextField
-                  label="Languages"
-                  autoComplete="off"
-                  @focusout="updateUser('languages')"
-                  v-model="form.languages"
-                  :loading="loading.languages"
-                  :error="errors?.languages?.[0]"
-              />
-
-              <BlockStack gap="200">
-                <OptionList
-                    title="Service Categories"
-                    :options="selectOptions.shopify_categories.map(option => ({
-                          ...option,
-                          disabled: user.usertype === 'paid' &&
-                                   form.service_categories?.length >= 3 &&
-                                   !form.service_categories.includes(option.value)
-                      }))"
-                    :selected="form.service_categories || []"
-                    v-model="form.service_categories"
-                    @change="handleCategoryChange"
-                    :allowMultiple="true"
-                />
-                <InlineError v-if="errors?.categories?.[0]" :message="errors?.categories?.[0]" />
-              </BlockStack>
-
             </BlockStack>
           </MobileCard>
         </InlineStack>
@@ -556,7 +449,7 @@ export default {
           </MobileCard>
         </BlockStack>
 
-        <Divider borderColor="border" />
+<!--        <Divider borderColor="border" />
 
         <BlockStack gap="300">
           <BlockStack>
@@ -581,7 +474,7 @@ export default {
               />
             </BlockStack>
           </MobileCard>
-        </BlockStack>
+        </BlockStack>-->
 
         <Divider borderColor="border" />
 
@@ -822,51 +715,6 @@ export default {
                     :loading="loading.about"
                     :error="errors?.about?.[0]"
                 />
-
-                <TextField
-                    label="Business Address"
-                    autoComplete="off"
-                    @focusout="updateUser('business_address')"
-                    v-model="form.business_address"
-                    :loading="loading.business_address"
-                    :error="errors?.business_address?.[0]"
-                />
-
-                <TextField
-                    label="Phone Number"
-                    autoComplete="off"
-                    @focusout="updateUser('phone_number')"
-                    v-model="form.phone_number"
-                    :loading="loading.phone_number"
-                    :error="errors?.phone_number?.[0]"
-                />
-
-                <TextField
-                    label="Languages"
-                    autoComplete="off"
-                    @focusout="updateUser('languages')"
-                    v-model="form.languages"
-                    :loading="loading.languages"
-                    :error="errors?.languages?.[0]"
-                />
-
-                <BlockStack gap="200">
-                  <OptionList
-                      title="Service Categories"
-                      :options="selectOptions.shopify_categories.map(option => ({
-                          ...option,
-                          disabled: user.usertype === 'paid' &&
-                                   form.service_categories?.length >= 3 &&
-                                   !form.service_categories.includes(option.value)
-                      }))"
-                      :selected="form.service_categories || []"
-                      v-model="form.service_categories"
-                      @change="handleCategoryChange"
-                      :allowMultiple="true"
-                  />
-                  <InlineError v-if="errors?.categories?.[0]" :message="errors?.categories?.[0]" />
-                </BlockStack>
-
               </BlockStack>
             </Card>
           </LayoutAnnotatedSection>
@@ -946,7 +794,7 @@ export default {
 
           <Divider borderColor="border" v-if="false" />
 
-          <LayoutAnnotatedSection
+          <LayoutAnnotatedSection v-if="false"
               id="timezone"
               title="Timezone"
               description="Set your timezone to facilitate smoother communication with experts on projects."

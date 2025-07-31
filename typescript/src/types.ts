@@ -40,11 +40,7 @@ export interface ILead {
 export interface IListing {
     id: number,
     name: string
-    displayUrl: string | null
-    avatarInfo?: {
-        initials: string
-        bgColor: string
-    }
+    displayUrl: string
     type: string
     email: string
     storeTitle: string
@@ -56,8 +52,6 @@ export interface IListing {
     status: string
     statusUpdatedAt: string
     servicesOffered: string[]
-    expertData?: any
-    onLoginAs?: () => void
 }
 
 export interface IReview {
@@ -433,4 +427,9 @@ export interface IExpertStat {
     cta_clicks: number
     listing_page_visits: number
     unique_visits: number
+}
+
+export interface IProjectName {
+    id: number
+    name: string
 }

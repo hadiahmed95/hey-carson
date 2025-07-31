@@ -16,6 +16,18 @@ class ExpertService {
         return ApiService.get(`${this.base}/leads`, { ...params });
     }
 
+    updateReview(id: number, data: any) {
+        return ApiService.put(`${this.base}/reviews/${id}`, data);
+    }
+
+    createReviewRequest(payload: any) {
+        return ApiService.post(`${this.base}/review-requests`, payload);
+    }
+
+    fetchProjectNames() {
+        return ApiService.get(`${this.base}/project-names`);
+    }
+
     async getStats() {
         return ApiService.get(`${this.base}/stats`);
     }

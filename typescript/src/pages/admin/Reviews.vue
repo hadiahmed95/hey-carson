@@ -28,7 +28,7 @@ const reviews = ref([
     postedAt: "Dec 10, 2025",
     projectValue: "$1000-$2000",
     reviewSource: "Organic",
-    response: "",
+    response: '',
     status: 'Pending Review',
     expert: {
       id: 101,
@@ -58,7 +58,7 @@ const reviews = ref([
     postedAt: "Dec 10, 2025",
     projectValue: "$1000-$2000",
     reviewSource: "Invited",
-    response: "",
+    response: '',
     status: 'Approved',
     expert: {
       id: 102,
@@ -88,7 +88,7 @@ const reviews = ref([
     postedAt: "Dec 10, 2025",
     projectValue: "$1000-$2000",
     reviewSource: "Invited",
-    response: "",
+    response: '',
     status: 'Approved',
     expert: {
       id: 103,
@@ -124,7 +124,7 @@ const reviews = ref([
       </div>
     </div>
 
-    <div class="text-paragraph space-x-3">
+    <p class="space-x-3">
       <select v-model="status" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Status: All</option>
         <option value="In Progress">In Progress</option>
@@ -155,7 +155,7 @@ const reviews = ref([
         <option value="united_states">United Sates</option>
         <option value="canada">Canada</option>
       </select>
-    </div>
+    </p>
 
     <div>
       <ReviewCard

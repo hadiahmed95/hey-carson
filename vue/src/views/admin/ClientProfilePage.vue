@@ -6,7 +6,6 @@ import LoadingPage from "@/components/cards/LoadingPage.vue";
 import axios from "axios";
 import moment from "moment";
 import AvatarFrame from "@/components/misc/AvatarFrame.vue";
-import TransactionCard from "@/components/cards/admin/TransactionCard.vue";
 
 export default {
   name: "ClientProfilePage",
@@ -15,8 +14,7 @@ export default {
     LoadingPage,
     ProjectsCard,
     AdminLayout,
-    AvatarFrame,
-    TransactionCard,
+    AvatarFrame
   },
 
   async mounted() {
@@ -92,7 +90,6 @@ export default {
       pageLoading: true,
 
       activeTab: 0,
-      transactions: [],
       tabs: [
         {
           id: 'projects',
@@ -123,7 +120,6 @@ export default {
       await axios.get('api/admin/clients/' + id).then(res => {
         this.client = res.data.client;
         this.balance = res.data.balance;
-        this.transactions = res.data.transactions;
 
         this.pageLoading = false;
       }).catch(() => {
@@ -229,13 +225,10 @@ export default {
           />
         </BlockStack>
 
-        <BlockStack v-if="this.activeTab === 0" gap="300">
+        <BlockStack gap="300">
           <ProjectsCard v-for="project in projects"
                         :key="project.id"
                         :project="project"/>
-        </BlockStack>
-        <BlockStack gap="200" v-if=" this.activeTab === 1 && this.transactions?.length">
-          <TransactionCard v-for="transaction in transactions" :key="transaction.id" :item="transaction" />
         </BlockStack>
       </BlockStack>
     </Page>

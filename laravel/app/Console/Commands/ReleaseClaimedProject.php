@@ -31,7 +31,7 @@ class ReleaseClaimedProject extends Command
     {
         Project::with(['activeAssignment.expert'])
             ->where('status', '=', 'claimed')
-            ->where('status_updated_at', '<=', Carbon::now()->subSeconds(15))
+            ->where('status_updated_at', '<=', Carbon::now()->subMinutes(5))
             ->chunk(100, function ($projects) use ($projectRepository) {
                 foreach ($projects as $project) {
 

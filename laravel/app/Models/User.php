@@ -2,32 +2,63 @@
 
 namespace App\Models;
 
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable;
+    use SoftDeletes;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'name',
+        'click_id',
+        'partner_id',
+        'program_id',
+        'first_name',
+        'last_name',
         'email',
         'password',
+        'role_id',
+        'url',
+        'password_changed',
+        'photo',
+        'project_notifications',
+        'new_messages',
+        'is_disable',
+        'timezone',
+        'company_type',
+        'shopify_plan',
+        'source',
+        'availability_status'
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
@@ -138,69 +169,4 @@ class User extends Authenticatable
         return $this->belongsToMany(ServiceCategory::class, 'expert_service_categories', 'user_id', 'category_id');
     }
 
-    public function getDisplayNameAttribute()
-    {
-        return $this->first_name . ' ' . $this->last_name;
-    }
-
-    public function getAvatarUrlAttribute()
-    {
-        if ($this->photo) {
-            if (str_starts_with($this->photo, 'http')) {
-                return $this->photo;
-            }
-            return asset('storage/' . $this->photo);
-        }
-        return asset('images/default-avatar.png');
-    }
-
-    public function getAccountTypeAttribute()
-    {
-        return 'freelancer';
-    }
-
-    public function getCompanyTypeDisplayAttribute()
-    {
-        return 'Individual';
-    }
-
-    public function getHourlyRateFormattedAttribute()
-    {
-        $rate = $this->profile?->hourly_rate ?? 0;
-        return '' . number_format($rate, 2) . '/hour';
-    }
-
-    public function getStatsAttribute()
-    {
-        return [
-            'total_reviews' => $this->reviews()->count(),
-            'average_rating' => $this->reviews()->avg('rate') ?? 0,  // ✅ Correct column name
-            'total_projects' => $this->activeAssignments()->count(),
-            'response_time' => '2 hours',
-            'success_rate' => '95%',
-        ];
-    }
-
-    public function scopeForV2Listing($query)
-    {
-        return $query->with([
-            'profile',
-            'reviews',
-            'activeAssignments.project'
-        ]);
-    }
-
-    public function scopeByRole($query, $role)
-    {
-        return $query->whereHas('profile', function($q) use ($role) {
-            $q->where('role', $role);
-        });
-    }
-
-    public function scopeByStatus($query, $status)
-    {
-        return $query->whereHas('profile', function($q) use ($status) {
-            $q->where('status', $status);
-        });
-    }
 }

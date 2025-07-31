@@ -26,6 +26,8 @@
           softpink: 'var(--color-softpink)',
           darkpink: 'var(--color-darkpink)',
           softgreen: 'var(--color-softgreen)',
+          'extra-dark-green': 'var(--color-extra-dark-green)',
+          'light-green': 'var(--color-light-green)',
           info: 'var(--color-info)',
           darkGreen: 'var(--color-darkGreen)',
           lightGray: 'var(--color-lightGray)',
@@ -83,9 +85,9 @@
         spacing: {
           'card-padding': '16px',
         },
-      },
-      letterSpacing: {
-        '10p': '0.1em', // 10% of font size
+        letterSpacing: {
+          '10p': '0.1em', // 10% of font size
+        },
       },
     },
     plugins: [

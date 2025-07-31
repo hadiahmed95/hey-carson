@@ -4,23 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ClientFund;
-use App\Models\Payment;
 use App\Models\User;
 use App\Services\CacheService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use App\Repositories\PaymentRepository;
 
 class ClientController extends Controller
 {
-    protected PaymentRepository $paymentRepository;
-
-    public function __construct(PaymentRepository $paymentRepository)
-    {
-        $this->paymentRepository = $paymentRepository;
-    }
     public function all(Request $request)
     {
         $search = $request->get('search');
@@ -83,12 +75,9 @@ class ClientController extends Controller
             'projects.activeAssignment.expert.profile'
         ]);
 
-        $transactions = $this->paymentRepository->getTransactions($user);
-
         return response()->json([
             'client'    => $user,
-            'balance'   => $balance,
-            'transactions' => $transactions
+            'balance'   => $balance
         ]);
     }
 }

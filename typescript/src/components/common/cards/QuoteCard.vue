@@ -5,9 +5,9 @@
       <div>
         <div class="flex gap-1 items-center">
           <p class="font-semibold">{{ quoteLabel }}</p>
-          <p :class="['rounded-sm px-2 py-1 font-semibold text-h5', statusStyle]">{{ quote.status === 'send' ? 'Pending' : capitalize(quote.status) }}</p>
+          <h5 :class="['rounded-sm px-2 py-1 font-semibold', statusStyle]">{{ quote.status === 'send' ? 'Pending' : capitalize(quote.status) }}</h5>
         </div>
-        <div class="text-h5 text-greyExtraDark">{{ quote.created_at }}</div>
+        <h5 class="text-greyExtraDark">{{ quote.created_at }}</h5>
       </div>
       <div>
         <h5 class="font-normal">Hourly rate</h5>

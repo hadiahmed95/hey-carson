@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia';
-import { withLoader } from "@/utils/helpers.ts";
 import ApiService from '@/services/api.service';
-import AdminService from '@/services/admin.service';
 
 interface Admin {
     id: number;
@@ -13,14 +11,6 @@ interface AdminState {
     admin: Admin | null;
     loading: boolean;
     error: string | null;
-    experts: {
-        data: any[];
-        total: number;
-        current_page: number;
-        last_page: number;
-        per_page: number;
-    };
-    expert: any;
 }
 
 export const useAdminStore = defineStore('admin', {
@@ -28,14 +18,6 @@ export const useAdminStore = defineStore('admin', {
         admin: null,
         loading: false,
         error: null,
-        experts: {
-            data: [],
-            total: 0,
-            current_page: 1,
-            last_page: 1,
-            per_page: 15,
-        },
-        expert: null,
     }),
 
     actions: {
@@ -49,39 +31,6 @@ export const useAdminStore = defineStore('admin', {
                 this.error = err.response?.data?.message || 'Failed to load admin data';
             } finally {
                 this.loading = false;
-            }
-        },
-
-        async fetchExperts(params: Record<string, any> = {}) {
-            return await withLoader(async () => {
-                const response = await AdminService.getExperts(params);
-                this.experts = response.data.experts;
-                return response.data;
-            });
-        },
-
-        async fetchExpert(id: number) {
-            return await withLoader(async () => {
-                const response = await AdminService.getExpert(id);
-                this.expert = response.data.expert;
-                return response.data;
-            });
-        },
-
-        async updateExpert(id: number, data: any) {
-            return await withLoader(async () => {
-                await AdminService.updateExpert(id, data);
-                await this.fetchExpert(id);
-            });
-        },
-
-        async fetchExpertFilterOptions() {
-            try {
-                const response = await AdminService.getExpertFilterOptions()
-                return response.data
-            } catch (error) {
-                console.error('Error fetching expert filter options:', error)
-                throw error
             }
         },
     },

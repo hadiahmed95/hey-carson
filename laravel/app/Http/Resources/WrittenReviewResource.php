@@ -41,7 +41,7 @@ class WrittenReviewResource extends JsonResource
             'projectId' => $this->project_id,
             'projectTitle' => optional($this->project)->name,
             'postedAt' => $this->created_at->toDateString(),
-            'response' => $this->response,
+            'response' => $this->expert_response ?? '',
             'projectValue' => $this->value_range ?? '',
             'reviewSource' => $this->review_source ?? '',
             'status' => $this->status ?? 'Approved',

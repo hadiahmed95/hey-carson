@@ -151,10 +151,11 @@ export const useClientStore = defineStore('client', {
             try {
                 const response = await ClientService.updateProfile(data)
                 this.user = response.data.user
+                return { success: true, user: response.data.user };
             } catch (error) {
                 console.log(error)
                 this.error = 'Failed to update profile'
-                return false
+                return { success: false, error };
             }
         },
 

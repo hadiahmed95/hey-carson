@@ -37,8 +37,3 @@ Broadcast::channel('presence.receiver', function ($receiver) {
     return ['id' => $receiver->id, 'name' => $receiver->name];
 });
 
-// Broadcast when an expert is online/offline
-Broadcast::channel('users.online', function () {
-    return true;
-});
-

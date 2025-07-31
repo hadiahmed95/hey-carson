@@ -77,11 +77,11 @@ const currentSelectedLead = ref({
           <div class="flex items-center justify-between">
               <span class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
-                <span class="font-medium text-h4 text-primary">{{currentSelectedLead.leadStatus}}</span>
+                <h4 class="font-medium text-primary">{{currentSelectedLead.leadStatus}}</h4>
               </span>
             <DownArrow/>
           </div>
-          <span class="text-h6 text-tertiary">You are actively working on this project.</span>
+          <h6 class="text-tertiary">You are actively working on this project.</h6>
         </div>
       </div>
     </div>

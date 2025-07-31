@@ -30,9 +30,9 @@
       />
     </div>
     <div v-if="request.project.additional_expert_profiles">
-      <p class="text-h6 tracking-widest text- font-normal">
+      <h6 class="tracking-widest text- font-normal">
         {{ request.project.additional_expert_profiles?.length || 0 }} ADDITIONAL EXPERTS
-      </p>
+      </h6>
       <div class="border-t w-full mb-1"></div>
 
       <div v-if="request.project.additional_expert_profiles?.length">

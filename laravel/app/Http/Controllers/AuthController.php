@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Notifications\ResetPasswordLink;
-use App\Repositories\RequestRepository;
-use App\Events\ExpertOnlineStatus;
 use Illuminate\Support\Facades\Cookie;
 use App\Events\CacheInvalidation;
 use App\Events\SendEmail;
@@ -208,13 +206,6 @@ class AuthController extends Controller
                     'availability' => 'required|string',
                     'english_level' => 'required|string',
                     'hourly_rate' => 'required|numeric',
-                    'expert_type' => 'nullable|string',
-                    'agency_name' => 'nullable|string',
-                    'partner_tier' => 'nullable|string',
-                    'partner_link_directory' => 'nullable|string',
-                    'linkedIn_url' => 'nullable|string',
-                    'min_project_budget' => 'nullable|string',
-                    'services' => 'nullable|array',
                 ]);
 
                 if ($validateUser->fails()) {
@@ -243,18 +234,7 @@ class AuthController extends Controller
                     'country' => $data['expert']['country'],
                     'url' => $data['expert']['url'],
                     'about' => $data['expert']['about'],
-                    'expert_type' => $data['expert']['expert_type'] ?? "freelancer",
-                    'agency_name' => $data['expert']['agency_name'] ?? null,
-                    'partner_tier' => $data['expert']['partner_tier'] ?? null,
-                    'partner_link_directory' => $data['expert']['partner_link_directory'] ?? null,
-                    'linkedIn_url' => $data['expert']['linkedIn_url'] ?? null,
-                    'min_project_budget' => $data['expert']['min_project_budget'] ?? null,
                 ]);
-
-                if (!empty($data['expert']['services'])) {
-                    $user->serviceCategories()->sync($data['expert']['services']);
-                }
-
                 CacheInvalidation::dispatch('cache_duration_key', CacheService::EXPERTS_COUNT);
 
                 SendEmail::dispatch($user, new RegisterMail($user));
@@ -277,26 +257,6 @@ class AuthController extends Controller
                 'message' => $th->getMessage()
             ], 500);
         }
-    }
-
-    protected function validateRecaptcha(array $data): ?JsonResponse
-    {
-        $validator = Validator::make($data, [
-            'recaptcha_token' => 'required|recaptcha',
-        ], [
-            'recaptcha_token.required' => 'Please complete the reCAPTCHA verification.',
-            'recaptcha_token.recaptcha' => 'Security check failed. Please verify you\'re not a robot.',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Security verification required',
-                'errors' => $validator->errors()
-            ], 401);
-        }
-
-        return null;
     }
 
     public function checkData(Request $request)
@@ -386,9 +346,7 @@ class AuthController extends Controller
             if ($request->get('role') === 'expert') {
                 $user = $user->whereHas('profile', function ($builder) {
                     $builder->where('status', 'active');
-                })->with('profile' , 'serviceCategories')->first();
-
-                broadcast(new ExpertOnlineStatus($user->generateUserSlug(), true));
+                })->with('profile')->first();
             } else {
                 $user = $user->first();
             }
@@ -411,38 +369,6 @@ class AuthController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => $th->getMessage()
-            ], 500);
-        }
-    }
-
-    public function logout(Request $request): JsonResponse
-    {
-        $user = Auth::user();
-
-        try {
-            broadcast(new ExpertOnlineStatus($user->generateUserSlug(), false));
-
-            if (Auth::guard('sanctum')->check()) {
-                Auth::user()->tokens->each(function ($token) {
-                    $token->delete();
-                });
-            } else {
-                Auth::logout();
-            }
-
-            if ($request->hasSession()) {
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-            }
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Successfully logged out and user status updated to offline.',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Error logging out user: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -617,10 +543,6 @@ class AuthController extends Controller
     public function loginAsUser(Request $request, User $user): JsonResponse
     {
         try {
-            if ($user->role_id == Role::EXPERT){
-                $user->load('serviceCategories');
-            }
-            $user->load('profile');
             $response = response()->json([
                 'user' => $user,
                 'status' => true,
@@ -637,28 +559,5 @@ class AuthController extends Controller
                 'message' => $th->getMessage()
             ], 500);
         }
-    }
-
-    public function loginAs(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'role' => 'required|in:expert,client'
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-        
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-
-        // Create token for the target user
-        $token = $user->createToken('login-as-token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user->load('profile'),
-            'token' => $token,
-            'message' => 'Login successful'
-        ]);
     }
 }

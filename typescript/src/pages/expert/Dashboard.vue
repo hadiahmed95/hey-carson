@@ -3,7 +3,7 @@
     <div class="flex flex-row mb-6 justify-between">
       <div>
         <h1>
-          Welcome back, <span class="font-serif italic">Jonathan!</span>
+          Welcome back, <span class="font-serif italic">{{ authStore.user.first_name }}!</span>
         </h1>
         <p class="mt-1">
           This is overview of your shopexperts expert dashboard.
@@ -43,7 +43,9 @@ import YourReviews from "../../components/expert/YourReviews.vue";
 import LoadingCard from "@/components/common/LoadingCard.vue";
 import {useLoaderStore} from "@/store/loader.ts";
 import {useExpertStore} from "@/store/expert.ts";
+import {useAuthStore} from "@/store/auth.ts";
 
+const authStore = useAuthStore();
 const loader = useLoaderStore();
 const isLoading = computed(() => loader.isLoadingState);
 const range = ref('last_30_days')

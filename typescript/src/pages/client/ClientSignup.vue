@@ -97,7 +97,7 @@
 
           <div class="flex flex-col justify-end max-w-3xl mx-auto gap-8">
             <div class="flex flex-col gap-2">
-              <h2 class="text-primary text-h1 font-sm font-archivo">Finding your next Shopify expert</h2>
+              <h1 class="text-primary font-sm font-archivo">Finding your next Shopify expert</h1>
               <p class="italic text-3xl text-primary">just got way easier.</p>
             </div>
 
@@ -222,10 +222,27 @@ const signUp = async () => {
       new_dashboard: true,
     }
 
-    await registerStore.signupClient(payload)
+    try {
+      const res = await registerStore.signupClient(payload);
+      console.log(res)
 
-    if (authStore.token && authStore.user) {
-      await router.push('/client/dashboard')
+      if (authStore.token && authStore.user) {
+        await router.push('/client/dashboard');
+      }
+    } catch (err: any) {
+      if (err.response?.status === 422) {
+        const api = err.response.data;
+
+        const serverErrors = api.errors || {};
+        errors.value.firstName = serverErrors.first_name?.[0] || '';
+        errors.value.lastName = serverErrors.last_name?.[0] || '';
+        errors.value.email = serverErrors.email?.[0] || '';
+        errors.value.storeUrl = serverErrors.url?.[0] || '';
+        errors.value.password = serverErrors.password?.[0] || '';
+        console.log(errors.value)
+      } else {
+        console.error('Unexpected signup error', err);
+      }
     }
   }
 }

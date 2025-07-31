@@ -7,7 +7,7 @@ defineProps<{
 
 <template>
   <div class="dynamic-title-description font-archivo">
-    <h4 class="text-paragraph font-semibold">{{ title }}</h4>
+    <p class="font-semibold">{{ title }}</p>
     <p
         v-if="description"
         class="text-h4 text-coolGray"

@@ -160,27 +160,67 @@ const submitForm = async () => {
   console.log('Submitting matched data:', completeData)
 
   const payload = {
-    is_urgent:                 completeData.isUrgent,
-    project_description:       completeData.projectBrief,
-    project_name:              completeData.projectTitle,
-    expert_slug:               completeData.expertSlug,
-    store_url:                 completeData.storeUrl,
-    store_name:                completeData.storeName,
-    email:                     completeData.email,
-    first_name:                completeData.firstName,
-    last_name:                 completeData.lastName,
-    shopify_plan:              completeData.shopifyPlan,
-    password:                  completeData.password
+    is_urgent: completeData.isUrgent,
+    project_description: completeData.projectBrief,
+    project_name: completeData.projectTitle,
+    expert_slug: completeData.expertSlug,
+    store_url: completeData.storeUrl,
+    store_name: completeData.storeName,
+    email: completeData.email,
+    first_name: completeData.firstName,
+    last_name: completeData.lastName,
+    shopify_plan: completeData.shopifyPlan,
+    password: completeData.password
   }
 
-  await clientStore.getMatched(payload)
+  try {
+    await clientStore.getMatched(payload)
 
-  if (authStore.token && authStore.user) {
-    localStorage.removeItem('matchDetails')
-    localStorage.removeItem('matchBrief')
-    localStorage.removeItem('matchAccount')
+    if (authStore.token && authStore.user) {
+      localStorage.removeItem('matchDetails')
+      localStorage.removeItem('matchBrief')
+      localStorage.removeItem('matchAccount')
 
-    await router.push('/client/dashboard')
+      await router.push('/client/dashboard')
+    }
+  } catch (error: any) {
+    const response = error?.response
+
+    if (response?.status === 422 && response.data?.errors) {
+      const serverErrors = response.data.errors
+
+      const fieldsStepMap: Record<string, string> = {
+        expert_slug: 'get-matched-details',
+        store_name: 'get-matched-details',
+        store_url: 'get-matched-details',
+        project_name: 'get-matched-details',
+        project_description: 'get-matched-brief',
+      }
+
+      const stepRedirect = Object.keys(serverErrors).find(key => fieldsStepMap[key])
+
+      if (stepRedirect) {
+        localStorage.setItem('matchServerErrors', JSON.stringify(serverErrors))
+
+        const routeName = fieldsStepMap[stepRedirect]
+        const query: Record<string, string> = {}
+
+        if ('expert_slug' in serverErrors) {
+          query.expert_slug = payload.expert_slug
+        }
+
+        await router.push({ name: routeName, query })
+        return
+      }
+
+        errors.value.email = serverErrors.email?.[0] || ''
+        errors.value.firstName = serverErrors.first_name?.[0] || ''
+        errors.value.lastName = serverErrors.last_name?.[0] || ''
+        errors.value.password = serverErrors.password?.[0] || ''
+        errors.value.shopifyPlan = serverErrors.shopify_plan?.[0] || ''
+    } else {
+        console.error('Unexpected error:', error)
+    }
   }
 }
 
@@ -188,4 +228,5 @@ const goBack = () => {
   localStorage.setItem('matchAccount', JSON.stringify(formData.value))
   router.push('/client/get-matched/project-brief')
 }
+
 </script>

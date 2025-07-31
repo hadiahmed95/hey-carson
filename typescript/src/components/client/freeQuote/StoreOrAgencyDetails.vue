@@ -3,10 +3,10 @@
     <div class="flex flex-col gap-8">
       <div class="flex flex-col gap-4">
         <div class="flex justify-between items-center">
-          <p class="text-h4 font-normal font-archivo text-primary tracking-10p">
+          <h4 class="font-normal font-archivo text-primary tracking-10p">
             FREE PROJECT QUOTE
-          </p>
-          <p class="text-h4 font-normal font-archivo text-primary tracking-10p">1/3</p>
+          </h4>
+          <h4 class="font-normal font-archivo text-primary tracking-10p">1/3</h4>
         </div>
         <h1 class="font-normal text-primary">
           Receive a <i>free project quote</i> for your Shopify project
@@ -98,6 +98,12 @@ const validate = () => {
 onMounted(() => {
   const saved = localStorage.getItem('storeDetails')
   if (saved) formData.value = JSON.parse(saved)
+
+  const storedErrors = JSON.parse(localStorage.getItem('quoteServerErrors') || '{}')
+  errors.value.storeName = storedErrors.store_name?.[0] || ''
+  errors.value.storeUrl = storedErrors.store_url?.[0] || ''
+  errors.value.projectTitle = storedErrors.project_name?.[0] || ''
+  localStorage.removeItem('quoteServerErrors')
 })
 
 const proceed = () => {

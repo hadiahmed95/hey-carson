@@ -67,7 +67,7 @@ export default {
 
     claimedProjects() {
       if (this.totalProjects) {
-        return this.expert.active_assignments.filter(assignment => assignment.project?.status === 'claimed').length
+        return this.expert.active_assignments.filter(assignment => assignment.project.status === 'claimed').length
       } else {
         return 0
       }
@@ -75,7 +75,7 @@ export default {
 
     completedProjects() {
       if (this.totalProjects) {
-        return this.expert.active_assignments.filter(assignment => assignment.project?.status === 'completed').length
+        return this.expert.active_assignments.filter(assignment => assignment.project.status === 'completed').length
       } else {
         return 0
       }

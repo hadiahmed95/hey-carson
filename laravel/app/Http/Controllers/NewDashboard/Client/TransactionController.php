@@ -17,6 +17,7 @@ class TransactionController extends Controller
     {
         $invoices = $this->getClientInvoices();
 
+
         return response()->json([
             'transactions' => $invoices
         ]);
@@ -31,7 +32,7 @@ class TransactionController extends Controller
             ->where('user_id', \Auth::id())
             ->with([
                 'project',
-                'user.profile',
+                'expert.profile',
             ])
             ->latest()
             ->get();

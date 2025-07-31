@@ -31,7 +31,7 @@ defineProps<{
         {{ description }}
       </p>
 
-      <component :is="form" />
+      <component @close="emit('close')" :is="form" />
 
       <h4 class="text-center mt-8">
         Have a questions?

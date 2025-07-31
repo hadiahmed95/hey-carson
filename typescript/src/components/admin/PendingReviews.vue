@@ -32,7 +32,7 @@ const yourReviews = ref<IReview[]>([
     postedAt: "Dec 10, 2025",
     projectValue: "$1000-$2000",
     reviewSource: "Organic",
-    response: "",
+    response: '',
     status: 'Pending Review',
   },
   {
@@ -62,7 +62,7 @@ const yourReviews = ref<IReview[]>([
     postedAt: "Dec 10, 2025",
     projectValue: "$1000-$2000",
     reviewSource: "Invited",
-    response: "",
+    response: '',
     status: 'Pending Review',
   },
   {
@@ -92,7 +92,7 @@ const yourReviews = ref<IReview[]>([
     postedAt: "Dec 10, 2025",
     projectValue: "$1000-$2000",
     reviewSource: "Invited",
-    response: "",
+    response: '',
     status: 'Pending Review',
   }
 ])

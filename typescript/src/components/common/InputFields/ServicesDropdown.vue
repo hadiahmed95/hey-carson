@@ -13,14 +13,15 @@
 
     <!-- Pills -->
     <div class="flex flex-wrap gap-2">
-      <span
+      <h4
           v-for="(service, index) in model"
           :key="index"
-          class="bg-white text-primary text-h4 px-3 py-1 border border-tertiary-500 rounded-full flex items-center gap-2"
+          class="bg-white text-primary px-3 py-1 border border-tertiary-500 rounded-full flex items-center gap-2"
       >
         {{ service }}
         <button @click="removeService(index)" class="text-primary">×</button>
-      </span>
+      </h4>
+
     </div>
     <h5 v-if="error" class="text-red-600 mt-1">
       {{ error }}

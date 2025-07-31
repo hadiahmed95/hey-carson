@@ -26,7 +26,10 @@ export default {
         confirm_password: '',
       },
 
-      errors: {},
+      errors: {
+        password: '',
+        confirm_password: '',
+      },
       error: null,
       loading: false
     }
@@ -45,16 +48,19 @@ export default {
       this.loading = true;
 
       await axios.post('api/reset-password', {
+        email: this.$route.query.email,
         token: this.$route.query.token,
         password: this.form.password,
         password_confirmation: this.form.confirm_password
-      }).then((response) => {
+      }).then(() => {
         this.loading = false;
-        this.$router.push('/' + response.data.user_role + '/login')
+
+        this.$router.push('/' + this.$route.query.type + '/login')
       }).catch(err => {
         this.loading = false;
-        this.errors = err.response?.data?.errors || {};
-        this.error = err.response?.data?.error || null;
+
+        this.errors = err.response.data.errors;
+        this.error = err.response.data.error;
       });
     }
   }
@@ -89,7 +95,7 @@ export default {
           v-model="form.password"
           placeholder="Enter new password"
           autoComplete="off"
-          :error="errors.password && errors.password[0] ? errors.password[0] : null"
+          :error="errors.password ? errors.password[0] : null"
       >
         <template v-slot:suffix>
           <Icon v-if="passHidden" :source="ViewIcon" tone="base" @click="showPass" style="cursor: pointer"/>
@@ -103,7 +109,7 @@ export default {
           v-model="form.confirm_password"
           placeholder="Re-type password"
           autoComplete="off"
-          :error="errors.confirm_password && errors.confirm_password[0] ? errors.confirm_password[0] : null"
+          :error="errors.confirm_password ? errors.confirm_password[0] : null"
       >
         <template v-slot:suffix>
           <Icon v-if="passHidden" :source="ViewIcon" tone="base" @click="showPassConf" style="cursor: pointer"/>

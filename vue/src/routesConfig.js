@@ -422,26 +422,6 @@ export const routesConfig = [
         }
     },
     {
-        path: "/expert/new-dashboard",
-        name: "new-expert-dashboard",
-        component: () => import('./views/expert/new-dashboard/DashboardPage.vue'),
-        meta: {
-            authRequired: false,
-            isExpert: false,
-            title: 'shopexperts - New Dashboard',
-        }
-    },
-    {
-        path: "/expert/leads",
-        name: "expert-leads",
-        component: () => import('./views/expert/new-dashboard/Leads.vue'),
-        meta: {
-            authRequired: false,
-            isExpert: false,
-            title: 'shopexperts - My Leads',
-        }
-    },
-    {
         path: "/expert/available",
         name: "expert-available",
         component: () => import('./views/expert/AvailablePage.vue'),

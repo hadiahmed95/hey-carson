@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import {withLoader} from "@/utils/helpers.ts";
-import type {ExpertReviewsResponse, ILeadd, IExpertStat} from "@/types.ts";
+import type {ExpertReviewsResponse, ILeadd, IExpertStat, IProjectName} from "@/types.ts";
 import ExpertService from "@/services/expert.service.ts";
 
 export const useExpertStore = defineStore('expert', {
@@ -29,6 +29,23 @@ export const useExpertStore = defineStore('expert', {
         async fetchStats() {
             await withLoader(async () => {
                 this.stats = (await ExpertService.getStats()).data as any;
+            });
+        },
+        async updateReview(id: number, data: any) {
+            await withLoader(async () => {
+                await ExpertService.updateReview(id, data);
+                await this.fetchReviews();
+            });
+        },
+        async createReviewRequest(payload: any) {
+            await withLoader(async () => {
+                await ExpertService.createReviewRequest(payload);
+
+            });
+        },
+        async fetchProjectNames() {
+            return await withLoader(async () => {
+                return (await ExpertService.fetchProjectNames()).data.project_names as IProjectName[];
             });
         },
         async fetchClient() {

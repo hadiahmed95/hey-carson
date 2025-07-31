@@ -32,8 +32,8 @@ defineProps<{
       <div class="flex items-center gap-2">
         <Star class="w-4 h-4" />
         <div class="flex gap-1">
-          <span class="text-paragraph font-semibold text-primary">{{ expert?.reviews_stat?.rating }}</span>
-          <span class="text-paragraph font-normal text-slateGray">({{ expert?.reviews_stat?.reviews_count }} reviews)</span>
+          <p class="font-semibold text-primary">{{ expert?.reviews_stat?.rating }}</p>
+          <p class="font-normal text-slateGray">({{ expert?.reviews_stat?.reviews_count }} reviews)</p>
         </div>
       </div>
     </div>
@@ -41,7 +41,7 @@ defineProps<{
     <!-- Info List -->
     <div class="flex flex-col gap-2">
       <div class="flex justify-between">
-        <span class="text-tertiary text-h5">Type</span>
+        <h5 class="text-tertiary">Type</h5>
         <span
             class="text-custom1 font-semibold px-2 py-0.5 rounded"
             :class="{
@@ -54,25 +54,25 @@ defineProps<{
         </span>
       </div>
       <div class="flex justify-between">
-        <span class="text-tertiary text-h5">Budget</span>
-        <span class="font-normal text-h5 text-primary">-</span>
+        <h5 class="text-tertiary">Budget</h5>
+        <h5 class="font-normal text-primary">-</h5>
       </div>
       <div class="flex justify-between">
-        <span class="text-tertiary text-h5">Request Submitted</span>
-        <span class="font-normal text-h5 text-primary">{{ formatDate(requestCreatedAt) }}</span>
+        <h5 class="text-tertiary">Request Submitted</h5>
+        <h5 class="font-normal text-primary">{{ formatDate(requestCreatedAt) }}</h5>
       </div>
       <div class="flex justify-between">
-        <span class="text-tertiary text-h5">Experts Location</span>
-        <span class="font-normal text-h5 text-primary">{{ expert?.profile.country }}</span>
+        <h5 class="text-tertiary">Experts Location</h5>
+        <h5 class="font-normal text-primary">{{ expert?.profile.country }}</h5>
       </div>
       <div class="flex justify-between">
-        <span class="text-tertiary text-h5">Local Time</span>
-        <span class="font-normal text-h5 text-primary">-</span>
+        <h5 class="text-tertiary">Local Time</h5>
+        <h5 class="font-normal text-primary">-</h5>
       </div>
       <div class="flex justify-between">
-        <span class="text-tertiary text-h5">Avg. response time:</span>
+        <h5 class="text-tertiary">Avg. response time:</h5>
         <!-- //Todo: Need to add the Avg. response time -->
-        <span class="font-normal text-h5 text-primary">-</span>
+        <h5 class="font-normal text-primary">-</h5>
       </div>
     </div>
 
