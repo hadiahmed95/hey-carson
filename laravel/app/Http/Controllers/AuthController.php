@@ -638,27 +638,4 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-    public function loginAs(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'role' => 'required|in:expert,client'
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-        
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-
-        // Create token for the target user
-        $token = $user->createToken('login-as-token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user->load('profile'),
-            'token' => $token,
-            'message' => 'Login successful'
-        ]);
-    }
 }
