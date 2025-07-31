@@ -74,5 +74,15 @@ export const useAdminStore = defineStore('admin', {
                 await this.fetchExpert(id);
             });
         },
+
+        async fetchExpertFilterOptions() {
+            try {
+                const response = await AdminService.getExpertFilterOptions()
+                return response.data
+            } catch (error) {
+                console.error('Error fetching expert filter options:', error)
+                throw error
+            }
+        },
     },
 });

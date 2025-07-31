@@ -2,80 +2,174 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Events\SendEmail;
 use App\Http\Controllers\Controller;
-use App\Mail\Expert\ApprovedMail;
-use App\Mail\Expert\DeclinedMail;
-use App\Models\Assignment;
 use App\Models\User;
+use App\Models\ServiceCategory;
 use App\Repositories\ExpertFundRepository;
-use App\Repositories\PayoutRepository;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Services\ExpertUserService;
+use Illuminate\Support\Facades\DB;
 
 class ExpertController extends Controller
 {
-    private ExpertUserService $expertUserService;
-    private PayoutRepository $payoutRepository;
-    private ExpertFundRepository $expertFundRepository;
-    
-    public function __construct(ExpertUserService $expertUserService, PayoutRepository $payoutRepository, ExpertFundRepository $expertFundRepository)
+    private $expertFundRepository;
+
+    public function __construct(ExpertFundRepository $expertFundRepository)
     {
-        $this->expertUserService = $expertUserService;
-        $this->payoutRepository = $payoutRepository;
         $this->expertFundRepository = $expertFundRepository;
     }
-    
+
+    /**
+     * Get filter options for experts listing
+     */
+    public function getFilterOptions()
+    {
+        try {
+            // Get all experts with their profiles in one query
+            $experts = User::where('role_id', 3)
+                ->with('profile')
+                ->get();
+
+            // Extract unique values using collections
+            $statuses = $experts->pluck('profile.status')
+                ->filter()
+                ->unique()
+                ->map(fn($status) => ucfirst($status))
+                ->sort()
+                ->values();
+
+            $roles = $experts->pluck('profile.role')
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            $languages = $experts->pluck('profile.eng_level')
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
+
+            // Plan filter - from users.usertype
+            $userTypes = $experts->pluck('usertype')
+                ->filter()
+                ->unique()
+                ->map(fn($type) => ucfirst($type))
+                ->sort()
+                ->values();
+
+            // Type of Account filter - from profiles.expert_type
+            $expertTypes = $experts->pluck('profile.expert_type')
+                ->filter()
+                ->unique()
+                ->map(fn($type) => ucfirst($type))
+                ->sort()
+                ->values();
+
+            // Parse countries and cities from "city, country" format
+            $locationData = $experts->pluck('profile.country')
+                ->filter()
+                ->map(function($location) {
+                    if (strpos($location, ',') !== false) {
+                        $parts = array_map('trim', explode(',', $location));
+                        return [
+                            'city' => $parts[0] ?? '',
+                            'country' => $parts[1] ?? '',
+                            'full' => $location
+                        ];
+                    }
+                    return [
+                        'city' => '',
+                        'country' => $location,
+                        'full' => $location
+                    ];
+                })
+                ->filter(fn($item) => !empty($item['country']));
+
+            // Get unique countries
+            $countries = $locationData->pluck('country')
+                ->unique()
+                ->sort()
+                ->values();
+
+            // Group cities by country
+            $citiesByCountry = $locationData->groupBy('country')
+                ->map(fn($locations) => $locations->pluck('city')->filter()->unique()->sort()->values())
+                ->filter(fn($cities) => $cities->isNotEmpty());
+
+            // Services from service_categories table
+            $serviceCategories = ServiceCategory::orderBy('name')->pluck('name');
+
+            return response()->json([
+                'statuses' => $statuses,
+                'roles' => $roles,
+                'countries' => $countries,
+                'citiesByCountry' => $citiesByCountry,
+                'languages' => $languages,
+                'userTypes' => $userTypes,
+                'expertTypes' => $expertTypes,
+                'serviceCategories' => $serviceCategories
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to fetch filter options'], 500);
+        }
+    }
+
+    /**
+     * Display a listing of the resource.
+     */
     public function all(Request $request)
     {
         $search = $request->get('search');
+        $user_status = $request->get('status');
+        $city = $request->get('city');
+        $usertype = $request->get('usertype');
+        $expert_type = $request->get('expert_type');
+        $service_category = $request->get('service_category');
         $filters = $request->get('filter');
-        $status = $request->get('status');
-        $period = $request->get('period');
-        $projectId = $request->get('projectId');
-        $date = null;
-
         $version = $request->get('version', 'v1');
 
-        if ($period === 'week') {
-            $date = Carbon::now()->subWeek();
-        } elseif ($period === 'month') {
-            $date = Carbon::now()->subMonth();
-        }
+        $experts = User::query()->where('role_id', 3)->with(['profile', 'reviews']);
 
-        $experts = User::query()->where('role_id', 3)
-            ->with([
-                'profile',
-                'reviews',
-                'activeAssignments.project' => function ($query) {
-                    $query->withTrashed();
-                },
-            ])->withTrashed();
-
-        if ($date) {
-            $experts = $experts->whereDate('created_at', '>', $date);
-        }
-
-        if ($status) {
-            $experts = $experts->whereHas('profile', function($query) {
-                $query->where('status', 'active');
+        if ($search) {
+            $experts = $experts->where(function($query) use ($search) {
+                $query->where('first_name', 'LIKE', "%{$search}%")
+                      ->orWhere('last_name', 'LIKE', "%{$search}%")
+                      ->orWhere('email', 'LIKE', "%{$search}%");
             });
         }
 
-        if ($projectId) {
-            $currentAssignedExperts = Assignment::query()
-                ->where('project_id', $projectId)
-                ->where('is_active', true)
-                ->pluck('expert_id');
-
-            if ($currentAssignedExperts) {
-                $experts = $experts->whereNotIn('id', $currentAssignedExperts);
-            }
+        // Status filter
+        if ($user_status) {
+            $experts = $experts->whereHas('profile', function($query) use ($user_status) {
+                $query->where('status', $user_status);
+            });
         }
 
-        if ($search) {
-            $experts = $experts->whereRaw('CONCAT(first_name, " ", last_name) LIKE ?', ["%{$search}%"]);
+        // City filter (full "City, Country" string)
+        if ($city) {
+            $experts = $experts->whereHas('profile', function($query) use ($city) {
+                $query->where('country', $city);
+            });
+        }
+
+        // Plan filter (usertype)
+        if ($usertype) {
+            $experts = $experts->where('usertype', $usertype);
+        }
+
+        // Expert type filter
+        if ($expert_type) {
+            $experts = $experts->whereHas('profile', function($query) use ($expert_type) {
+                $query->where('expert_type', $expert_type);
+            });
+        }
+
+        // Service category filter
+        if ($service_category) {
+            $experts = $experts->whereHas('serviceCategories', function($query) use ($service_category) {
+                $query->where('service_categories.name', $service_category);
+            });
         }
 
         if ($filters) {
@@ -116,7 +210,9 @@ class ExpertController extends Controller
                 
                 $expert->account_type = 'freelancer';
                 $expert->company_type = 'Individual';
-                $expert->services_offered = [];
+                
+                // Get actual services from service categories relationship
+                $expert->services_offered = $expert->serviceCategories->pluck('name')->toArray();
                 
                 $expert->status_info = [
                     'status' => $expert->profile->status ?? 'pending',
@@ -125,102 +221,17 @@ class ExpertController extends Controller
 
                 $expert->stats = [
                     'total_reviews' => $expert->reviews ? $expert->reviews->count() : 0,
-                    'average_rating' => $expert->reviews && $expert->reviews->count() > 0 ? round($expert->reviews->avg('rate'), 1) : 0,  // ✅ Correct column
+                    'average_rating' => $expert->reviews && $expert->reviews->count() > 0 ? round($expert->reviews->avg('rate'), 1) : 0,
                     'total_projects' => $expert->activeAssignments ? $expert->activeAssignments->count() : 0,
                 ];
             }
-            
+
             return $expert;
         });
 
-        $response = [
-            'experts' => $experts,
-            'experts_count' => $expertsCount
-        ];
-
-        if ($version === 'v2') {
-            $response['meta'] = [
-                'version' => 'v2',
-                'total_pages' => $experts->lastPage(),
-                'current_page' => $experts->currentPage(),
-                'per_page' => $experts->perPage(),
-                'total_items' => $expertsCount,
-            ];
-            
-            $response['available_filters'] = [
-                'status' => ['pending', 'active', 'inactive'],
-                'roles' => $this->getAvailableRoles(),
-                'experience_levels' => $this->getExperienceLevels(),
-                'english_levels' => $this->getEnglishLevels(),
-            ];
-        }
-
-        return response()->json($response);
-    }
-
-    public function show(Request $request, User $user)
-    {
-        $user->load(['profile', 'reviews', 'reviews.project', 'reviews.client', 'activeAssignments.project' => function ($query) {
-            $query->withTrashed();
-        }, 'activeAssignments.project.client', 'activeAssignments.project.activeAssignment.expert' => function ($query) {
-            $query->withTrashed();
-        }, 'activeAssignments.project.activeAssignment.expert.profile']);
-
-        $withdrawAmount = $this->payoutRepository->getWithdrawAmount($user->id);
-        $totalEarnings = $this->expertFundRepository->getTotalEarnings($user->id);
-        $currentBalance = $this->expertFundRepository->getCurrentBalance($user->id, $withdrawAmount);
-
         return response()->json([
-            'expert' => $user,
-            'totalEarning' => $totalEarnings,
-            'currentBalance' => $currentBalance
+            'experts' => $experts,
+            'experts_count' => $expertsCount,
         ]);
-    }
-
-    public function update(Request $request, User $user)
-    {
-        if ($request->get('status') === 'active') {
-            $this->expertUserService->activate($user->id);
-            SendEmail::dispatch($user, new ApprovedMail($user));
-        }
-
-        if ($request->get('status') === 'inactive') {
-            $this->expertUserService->deactivate($user->id);
-            SendEmail::dispatch($user, new DeclinedMail($user));
-        }
-
-        return response()->json(['message' => 'OK']);
-    }
-
-    private function getAvailableRoles()
-    {
-        return [
-            'developer',
-            'designer', 
-            'consultant',
-            'marketing_specialist',
-            'project_manager'
-        ];
-    }
-
-    private function getExperienceLevels()
-    {
-        return [
-            '0-1 years',
-            '1-3 years', 
-            '3-5 years',
-            '5-10 years',
-            '10+ years'
-        ];
-    }
-
-    private function getEnglishLevels()
-    {
-        return [
-            'basic',
-            'intermediate',
-            'advanced',
-            'native'
-        ];
     }
 }

@@ -27,6 +27,11 @@ class AdminService {
     async getTransactions() {
         return ApiService.get(`${this.base}/transactions`);
     }
+
+    async getExpertFilterOptions(params: Record<string, any> = {}) {
+        // return ApiService.get(`${this.base}/filter-options`, params);
+        return ApiService.get('http://127.0.0.1:8000/api/filter-options', params);
+    }
 }
 
 export default new AdminService();

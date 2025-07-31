@@ -26,6 +26,54 @@ const language = ref('');
 const servicesOffered = ref('');
 const searchQuery = ref('');
 
+// Fixed TypeScript types for filter options
+const filterOptions = ref<{
+  statuses: string[];
+  roles: string[];
+  countries: string[];
+  citiesByCountry: Record<string, string[]>;
+  languages: string[];
+  userTypes: string[];
+  expertTypes: string[];
+  serviceCategories: string[];
+}>({
+  statuses: [],
+  roles: [],
+  countries: [],
+  citiesByCountry: {},
+  languages: [],
+  userTypes: [],
+  expertTypes: [],
+  serviceCategories: []
+});
+
+// Computed cities based on selected country
+const availableCities = computed(() => {
+  if (!country.value || !filterOptions.value.citiesByCountry[country.value]) {
+    return [];
+  }
+  return filterOptions.value.citiesByCountry[country.value];
+});
+
+// Watch country changes to reset city
+watch(country, (newCountry) => {
+  if (!newCountry) {
+    city.value = '';
+  } else {
+    city.value = '';
+  }
+});
+
+// Fetch filter options using admin store
+const fetchFilterOptions = async () => {
+  try {
+    const response = await adminStore.fetchExpertFilterOptions();
+    filterOptions.value = response;
+  } catch (error) {
+    console.error('Error fetching filter options:', error);
+  }
+};
+
 // Helper function to generate initials avatar
 const generateInitialsAvatar = (name: string): { initials: string; bgColor: string } => {
   if (!name) return { initials: 'NA', bgColor: 'bg-gray-400' };
@@ -33,14 +81,12 @@ const generateInitialsAvatar = (name: string): { initials: string; bgColor: stri
   const words = name.trim().split(' ');
   const initials = words.slice(0, 2).map(word => word.charAt(0).toUpperCase()).join('');
   
-  // Array of background colors for different initials
   const colors = [
     'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 
     'bg-indigo-500', 'bg-yellow-500', 'bg-red-500', 'bg-teal-500',
     'bg-orange-500', 'bg-cyan-500', 'bg-lime-500', 'bg-amber-500'
   ];
   
-  // Generate consistent color based on initials
   const charSum = initials.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
   const colorIndex = charSum % colors.length;
   
@@ -53,7 +99,6 @@ const generateInitialsAvatar = (name: string): { initials: string; bgColor: stri
 const filteredAndMappedExperts = computed(() => {
   return experts.value.map((expert: any) => {
     const name = expert.display_name || `${expert.first_name} ${expert.last_name}`;
-    // Check if user has a real photo (not null, empty)
     const hasRealPhoto = expert.photo && 
                          expert.photo !== null && 
                          expert.photo !== '';
@@ -63,7 +108,7 @@ const filteredAndMappedExperts = computed(() => {
       name,
       displayUrl: hasRealPhoto ? getS3URL(expert.photo) : 'https://randomuser.me/api/portraits/men/32.jpg',
       avatarInfo: hasRealPhoto ? undefined : generateInitialsAvatar(name),
-      type: expert.account_type === 'agency' ? 'Agency' : 'Freelancer',
+      type: expert.profile?.expert_type ? expert.profile.expert_type.charAt(0).toUpperCase() + expert.profile.expert_type.slice(1) : 'Freelancer',
       email: expert.email,
       storeTitle: 'Check Website',
       storeUrl: expert.url || 'https://www.trustpilot.com/',
@@ -77,11 +122,8 @@ const filteredAndMappedExperts = computed(() => {
           ? expert.profile.status.charAt(0).toUpperCase() + expert.profile.status.slice(1)
           : 'Pending',
       statusUpdatedAt: expert.status_info?.updated_at || new Date().toLocaleDateString(),
-      servicesOffered: expert.services_offered || [
-        'Store Setup & Management',
-        'Development and Troubleshooting', 
-        'Training & Consultation'
-      ],
+      // Use real services from database
+      servicesOffered: expert.services_offered || [],
     };
   });
 });
@@ -107,11 +149,25 @@ const fetchExperts = async (page = 1, resetData = false) => {
     };
 
     if (searchQuery.value) params.search = searchQuery.value;
-    if (status.value) params.status = status.value.toLowerCase();
+    if (status.value) params.status = status.value;
 
-    const filters: { role?: string; eng_level?: string } = {};
+    const filters: any = {};
     if (role.value) filters.role = role.value;
     if (language.value) filters.eng_level = language.value;
+    
+    // Send full "City, Country" string for city filter
+    if (city.value) {
+      params.city = city.value;
+    }
+    
+    // Plan filter (usertype)
+    if (plan.value) params.usertype = plan.value;
+    
+    // Expert type filter
+    if (typeOfAccount.value) params.expert_type = typeOfAccount.value;
+    
+    // Service category filter
+    if (servicesOffered.value) params.service_category = servicesOffered.value;
     
     if (Object.keys(filters).length > 0) {
       params.filter = filters;
@@ -164,14 +220,15 @@ const applyFilters = () => {
 };
 
 let searchTimeout: ReturnType<typeof setTimeout> | undefined;
-watch([searchQuery, status, role, language], () => {
+watch([searchQuery, status, role, language, city, typeOfAccount, plan, servicesOffered], () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     applyFilters();
   }, 500);
 });
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchFilterOptions();
   fetchExperts(1, true);
 });
 </script>
@@ -196,57 +253,104 @@ onMounted(() => {
     </div>
 
     <div class="mt-1 text-paragraph space-x-3">
+      <!-- Status Filter -->
       <select v-model="status" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Status: All</option>
-        <option value="pending">Pending</option>
-        <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
+        <option 
+          v-for="statusOption in filterOptions.statuses" 
+          :key="statusOption" 
+          :value="statusOption.toLowerCase()"
+        >
+          {{ statusOption }}
+        </option>
       </select>
 
+      <!-- Type of Account Filter (expert_type) -->
       <select v-model="typeOfAccount" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Type of Account: All</option>
-        <option value="freelance">Freelance</option>
-        <option value="agency">Agency</option>
+        <option 
+          v-for="expertType in filterOptions.expertTypes" 
+          :key="expertType" 
+          :value="expertType.toLowerCase()"
+        >
+          {{ expertType }}
+        </option>
       </select>
 
+      <!-- Plan Filter (usertype) -->
       <select v-model="plan" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Plan: All</option>
-        <option value="free">Free</option>
-        <option value="paid">Paid</option>
+        <option 
+          v-for="userType in filterOptions.userTypes" 
+          :key="userType" 
+          :value="userType.toLowerCase()"
+        >
+          {{ userType }}
+        </option>
       </select>
 
+      <!-- Role Filter -->
       <select v-model="role" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Role: All</option>
-        <option value="developer">Developer</option>
-        <option value="designer">Designer</option>
-        <option value="consultant">Consultant</option>
-        <option value="marketing_specialist">Marketing Specialist</option>
+        <option 
+          v-for="roleOption in filterOptions.roles" 
+          :key="roleOption" 
+          :value="roleOption"
+        >
+          {{ roleOption.charAt(0).toUpperCase() + roleOption.slice(1).replace('_', ' ') }}
+        </option>
       </select>
 
+      <!-- Country Filter -->
       <select v-model="country" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Country: All</option>
-        <option value="united_states">United States</option>
-        <option value="canada">Canada</option>
+        <option 
+          v-for="countryOption in filterOptions.countries" 
+          :key="countryOption" 
+          :value="countryOption"
+        >
+          {{ countryOption }}
+        </option>
       </select>
 
-      <select v-model="city" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
+      <!-- City Filter (Cascading) -->
+      <select 
+        v-model="city" 
+        :disabled="!country || !availableCities || availableCities.length === 0"
+        class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         <option value="">City: All</option>
-        <option value="new_york">New York</option>
-        <option value="toronto">Toronto</option>
+        <option 
+          v-for="cityOption in availableCities" 
+          :key="cityOption" 
+          :value="`${cityOption}, ${country}`"
+        >
+          {{ cityOption }}
+        </option>
       </select>
 
+      <!-- Language Filter -->
       <select v-model="language" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Language: All</option>
-        <option value="basic">Basic</option>
-        <option value="intermediate">Intermediate</option>
-        <option value="advanced">Advanced</option>
-        <option value="native">Native</option>
+        <option 
+          v-for="languageOption in filterOptions.languages" 
+          :key="languageOption" 
+          :value="languageOption"
+        >
+          {{ languageOption.charAt(0).toUpperCase() + languageOption.slice(1) }}
+        </option>
       </select>
 
+      <!-- Services Offered Filter (Real Data) -->
       <select v-model="servicesOffered" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Services Offered: All</option>
-        <option value="store_management">Store Management</option>
-        <option value="store_marketing">Store Marketing</option>
+        <option 
+          v-for="serviceOption in filterOptions.serviceCategories" 
+          :key="serviceOption" 
+          :value="serviceOption"
+        >
+          {{ serviceOption }}
+        </option>
       </select>
 
       <button 
