@@ -229,3 +229,4 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 Route::get('/test-experts', [\App\Http\Controllers\Admin\ExpertController::class, 'all']);
 Route::get('/filter-options', [\App\Http\Controllers\Admin\ExpertController::class, 'getFilterOptions']);
+Route::post('/admin/login-as', [AuthController::class, 'loginAs'])->middleware('auth:sanctum');

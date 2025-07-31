@@ -3,11 +3,18 @@ import ExternalLink from "../../../assets/icons/externalLink.svg";
 import { ref } from "vue";
 import type { IListing } from "../../../types.ts";
 
-defineProps<{
+const props = defineProps<{
   listing: IListing,
 }>()
 
 const action = ref('')
+
+// Handle Login As button click
+const handleLoginAs = () => {
+  if (props.listing.onLoginAs) {
+    props.listing.onLoginAs();
+  }
+}
 </script>
 
 <template>
@@ -94,7 +101,8 @@ const action = ref('')
           <!-- Only show Login As button for non-inactive users -->
           <button
               v-if="listing.status !== 'Pending' && listing.status !== 'Inactive'"
-              class="bg-primary text-white text-h4 py-2 px-4 rounded-sm"
+              @click="handleLoginAs"
+              class="bg-primary text-white text-h4 py-2 px-4 rounded-sm hover:bg-primary-dark"
           >
             Login As
           </button>

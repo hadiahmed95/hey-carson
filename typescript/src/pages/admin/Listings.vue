@@ -5,6 +5,7 @@ import { useLoaderStore } from "@/store/loader.ts";
 import ListingCard from "../../components/admin/cards/ListingCard.vue";
 import Search from "../../assets/icons/search.svg";
 import { getS3URL } from "@/utils/helpers.ts";
+import LoginAsModal from "../../components/admin/modals/LoginAsModal.vue";
 
 const adminStore = useAdminStore();
 const loader = useLoaderStore();
@@ -25,6 +26,10 @@ const city = ref('');
 const language = ref('');
 const servicesOffered = ref('');
 const searchQuery = ref('');
+
+// Login As Modal
+const showLoginAsModal = ref(false);
+const selectedExpert = ref<any>(null);
 
 // Fixed TypeScript types for filter options
 const filterOptions = ref<{
@@ -63,6 +68,17 @@ watch(country, (newCountry) => {
     city.value = '';
   }
 });
+
+// Login As functionality
+const openLoginAsModal = (expert: any) => {
+  selectedExpert.value = expert;
+  showLoginAsModal.value = true;
+};
+
+const closeLoginAsModal = () => {
+  showLoginAsModal.value = false;
+  selectedExpert.value = null;
+};
 
 // Fetch filter options using admin store
 const fetchFilterOptions = async () => {
@@ -124,6 +140,10 @@ const filteredAndMappedExperts = computed(() => {
       statusUpdatedAt: expert.status_info?.updated_at || new Date().toLocaleDateString(),
       // Use real services from database
       servicesOffered: expert.services_offered || [],
+      // Add expert data for login as functionality
+      expertData: expert,
+      // Login As handler
+      onLoginAs: () => openLoginAsModal(expert)
     };
   });
 });
@@ -235,6 +255,7 @@ onMounted(async () => {
 
 <template>
   <main class="flex-1 p-8 overflow-y-auto bg-secondary font-light space-y-6">
+    <!-- Same header and filters as before -->
     <div class="flex flex-row justify-between">
       <div>
         <h1>
@@ -252,6 +273,7 @@ onMounted(async () => {
       </div>
     </div>
 
+    <!-- All the filters remain the same as your existing code -->
     <div class="mt-1 text-paragraph space-x-3">
       <!-- Status Filter -->
       <select v-model="status" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
@@ -362,6 +384,7 @@ onMounted(async () => {
       </button>
     </div>
 
+    <!-- Loading, Data, and Empty states remain the same -->
     <div v-if="isLoading" class="space-y-4">
       <div v-for="i in 5" :key="i" class="bg-white border rounded-md shadow-sm p-6">
         <div class="flex space-x-4">
@@ -411,5 +434,12 @@ onMounted(async () => {
         </button>
       </div>
     </div>
+
+    <!-- Login As Modal -->
+    <LoginAsModal 
+      v-if="showLoginAsModal && selectedExpert"
+      :expert="selectedExpert"
+      @close="closeLoginAsModal"
+    />
   </main>
 </template>

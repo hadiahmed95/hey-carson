@@ -41,7 +41,7 @@ export interface IListing {
     id: number,
     name: string
     displayUrl: string | null
-    avatarInfo?: {             // Added optional property for initials
+    avatarInfo?: {
         initials: string
         bgColor: string
     }
@@ -56,6 +56,8 @@ export interface IListing {
     status: string
     statusUpdatedAt: string
     servicesOffered: string[]
+    expertData?: any
+    onLoginAs?: () => void
 }
 
 export interface IReview {

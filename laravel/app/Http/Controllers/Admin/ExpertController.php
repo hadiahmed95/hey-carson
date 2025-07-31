@@ -129,7 +129,7 @@ class ExpertController extends Controller
         $filters = $request->get('filter');
         $version = $request->get('version', 'v1');
 
-        $experts = User::query()->where('role_id', 3)->with(['profile', 'reviews']);
+        $experts = User::query()->where('role_id', 3)->with(['profile', 'reviews', 'serviceCategories', 'activeAssignments']);
 
         if ($search) {
             $experts = $experts->where(function($query) use ($search) {
@@ -203,6 +203,9 @@ class ExpertController extends Controller
             $totalEarnings = $this->expertFundRepository->getTotalEarnings($expert->id);
             $expert->totalEarnings = $totalEarnings;
             
+            // Ensure services_offered is always an array for backward compatibility
+            $expert->services_offered = $expert->serviceCategories ? $expert->serviceCategories->pluck('name')->toArray() : [];
+            
             if ($version === 'v2') {
                 $expert->display_name = $expert->first_name . ' ' . $expert->last_name;
                 $expert->avatar_url = $expert->photo ? asset('storage/' . $expert->photo) : null;
@@ -210,9 +213,6 @@ class ExpertController extends Controller
                 
                 $expert->account_type = 'freelancer';
                 $expert->company_type = 'Individual';
-                
-                // Get actual services from service categories relationship
-                $expert->services_offered = $expert->serviceCategories->pluck('name')->toArray();
                 
                 $expert->status_info = [
                     'status' => $expert->profile->status ?? 'pending',
