@@ -6,6 +6,7 @@ import LeadCard from "../../components/admin/cards/LeadCard.vue";
 import Search from "../../assets/icons/search.svg";
 import LoginAsLeadModal from "../../components/admin/modals/LoginAsLeadModal.vue";
 import type { ILeadd } from "../../types.ts";
+import { getS3URL } from "@/utils/helpers.ts";
 
 const adminStore = useAdminStore();
 const loader = useLoaderStore();
@@ -31,24 +32,52 @@ const filterOptions = ref<{
   shopifyPlans: []
 });
 
+// Helper function to generate initials avatar (same as Listings.vue)
+const generateInitialsAvatar = (name: string): { initials: string; bgColor: string } => {
+  if (!name) return { initials: 'NA', bgColor: 'bg-gray-400' };
+  
+  const words = name.trim().split(' ');
+  const initials = words.slice(0, 2).map(word => word.charAt(0).toUpperCase()).join('');
+  
+  const colors = [
+    'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 
+    'bg-indigo-500', 'bg-yellow-500', 'bg-red-500', 'bg-teal-500',
+    'bg-orange-500', 'bg-cyan-500', 'bg-lime-500', 'bg-amber-500'
+  ];
+  
+  const charSum = initials.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const colorIndex = charSum % colors.length;
+  
+  return {
+    initials: initials || 'NA',
+    bgColor: colors[colorIndex] || 'bg-gray-400'
+  };
+};
+
 // Transform leads data to match ILeadd interface
 const transformedLeads = computed((): ILeadd[] => {
   return leads.value.map(lead => {
+    const name = `${lead.first_name} ${lead.last_name}`;
+    const hasRealPhoto = lead.photo && 
+                         lead.photo !== null && 
+                         lead.photo !== '';
+    
     return {
       id: lead.id,
-      name: `${lead.first_name} ${lead.last_name}`,
+      name,
       website: lead.url ? (lead.url.startsWith('http') ? lead.url : `https://${lead.url}`) : '#',
       email: lead.email,
       plan: lead.shopify_plan || 'Unknown',
-      displayUrl: lead.photo ? `https://shopexperts.s3.amazonaws.com/${lead.photo}` : 'https://randomuser.me/api/portraits/men/32.jpg',
+      displayUrl: hasRealPhoto ? getS3URL(lead.photo) : 'https://randomuser.me/api/portraits/men/32.jpg',
+      avatarInfo: hasRealPhoto ? undefined : generateInitialsAvatar(name),
       directChatCount: lead.projects_count || 0,
       quoteRequestCount: lead.quote_requests_count || 0,
       lifetimeSpendCount: lead.lifetime_spend ? `$${lead.lifetime_spend}` : '$0.00',
       joinedOn: lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '',
-      type: 'Lead', // Default type
+      type: 'Lead',
       created_at: lead.created_at,
       project: {
-        name: 'N/A' // Default project name for clients
+        name: 'N/A'
       },
       client: {
         first_name: lead.first_name,

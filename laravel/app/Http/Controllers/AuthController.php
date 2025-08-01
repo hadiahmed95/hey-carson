@@ -657,7 +657,7 @@ class AuthController extends Controller
                 ], 404);
             }
 
-            // Map role names to role IDs (adjust based on your Role model constants)
+            // Map role names to role IDs
             $roleMapping = [
                 'expert' => 3, // Role::EXPERT
                 'client' => 2, // Role::CLIENT
@@ -675,7 +675,7 @@ class AuthController extends Controller
             if (auth('sanctum')->check()) {
                 $currentUser = auth('sanctum')->user();
                 
-                // Check if current user is admin (role_id = 1)
+                // Check if current user is admin
                 if (!$currentUser->role || $currentUser->role_id !== 1) {
                     return response()->json([
                         'status' => false,
@@ -708,7 +708,7 @@ class AuthController extends Controller
             if ($request->role === 'expert') {
                 $targetUser->load(['profile', 'serviceCategories']);
                 
-                // Check if expert is active (optional - you can remove this if not needed)
+                // Check if expert is active
                 if ($targetUser->profile && isset($targetUser->profile->status) && $targetUser->profile->status !== 'active') {
                     \Log::info('Expert login-as with inactive status', [
                         'expert_id' => $targetUser->id,

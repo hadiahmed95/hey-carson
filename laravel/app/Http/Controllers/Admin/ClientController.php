@@ -26,7 +26,7 @@ class ClientController extends Controller
     {
         $search = $request->get('search');
         $period =  $request->get('period');
-        $shopifyPlan = $request->get('shopify_plan'); // New filter for leads
+        $shopifyPlan = $request->get('shopify_plan');
         $date = null;
 
         if ($period === 'week') {
@@ -37,17 +37,18 @@ class ClientController extends Controller
 
         $clients = User::query()->where('role_id', 2)->withCount('projects');
         
-        // FIXED: Use requests table instead of projects table for quote requests
         $clients = $clients->withCount([
             'requests as quote_requests_count' => function ($query) {
-                $query->where('type', 'Quote Request');
+                $query->where('type', 'Quote Request')
+                    ->whereColumn('client_id', 'users.id');
             }
         ]);
         
         // Add count for direct messages from requests table
         $clients = $clients->withCount([
             'requests as direct_messages_count' => function ($query) {
-                $query->where('type', 'Direct Message');
+                $query->where('type', 'Direct Message')
+                    ->whereColumn('client_id', 'users.id');
             }
         ]);
         
@@ -55,7 +56,7 @@ class ClientController extends Controller
         $clients = $clients->addSelect([
             'lifetime_spend' => Payment::selectRaw('COALESCE(SUM(total), 0)')
                 ->whereColumn('user_id', 'users.id')
-                ->where('status', 'completed')
+                ->where('status', 'paid')
         ]);
         
         if ($date) {
@@ -72,7 +73,7 @@ class ClientController extends Controller
             });
         }
 
-        // New: Shopify plan filter for leads
+        // Shopify plan filter for leads
         if ($shopifyPlan && $shopifyPlan !== '') {
             $clients = $clients->where('shopify_plan', $shopifyPlan);
         }
@@ -102,7 +103,6 @@ class ClientController extends Controller
         ]);
     }
 
-    // Keep existing show method unchanged
     public function show(Request $request, User $user): JsonResponse
     {
         $balance = Cache::remember(

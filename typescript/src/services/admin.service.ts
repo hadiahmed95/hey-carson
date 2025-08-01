@@ -41,8 +41,6 @@ class AdminService {
 
     // New leads filter options method
     async getLeadFilterOptions(params: Record<string, any> = {}) {
-        // For now, reuse the client filter options since leads are clients
-        // This can be extended to have specific lead filters if needed
         return ApiService.get('http://127.0.0.1:8000/api/lead-filter-options', params);
     }
 }

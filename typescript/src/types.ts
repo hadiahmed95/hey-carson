@@ -418,6 +418,10 @@ export interface ILeadd {
     email: string,
     plan: string,
     displayUrl: string,
+    avatarInfo?: {
+        initials: string
+        bgColor: string
+    },
     directChatCount: number,
     quoteRequestCount: number,
     lifetimeSpendCount: string,

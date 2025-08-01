@@ -29,12 +29,34 @@ const handleImageError = (event: Event) => {
   <div class="bg-white border rounded-md shadow-sm p-card-padding mb-5">
     <div class="grid grid-cols-6 gap-6 mb-5 items-start">
       <div class="flex gap-4 col-span-2">
-        <img
-            :src="lead.displayUrl"
-            alt="Lead avatar"
-            class="w-[64px] h-[64px] rounded-full object-cover"
-            @error="handleImageError"
-        />
+        <!-- Profile Image or Initials Avatar -->
+        <div class="w-[64px] h-[64px] rounded-full overflow-hidden">
+          <!-- Show initials avatar only if it's the default placeholder AND has avatarInfo -->
+          <div
+              v-if="lead.displayUrl === 'https://randomuser.me/api/portraits/men/32.jpg' && lead.avatarInfo"
+              :class="[
+                'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg',
+                lead.avatarInfo.bgColor
+              ]"
+          >
+            {{ lead.avatarInfo.initials }}
+          </div>
+          <!-- Show actual image for real photos -->
+          <img
+              v-else-if="lead.displayUrl && lead.displayUrl !== 'https://randomuser.me/api/portraits/men/32.jpg'"
+              :src="lead.displayUrl"
+              alt="Lead avatar"
+              class="w-full h-full rounded-full object-cover"
+              @error="handleImageError"
+          />
+          <!-- Fallback to default placeholder if no photo and no avatarInfo -->
+          <img
+              v-else
+              src="https://randomuser.me/api/portraits/men/32.jpg"
+              alt="Lead avatar"
+              class="w-full h-full rounded-full object-cover"
+          />
+        </div>
         <div>
           <p class="text-primary font-medium">{{ lead.name }}</p>
           <div class="flex items-center gap-2 mb-1">
@@ -69,9 +91,11 @@ const handleImageError = (event: Event) => {
         <div class="justify-items-end space-y-2 space-x-2">
           <select v-model="action" class="border rounded-sm px-1 py-2 text-h4 font-medium w-fit hover:bg-gray-100">
             <option value="">Actions</option>
-            <option value="view_profile">View Profile</option>
-            <option value="view_projects">View Projects</option>
-            <option value="send_message">Send Message</option>
+            <option value="last_7_days">Last 7 Days</option>
+            <option value="last_week">Last Week</option>
+            <option value="last_30_days">Last 30 Days</option>
+            <option value="last_month">Last Month</option>
+            <option value="last_year">Last Year</option>
           </select>
 
           <button
