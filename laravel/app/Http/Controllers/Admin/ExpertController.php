@@ -2,19 +2,29 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Events\SendEmail;
 use App\Http\Controllers\Controller;
+use App\Mail\Expert\ApprovedMail;
+use App\Mail\Expert\DeclinedMail;
+use App\Models\Assignment;
 use App\Models\User;
 use App\Models\ServiceCategory;
 use App\Repositories\ExpertFundRepository;
+use App\Repositories\PayoutRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Services\ExpertUserService;
 use Illuminate\Support\Facades\DB;
 
 class ExpertController extends Controller
 {
-    private $expertFundRepository;
-
-    public function __construct(ExpertFundRepository $expertFundRepository)
+    private ExpertUserService $expertUserService;
+    private PayoutRepository $payoutRepository;
+    private ExpertFundRepository $expertFundRepository;
+    public function __construct(ExpertUserService $expertUserService, PayoutRepository $payoutRepository, ExpertFundRepository $expertFundRepository)
     {
+        $this->expertUserService = $expertUserService;
+        $this->payoutRepository = $payoutRepository;
         $this->expertFundRepository = $expertFundRepository;
     }
 
@@ -49,7 +59,6 @@ class ExpertController extends Controller
                 ->sort()
                 ->values();
 
-            // Plan filter - from users.usertype
             $userTypes = $experts->pluck('usertype')
                 ->filter()
                 ->unique()
@@ -57,7 +66,6 @@ class ExpertController extends Controller
                 ->sort()
                 ->values();
 
-            // Type of Account filter - from profiles.expert_type
             $expertTypes = $experts->pluck('profile.expert_type')
                 ->filter()
                 ->unique()
@@ -65,7 +73,6 @@ class ExpertController extends Controller
                 ->sort()
                 ->values();
 
-            // Parse countries and cities from "city, country" format
             $locationData = $experts->pluck('profile.country')
                 ->filter()
                 ->map(function($location) {
@@ -96,8 +103,14 @@ class ExpertController extends Controller
                 ->map(fn($locations) => $locations->pluck('city')->filter()->unique()->sort()->values())
                 ->filter(fn($cities) => $cities->isNotEmpty());
 
-            // Services from service_categories table
             $serviceCategories = ServiceCategory::orderBy('name')->pluck('name');
+
+            // Add Shopify Plans filter
+            $shopifyPlans = $experts->pluck('shopify_plan')
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values();
 
             return response()->json([
                 'statuses' => $statuses,
@@ -107,7 +120,8 @@ class ExpertController extends Controller
                 'languages' => $languages,
                 'userTypes' => $userTypes,
                 'expertTypes' => $expertTypes,
-                'serviceCategories' => $serviceCategories
+                'serviceCategories' => $serviceCategories,
+                'shopifyPlans' => $shopifyPlans
             ]);
 
         } catch (\Exception $e) {
@@ -126,6 +140,7 @@ class ExpertController extends Controller
         $usertype = $request->get('usertype');
         $expert_type = $request->get('expert_type');
         $service_category = $request->get('service_category');
+        $shopify_plan = $request->get('shopify_plan');
         $filters = $request->get('filter');
         $version = $request->get('version', 'v1');
 
@@ -133,9 +148,42 @@ class ExpertController extends Controller
 
         if ($search) {
             $experts = $experts->where(function($query) use ($search) {
-                $query->where('first_name', 'LIKE', "%{$search}%")
-                      ->orWhere('last_name', 'LIKE', "%{$search}%")
-                      ->orWhere('email', 'LIKE', "%{$search}%");
+                // Check if search contains space (likely first name + last name)
+                if (strpos($search, ' ') !== false) {
+                    $searchTerms = array_filter(explode(' ', trim($search)));
+                    
+                    if (count($searchTerms) >= 2) {
+                        $firstName = $searchTerms[0];
+                        $lastName = $searchTerms[1];
+                        
+                        $query->where(function($nameQuery) use ($firstName, $lastName, $search) {
+                            // Try: "first_name last_name" combination
+                            $nameQuery->where(function($q) use ($firstName, $lastName) {
+                                $q->where('first_name', 'LIKE', "%{$firstName}%")
+                                ->where('last_name', 'LIKE', "%{$lastName}%");
+                            })
+                            // Try: "last_name first_name" combination  
+                            ->orWhere(function($q) use ($firstName, $lastName) {
+                                $q->where('first_name', 'LIKE', "%{$lastName}%")
+                                ->where('last_name', 'LIKE', "%{$firstName}%");
+                            })
+                            // Fallback: original full string search
+                            ->orWhere('first_name', 'LIKE', "%{$search}%")
+                            ->orWhere('last_name', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+                        });
+                    } else {
+                        // Single word after split - treat as original
+                        $query->where('first_name', 'LIKE', "%{$search}%")
+                            ->orWhere('last_name', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+                    }
+                } else {
+                    // Single word search - original logic
+                    $query->where('first_name', 'LIKE', "%{$search}%")
+                        ->orWhere('last_name', 'LIKE', "%{$search}%")
+                        ->orWhere('email', 'LIKE', "%{$search}%");
+                }
             });
         }
 
@@ -170,6 +218,11 @@ class ExpertController extends Controller
             $experts = $experts->whereHas('serviceCategories', function($query) use ($service_category) {
                 $query->where('service_categories.name', $service_category);
             });
+        }
+
+        // Shopify plan filter
+        if ($shopify_plan) {
+            $experts = $experts->where('shopify_plan', $shopify_plan);
         }
 
         if ($filters) {
@@ -231,7 +284,44 @@ class ExpertController extends Controller
 
         return response()->json([
             'experts' => $experts,
-            'experts_count' => $expertsCount,
+            'experts_count' => $expertsCount
         ]);
+    }
+
+    public function show(Request $request, User $user)
+    {
+        $user->load(['profile', 'reviews', 'reviews.project', 'reviews.client', 'activeAssignments.project' => function ($query) {
+            $query->withTrashed();
+        }, 'activeAssignments.project.client', 'activeAssignments.project.activeAssignment.expert' => function ($query) {
+            $query->withTrashed();
+        }, 'activeAssignments.project.activeAssignment.expert.profile']);
+
+        $withdrawAmount = $this->payoutRepository->getWithdrawAmount($user->id);
+
+        $totalEarnings = $this->expertFundRepository->getTotalEarnings($user->id);
+
+        $currentBalance = $this->expertFundRepository->getCurrentBalance($user->id, $withdrawAmount);
+
+        return response()->json([
+            'expert' => $user,
+            'totalEarning' => $totalEarnings,
+            'currentBalance' => $currentBalance
+        ]);
+    }
+
+    public function update(Request $request, User $user)
+    {
+
+        if ($request->get('status') === 'active') {
+            $this->expertUserService->activate($user->id);
+            SendEmail::dispatch($user, new ApprovedMail($user));
+        }
+
+        if ($request->get('status') === 'inactive') {
+            $this->expertUserService->deactivate($user->id);
+            SendEmail::dispatch($user, new DeclinedMail($user));
+        }
+
+        return response()->json(['message' => 'OK']);
     }
 }

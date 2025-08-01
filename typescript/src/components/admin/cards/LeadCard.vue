@@ -1,14 +1,28 @@
 <script setup lang="ts">
-
 import ExternalLink from "../../../assets/icons/externalLink.svg";
 import { ref } from "vue";
-import type { ILead } from "../../../types.ts";
+import type { ILeadd } from "../../../types.ts";
 
-defineProps<{
-  lead: ILead,
+const props = defineProps<{
+  lead: ILeadd,
 }>()
 
 const action = ref('')
+
+// Handle Login As button click
+const handleLoginAs = () => {
+  if (props.lead.onLoginAs) {
+    props.lead.onLoginAs();
+  }
+}
+
+// Handle image error
+const handleImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement;
+  if (target) {
+    target.src = 'https://randomuser.me/api/portraits/men/32.jpg';
+  }
+}
 </script>
 
 <template>
@@ -17,8 +31,9 @@ const action = ref('')
       <div class="flex gap-4 col-span-2">
         <img
             :src="lead.displayUrl"
-            alt="Reviewer avatar"
+            alt="Lead avatar"
             class="w-[64px] h-[64px] rounded-full object-cover"
+            @error="handleImageError"
         />
         <div>
           <p class="text-primary font-medium">{{ lead.name }}</p>
@@ -54,15 +69,14 @@ const action = ref('')
         <div class="justify-items-end space-y-2 space-x-2">
           <select v-model="action" class="border rounded-sm px-1 py-2 text-h4 font-medium w-fit hover:bg-gray-100">
             <option value="">Actions</option>
-            <option value="last_7_days">Last 7 Days</option>
-            <option value="last_week">Last Week</option>
-            <option value="last_30_days">Last 30 Days</option>
-            <option value="last_month">Last Month</option>
-            <option value="last_year">Last Year</option>
+            <option value="view_profile">View Profile</option>
+            <option value="view_projects">View Projects</option>
+            <option value="send_message">Send Message</option>
           </select>
 
           <button
-              class="bg-primary text-white text-h4 py-2 px-4 rounded-sm"
+              @click="handleLoginAs"
+              class="bg-primary text-white text-h4 py-2 px-4 rounded-sm hover:bg-primary-dark"
           >
             Login As
           </button>

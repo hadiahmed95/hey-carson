@@ -21,10 +21,12 @@ class ClientController extends Controller
     {
         $this->paymentRepository = $paymentRepository;
     }
+    
     public function all(Request $request)
     {
         $search = $request->get('search');
         $period =  $request->get('period');
+        $shopifyPlan = $request->get('shopify_plan'); // New filter for leads
         $date = null;
 
         if ($period === 'week') {
@@ -34,6 +36,28 @@ class ClientController extends Controller
         }
 
         $clients = User::query()->where('role_id', 2)->withCount('projects');
+        
+        // FIXED: Use requests table instead of projects table for quote requests
+        $clients = $clients->withCount([
+            'requests as quote_requests_count' => function ($query) {
+                $query->where('type', 'Quote Request');
+            }
+        ]);
+        
+        // Add count for direct messages from requests table
+        $clients = $clients->withCount([
+            'requests as direct_messages_count' => function ($query) {
+                $query->where('type', 'Direct Message');
+            }
+        ]);
+        
+        // Calculate lifetime spend from payments table
+        $clients = $clients->addSelect([
+            'lifetime_spend' => Payment::selectRaw('COALESCE(SUM(total), 0)')
+                ->whereColumn('user_id', 'users.id')
+                ->where('status', 'completed')
+        ]);
+        
         if ($date) {
             $clients = $clients->whereDate('created_at', '>', $date);
         }
@@ -48,6 +72,11 @@ class ClientController extends Controller
             });
         }
 
+        // New: Shopify plan filter for leads
+        if ($shopifyPlan && $shopifyPlan !== '') {
+            $clients = $clients->where('shopify_plan', $shopifyPlan);
+        }
+
         return response()->json([
             'clients' => $clients->latest()->paginate(15),
             'clients_count' => $clientsCount
@@ -55,10 +84,25 @@ class ClientController extends Controller
     }
 
     /**
-     * @param Request $request
-     * @param User $user
-     * @return JsonResponse
+     * Get filter options for leads
      */
+    public function getLeadFilterOptions()
+    {
+        $shopifyPlans = User::where('role_id', 2)
+            ->whereNotNull('shopify_plan')
+            ->where('shopify_plan', '!=', '')
+            ->distinct()
+            ->pluck('shopify_plan')
+            ->sort()
+            ->values()
+            ->toArray();
+
+        return response()->json([
+            'shopifyPlans' => $shopifyPlans
+        ]);
+    }
+
+    // Keep existing show method unchanged
     public function show(Request $request, User $user): JsonResponse
     {
         $balance = Cache::remember(

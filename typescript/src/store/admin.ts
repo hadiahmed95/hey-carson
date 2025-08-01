@@ -21,6 +21,13 @@ interface AdminState {
         per_page: number;
     };
     expert: any;
+    leads: {
+        data: any[];
+        total: number;
+        current_page: number;
+        last_page: number;
+        per_page: number;
+    };
 }
 
 export const useAdminStore = defineStore('admin', {
@@ -36,6 +43,13 @@ export const useAdminStore = defineStore('admin', {
             per_page: 15,
         },
         expert: null,
+        leads: {
+            data: [],
+            total: 0,
+            current_page: 1,
+            last_page: 1,
+            per_page: 15,
+        },
     }),
 
     actions: {
@@ -81,6 +95,25 @@ export const useAdminStore = defineStore('admin', {
                 return response.data
             } catch (error) {
                 console.error('Error fetching expert filter options:', error)
+                throw error
+            }
+        },
+
+        // New leads methods
+        async fetchLeads(params: Record<string, any> = {}) {
+            return await withLoader(async () => {
+                const response = await AdminService.getLeads(params);
+                this.leads = response.data.clients;
+                return response.data;
+            });
+        },
+
+        async fetchLeadFilterOptions() {
+            try {
+                const response = await AdminService.getLeadFilterOptions()
+                return response.data
+            } catch (error) {
+                console.error('Error fetching lead filter options:', error)
                 throw error
             }
         },

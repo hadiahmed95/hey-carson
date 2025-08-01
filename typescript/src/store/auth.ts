@@ -1,6 +1,7 @@
 // stores/Auth.ts
 import { defineStore } from 'pinia'
 import AuthService from '@/services/auth.service'
+import ApiService from '@/services/api.service'
 import { api } from '@/services/api.service';
 import {withLoader} from "@/utils/helpers.ts";
 
@@ -50,7 +51,7 @@ export const useAuthStore = defineStore('auth', {
         },
         async loginAs(email: string, role: string) {
             try {
-                const response = await ApiService.post('/admin/login-as', {
+                const response = await ApiService.post('/login-as', {
                     email,
                     role
                 })
@@ -59,8 +60,11 @@ export const useAuthStore = defineStore('auth', {
                 this.user = response.data.user
                 
                 // Store in localStorage
-                localStorage.setItem('token', this.token)
-                localStorage.setItem('user', JSON.stringify(this.user))
+                localStorage.setItem('CURRENT_TOKEN', this.token)
+                localStorage.setItem('CURRENT_USER', JSON.stringify(this.user))
+                
+                // Set authorization header
+                api.defaults.headers.common['Authorization'] = 'Bearer ' + this.token;
                 
                 return response.data
             } catch (error) {

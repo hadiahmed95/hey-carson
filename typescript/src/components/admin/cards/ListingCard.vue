@@ -1,4 +1,5 @@
 <script setup lang="ts">
+
 import ExternalLink from "../../../assets/icons/externalLink.svg";
 import { ref } from "vue";
 import type { IListing } from "../../../types.ts";

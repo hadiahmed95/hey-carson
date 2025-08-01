@@ -413,6 +413,15 @@ export interface Card {
 
 export interface ILeadd {
     id: number,
+    name: string,
+    website: string,
+    email: string,
+    plan: string,
+    displayUrl: string,
+    directChatCount: number,
+    quoteRequestCount: number,
+    lifetimeSpendCount: string,
+    joinedOn: string,
     type: string
     created_at: string
     project: {
@@ -426,6 +435,7 @@ export interface ILeadd {
         photo?: string
         shopify_plan?: string
     }
+    onLoginAs?: () => void
 }
 
 export interface IExpertStat {

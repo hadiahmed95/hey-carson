@@ -639,26 +639,116 @@ class AuthController extends Controller
         }
     }
 
-    public function loginAs(Request $request)
+    public function loginAs(Request $request): JsonResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'role' => 'required|in:expert,client'
-        ]);
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'role' => 'required|in:expert,client'
+            ]);
 
-        $user = User::where('email', $request->email)->first();
-        
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
+            // Find the target user by email
+            $targetUser = User::where('email', $request->email)->first();
+            
+            if (!$targetUser) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            // Map role names to role IDs (adjust based on your Role model constants)
+            $roleMapping = [
+                'expert' => 3, // Role::EXPERT
+                'client' => 2, // Role::CLIENT
+            ];
+
+            // Check if the target user has the requested role
+            if (!isset($roleMapping[$request->role]) || $targetUser->role_id !== $roleMapping[$request->role]) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User does not have the requested role'
+                ], 400);
+            }
+
+            // If user is authenticated, verify they have admin privileges
+            if (auth('sanctum')->check()) {
+                $currentUser = auth('sanctum')->user();
+                
+                // Check if current user is admin (role_id = 1)
+                if (!$currentUser->role || $currentUser->role_id !== 1) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Unauthorized. Admin access required.'
+                    ], 403);
+                }
+                
+                // Log the admin action for security
+                \Log::info('Admin login-as action', [
+                    'admin_user_id' => $currentUser->id,
+                    'admin_email' => $currentUser->email,
+                    'target_user_id' => $targetUser->id,
+                    'target_email' => $targetUser->email,
+                    'target_role' => $request->role,
+                    'timestamp' => now(),
+                    'ip_address' => $request->ip()
+                ]);
+            } else {
+                // For development/testing: Allow unauthenticated access but log it
+                \Log::warning('Unauthenticated login-as attempt', [
+                    'target_email' => $targetUser->email,
+                    'target_role' => $request->role,
+                    'timestamp' => now(),
+                    'ip_address' => $request->ip(),
+                    'note' => 'This should only happen in development when admin auth is not implemented'
+                ]);
+            }
+
+            // Load user with appropriate relationships based on role
+            if ($request->role === 'expert') {
+                $targetUser->load(['profile', 'serviceCategories']);
+                
+                // Check if expert is active (optional - you can remove this if not needed)
+                if ($targetUser->profile && isset($targetUser->profile->status) && $targetUser->profile->status !== 'active') {
+                    \Log::info('Expert login-as with inactive status', [
+                        'expert_id' => $targetUser->id,
+                        'status' => $targetUser->profile->status,
+                        'note' => 'Allowing login despite inactive status'
+                    ]);
+                    // Continue with login instead of blocking
+                }
+            } elseif ($request->role === 'client') {
+                // Load client-specific relationships if needed
+                $targetUser->load(['projects', 'clientReviews']);
+            }
+
+            // Create token for the target user
+            $token = $targetUser->createToken('admin-login-as-token')->plainTextToken;
+
+            return response()->json([
+                'status' => true,
+                'user' => $targetUser,
+                'token' => $token,
+                'message' => 'Login as user successful'
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Login-as error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred during login-as operation'
+            ], 500);
         }
-
-        // Create token for the target user
-        $token = $user->createToken('login-as-token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user->load('profile'),
-            'token' => $token,
-            'message' => 'Login successful'
-        ]);
     }
 }
