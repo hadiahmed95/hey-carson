@@ -35,26 +35,24 @@ class ClientController extends Controller
             $date = Carbon::now()->subMonth();
         }
 
-        $clients = User::query()->where('role_id', 2)->withCount('projects');
+        $clients = User::query()->where('role_id', 2);
         
-        $clients = $clients->withCount([
-            'requests as quote_requests_count' => function ($query) {
-                $query->where('type', 'Quote Request')
-                    ->whereColumn('client_id', 'users.id');
-            }
-        ]);
-        
-        // Add count for direct messages from requests table
-        $clients = $clients->withCount([
-            'requests as direct_messages_count' => function ($query) {
-                $query->where('type', 'Direct Message')
-                    ->whereColumn('client_id', 'users.id');
-            }
-        ]);
-        
-        // Calculate lifetime spend from payments table
         $clients = $clients->addSelect([
-            'lifetime_spend' => Payment::selectRaw('COALESCE(SUM(total), 0)')
+            // Direct Chats = requests where type='Direct Message'
+            'direct_messages_count' => \DB::table('requests')
+                ->select(\DB::raw('COUNT(*)'))
+                ->where('type', 'Direct Message')
+                ->whereColumn('client_id', 'users.id'),
+                
+            // Quote Requests = requests where type='Quote Request'
+            'quote_requests_count' => \DB::table('requests')
+                ->select(\DB::raw('COUNT(*)'))
+                ->where('type', 'Quote Request')
+                ->whereColumn('client_id', 'users.id'),
+                
+            // Lifetime spend
+            'lifetime_spend' => \DB::table('payments')
+                ->select(\DB::raw('COALESCE(SUM(total), 0)'))
                 ->whereColumn('user_id', 'users.id')
                 ->where('status', 'paid')
         ]);
@@ -73,7 +71,6 @@ class ClientController extends Controller
             });
         }
 
-        // Shopify plan filter for leads
         if ($shopifyPlan && $shopifyPlan !== '') {
             $clients = $clients->where('shopify_plan', $shopifyPlan);
         }
