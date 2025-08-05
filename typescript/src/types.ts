@@ -299,14 +299,41 @@ export interface INotification {
     }
 }
 
-export interface IQuotee {
+export interface IQuotee { //Todo: We will replace this with IQuotee soon
     id: number
     type: string
     hours: number
-    deadline: string
     rate: number
-    status: string
     created_at: string
+    title: string
+    link: string
+    hourlyRate: string
+    estimatedTime: string
+    deadline: string
+    total: string
+    status: string
+    sentDate: string
+    paidDate?: string
+    rejectedDate?: string
+    client: {
+        name: string
+        email: string
+        avatar: string
+        plan: string
+        avatarInfo?: {
+            initials: string
+            bgColor: string
+        }
+    }
+    expert: {
+        name: string
+        email: string
+        avatar: string
+        avatarInfo?: {
+            initials: string
+            bgColor: string
+        }
+    }
 }
 
 export interface IExpertt {
@@ -447,4 +474,36 @@ export interface IExpertStat {
     cta_clicks: number
     listing_page_visits: number
     unique_visits: number
+}
+
+export interface IQuoteSent {
+    id: number;
+    title: string;
+    hourly_rate: number;
+    estimated_hours: number;
+    deadline: string;
+    status: 'send' | 'declined' | 'paid';
+    created_at: string;
+    paid_at?: string | null;
+    rejected_at?: string | null;
+    project: {
+        id: number;
+        name: string;
+    };
+    client: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+        photo?: string | null;
+        url?: string;
+        shopify_plan: string;
+    };
+    expert: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+        photo?: string | null;
+    };
 }

@@ -28,6 +28,13 @@ interface AdminState {
         last_page: number;
         per_page: number;
     };
+    quotes: {
+        data: any[];
+        total: number;
+        current_page: number;
+        last_page: number;
+        per_page: number;
+    };
 }
 
 export const useAdminStore = defineStore('admin', {
@@ -44,6 +51,13 @@ export const useAdminStore = defineStore('admin', {
         },
         expert: null,
         leads: {
+            data: [],
+            total: 0,
+            current_page: 1,
+            last_page: 1,
+            per_page: 15,
+        },
+        quotes: {
             data: [],
             total: 0,
             current_page: 1,
@@ -114,6 +128,25 @@ export const useAdminStore = defineStore('admin', {
                 return response.data
             } catch (error) {
                 console.error('Error fetching lead filter options:', error)
+                throw error
+            }
+        },
+
+        // New quotes methods
+        async fetchQuotesSent(params: Record<string, any> = {}) {
+            return await withLoader(async () => {
+                const response = await AdminService.getQuotesSent(params);
+                this.quotes = response.data.quotes;
+                return response.data;
+            });
+        },
+
+        async fetchQuoteFilterOptions() {
+            try {
+                const response = await AdminService.getQuoteFilterOptions()
+                return response.data
+            } catch (error) {
+                console.error('Error fetching quote filter options:', error)
                 throw error
             }
         },

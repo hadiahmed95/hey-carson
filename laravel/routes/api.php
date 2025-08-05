@@ -233,3 +233,6 @@ Route::post('/login-as', [AuthController::class, 'loginAs'])->middleware('auth:s
 
 Route::get('/test-clients', [\App\Http\Controllers\Admin\ClientController::class, 'all']);
 Route::get('/lead-filter-options', [\App\Http\Controllers\Admin\ClientController::class, 'getLeadFilterOptions']);
+
+Route::get('/test-quotes-sent', [\App\Http\Controllers\Admin\ProjectController::class, 'all']);
+Route::get('/quote-filter-options', [\App\Http\Controllers\Admin\ProjectController::class, 'getQuoteFilterOptions']);

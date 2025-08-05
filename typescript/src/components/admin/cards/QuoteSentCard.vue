@@ -1,21 +1,35 @@
 <script setup lang="ts">
-import type { IQuote } from '../../../types.ts'
+import type { IQuotee } from '../../../types.ts'
 import { computed } from 'vue'
 import ExternalLink from "../../../assets/icons/externalLink.svg";
 
 const props = defineProps<{
-  quote: IQuote
+  quote: IQuotee
 }>()
 
 const statusStyle = computed(() => {
   switch (props.quote.status) {
-    case 'Paid':
+    case 'accepted':
       return 'bg-softgreen text-success'
-    case 'Rejected':
+    case 'declined':
       return 'bg-softpink text-darkpink'
-    case 'Pending Payment':
+    case 'send':
     default:
       return 'bg-pending-light text-pending'
+  }
+})
+
+// Follow the EXACT pattern from old templates
+const displayStatus = computed(() => {
+  switch (props.quote.status) {
+    case 'accepted':
+      return 'Paid' // same as old template: "Completed", "Paid"
+    case 'declined':
+      return 'Rejected' // same as old template: "Archived"
+    case 'send':
+      return 'Pending Payment' // same as old template: "Pending Payment"
+    default:
+      return 'Unknown Status'
   }
 })
 </script>
@@ -32,13 +46,14 @@ const statusStyle = computed(() => {
         </a>
       </div>
       <h5 class="flex flex-col items-end text-tertiary">
-        <span :class="['px-3 py-1 rounded-md font-medium', statusStyle]">{{ quote.status }}</span>
-        <span v-if="quote.status === 'Rejected'" class="mt-1">Quote Rejected: {{ quote.rejectedDate }}</span>
-        <span v-if="quote.status === 'Paid'" class="mt-1">Quote Paid: {{ quote.paidDate }}</span>
+        <span :class="['px-3 py-1 rounded-md font-medium', statusStyle]">{{ displayStatus }}</span>
+        <span v-if="quote.status === 'declined'" class="mt-1">Quote Rejected: {{ quote.rejectedDate }}</span>
+        <span v-if="quote.status === 'accepted'" class="mt-1">Quote Paid: {{ quote.paidDate }}</span>
         <span>Quote Sent: {{ quote.sentDate }}</span>
       </h5>
     </div>
 
+    <!-- Rest of template remains same -->
     <div class="grid grid-cols-1 md:grid-cols-7 text-sm pt-4">
       <h4 class="flex flex-col">
         <span>Hourly Rate</span>
@@ -60,7 +75,12 @@ const statusStyle = computed(() => {
 
     <div class="grid grid-cols-4 md:grid-cols-4 gap-4 border-t pt-4">
       <div class="flex items-start space-x-3">
-        <img
+        <!-- Client Avatar with initials fallback -->
+        <div v-if="quote.client.avatarInfo" 
+             :class="['w-[64px] h-[64px] rounded-full flex items-center justify-center text-white font-semibold', quote.client.avatarInfo.bgColor]">
+          {{ quote.client.avatarInfo.initials }}
+        </div>
+        <img v-else
             :src="quote.client.avatar"
             alt="Client avatar"
             class="w-[64px] h-[64px] rounded-full object-cover"
@@ -76,7 +96,12 @@ const statusStyle = computed(() => {
       </div>
 
       <div class="flex items-start space-x-3">
-        <img
+        <!-- Expert Avatar with initials fallback -->
+        <div v-if="quote.expert.avatarInfo" 
+             :class="['w-[64px] h-[64px] rounded-full flex items-center justify-center text-white font-semibold', quote.expert.avatarInfo.bgColor]">
+          {{ quote.expert.avatarInfo.initials }}
+        </div>
+        <img v-else
             :src="quote.expert.avatar"
             alt="Expert avatar"
             class="w-[64px] h-[64px] rounded-full object-cover"
