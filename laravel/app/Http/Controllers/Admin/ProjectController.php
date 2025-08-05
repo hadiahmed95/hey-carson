@@ -73,14 +73,8 @@ class ProjectController extends Controller
                 });
             }
 
-            // Filter by offer status
             if ($status && $status !== 'all') {
-                $projects = $projects->whereHas('activeAssignment', function($assignmentQuery) use ($status) {
-                    $assignmentQuery->whereHas('offers', function($offerQuery) use ($status) {
-                        $offerQuery->where('status', $status)
-                                ->whereRaw('id = (SELECT MAX(id) FROM offers WHERE assignment_id = assignments.id)');
-                    });
-                });
+                $projects = $projects->where('status', $status); // Use project status, not offer status
             }
 
             return response()->json(['quotes' => $projects->latest()->paginate(15)]);
@@ -124,16 +118,22 @@ class ProjectController extends Controller
     public function getQuoteFilterOptions()
     {
         try {
-            // Get unique offer statuses from database
-            $statuses = \App\Models\Offer::select('status')
+            // Get unique PROJECT statuses from database (same as old template)
+            $statuses = \App\Models\Project::select('status')
                 ->distinct()
+                ->whereHas('activeAssignment.offers') // Only projects with offers
                 ->pluck('status')
                 ->map(function($status) {
                     return [
                         'value' => $status,
-                        'label' => $status === 'send' ? 'Pending Payment' : 
-                                ($status === 'accepted' ? 'Paid' : 
-                                ($status === 'declined' ? 'Rejected' : ucfirst($status)))
+                        'label' => $status === 'pending_payment' ? 'Pending Payment' : 
+                                ($status === 'in_progress' ? 'In Progress' : 
+                                ($status === 'expert_completed' ? 'Awaiting Approval' : 
+                                ($status === 'completed' ? 'Completed' : 
+                                ($status === 'pending_match' ? 'Pending Match' : 
+                                ($status === 'claimed' ? 'Read' : 
+                                ($status === 'available' ? 'In Available' : 
+                                ($status === 'matched' ? 'Matched' : ucfirst($status))))))))
                     ];
                 })
                 ->values();
@@ -148,7 +148,6 @@ class ProjectController extends Controller
         }
     }
 
-    // ... rest of your existing methods remain unchanged
     public function update(Request $request, Project $project)
     {
         $action = $request->get('status');
@@ -170,37 +169,65 @@ class ProjectController extends Controller
         }
 
         if ($expertIdToAssign) {
-            try {
-                $isAssigned = $this->projectRepository->assignExpert($project, $expertIdToAssign);
+            $projectStatus = $project->status;
+            $activeAssignment = $project->activeAssignment;
 
-                if ($isAssigned) {
-                    return response()->json(['message' => 'OK']);
-                } else {
-                    return response()->json(['message' => 'Expert already matched']);
+            if ($activeAssignment) {
+                $assignedExpertId = $activeAssignment->expert_id;
+
+                if ($projectStatus === 'matched' || $projectStatus === 'in_progress') {
+                    if ($assignedExpertId !== $expertIdToAssign) {
+                        $this->projectRepository->deactivateAssignment($project, $assignedExpertId);
+                    } else {
+                        return response()->json(['message' => 'Expert already matched']);
+                    }
                 }
-            } catch (\Exception $e) {
-                return response()->json(['message' => 'Error occurred during assignment'], 500);
+
+                if ($projectStatus === 'claimed') {
+                    $this->projectRepository->deactivateAssignment($project, $assignedExpertId);
+                }
             }
+
+            $this->projectRepository->assignPreferred($project, $expertIdToAssign);
         }
 
-        return response()->json(['message' => 'Invalid action or missing expert ID'], 400);
+        return response()->json(['message' => 'OK']);
     }
 
-    public function show(Project $project)
+    public function show(Request $request, $projectId)
     {
+        $project = Project::withTrashed()->find($projectId);
         $project->load([
             'client',
+            'invoices' => function ($query) {
+                $query->withTrashed();
+            },
+            'messages',
+            'messages.user',
+            'messages.banner',
+            'messages.offer',
+            'messages.projectFile',
+            'messages.reply',
+            'messages.reply.user',
+            'messages.reply.projectFile',
             'activeAssignment',
             'activeAssignment.expert',
             'activeAssignment.expert.profile',
+            'activeAssignment.expert.reviews',
+            'activeAssignment.expert.activeAssignments.project',
             'activeAssignment.offers',
-            'messages',
-            'invoices',
-            'history',
             'preferredExpert',
-            'preferredExpert.profile'
+            'preferredExpert.profile',
+            'projectFiles',
+            'review' => function ($query) {
+                $query->withTrashed();
+            },
+            'invoices.offer',
+            'invoices.user',
+            'history' => function ($query) {
+                $query->withTrashed();
+            },
         ]);
-
         return response()->json(['project' => $project]);
     }
 

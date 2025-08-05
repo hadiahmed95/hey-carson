@@ -299,7 +299,7 @@ export interface INotification {
     }
 }
 
-export interface IQuotee { //Todo: We will replace this with IQuotee soon
+export interface IQuotee {
     id: number
     type: string
     hours: number
@@ -474,36 +474,4 @@ export interface IExpertStat {
     cta_clicks: number
     listing_page_visits: number
     unique_visits: number
-}
-
-export interface IQuoteSent {
-    id: number;
-    title: string;
-    hourly_rate: number;
-    estimated_hours: number;
-    deadline: string;
-    status: 'send' | 'declined' | 'paid';
-    created_at: string;
-    paid_at?: string | null;
-    rejected_at?: string | null;
-    project: {
-        id: number;
-        name: string;
-    };
-    client: {
-        id: number;
-        first_name: string;
-        last_name: string;
-        email: string;
-        photo?: string | null;
-        url?: string;
-        shopify_plan: string;
-    };
-    expert: {
-        id: number;
-        first_name: string;
-        last_name: string;
-        email: string;
-        photo?: string | null;
-    };
 }

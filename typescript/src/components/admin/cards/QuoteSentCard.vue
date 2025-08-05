@@ -8,35 +8,56 @@ const props = defineProps<{
 }>()
 
 const statusStyle = computed(() => {
-  switch (props.quote.status) {
-    case 'accepted':
-      return 'bg-softgreen text-success'
-    case 'declined':
-      return 'bg-softpink text-darkpink'
-    case 'send':
-    default:
-      return 'bg-pending-light text-pending'
+  if (props.quote.deleted_at) {
+    return 'bg-red-500 text-white'
+  } else if (props.quote.status === 'pending_payment') {
+    return 'bg-red-500 text-white'
+  } else if (props.quote.status === 'in_progress') {
+    return 'bg-blue-500 text-white'
+  } else if (props.quote.status === 'expert_completed') {
+    return 'bg-blue-500 text-white'
+  } else if (props.quote.status === 'completed') {
+    return 'bg-green-500 text-white'
+  } else if (props.quote.status === 'pending_match') {
+    return 'bg-yellow-500 text-black'
+  } else if (props.quote.status === 'claimed') {
+    return 'bg-yellow-500 text-black'
+  } else if (props.quote.status === 'available') {
+    return 'bg-gray-500 text-white'
+  } else if (props.quote.status === 'matched') {
+    return 'bg-purple-500 text-white'
+  } else {
+    return 'bg-gray-400 text-white'
   }
 })
 
-// Follow the EXACT pattern from old templates
 const displayStatus = computed(() => {
-  switch (props.quote.status) {
-    case 'accepted':
-      return 'Paid' // same as old template: "Completed", "Paid"
-    case 'declined':
-      return 'Rejected' // same as old template: "Archived"
-    case 'send':
-      return 'Pending Payment' // same as old template: "Pending Payment"
-    default:
-      return 'Unknown Status'
+  if (props.quote.deleted_at) {
+    return 'Archived'
+  } else if (props.quote.status === 'pending_payment') {
+    return 'Pending Payment'
+  } else if (props.quote.status === 'in_progress') {
+    return 'In Progress'
+  } else if (props.quote.status === 'expert_completed') {
+    return 'Awaiting Approval'
+  } else if (props.quote.status === 'completed') {
+    return 'Completed'
+  } else if (props.quote.status === 'pending_match') {
+    return 'Pending Match'
+  } else if (props.quote.status === 'claimed') {
+    return 'Read'
+  } else if (props.quote.status === 'available') {
+    return 'In Available'
+  } else if (props.quote.status === 'matched') {
+    return 'Matched'
+  } else {
+    return 'Missing Status'
   }
 })
 </script>
 
 <template>
   <div class="bg-white rounded-md p-card-padding space-y-4 border border-grey">
-
     <div class="flex justify-between items-start">
       <div>
         <div class="text-paragraph font-semibold text-primary">{{ quote.title }}</div>
@@ -53,7 +74,6 @@ const displayStatus = computed(() => {
       </h5>
     </div>
 
-    <!-- Rest of template remains same -->
     <div class="grid grid-cols-1 md:grid-cols-7 text-sm pt-4">
       <h4 class="flex flex-col">
         <span>Hourly Rate</span>
@@ -115,7 +135,6 @@ const displayStatus = computed(() => {
           </a>
         </div>
       </div>
-
     </div>
   </div>
 </template>

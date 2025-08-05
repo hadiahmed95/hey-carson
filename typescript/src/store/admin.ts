@@ -132,7 +132,6 @@ export const useAdminStore = defineStore('admin', {
             }
         },
 
-        // New quotes methods
         async fetchQuotesSent(params: Record<string, any> = {}) {
             return await withLoader(async () => {
                 const response = await AdminService.getQuotesSent(params);

@@ -27,7 +27,7 @@ const filterOptions = ref<{
   statuses: []
 });
 
-// Transform quotes data to match IQuote interface
+// Transform quotes data to match IQuotee interface
 const transformedQuotes = computed((): IQuotee[] => {
   return quotes.value.map(project => {
     // Get the latest offer from activeAssignment
@@ -48,14 +48,21 @@ const transformedQuotes = computed((): IQuotee[] => {
     const clientAvatarInfo = hasClientPhoto ? undefined : generateInitialsAvatar(clientName);
     const expertAvatarInfo = hasExpertPhoto ? undefined : generateInitialsAvatar(expertName);
 
+    const transformedStatus = project.status || 'unknown';
+
     return {
+      id: latestOffer?.id || 0,
+      type: 'Quote',
+      hours: latestOffer?.hours || 0,
+      rate: latestOffer?.rate || 0,
+      created_at: latestOffer?.created_at || '',
       title: project.name || 'Untitled Project',
-      link: project.url || '#', // Use projects.url directly
-      hourlyRate: `$${latestOffer?.rate || 0}/hour`, // Use offers.rate directly
+      link: project.url || '#',
+      hourlyRate: `$${latestOffer?.rate || 0}/hour`,
       estimatedTime: `${latestOffer?.hours || 0} hours`,
       deadline: latestOffer?.deadline ? new Date(latestOffer.deadline).toLocaleDateString() : 'No deadline',
       total: `$${((latestOffer?.rate || 0) * (latestOffer?.hours || 0)).toFixed(2)}`,
-      status: latestOffer?.status || 'unknown', // Use exact database status
+      status: transformedStatus,
       sentDate: latestOffer?.created_at ? new Date(latestOffer.created_at).toLocaleDateString() : '',
       paidDate: latestOffer?.status === 'accepted' && latestOffer?.status_updated_at ? new Date(latestOffer.status_updated_at).toLocaleDateString() : undefined,
       rejectedDate: latestOffer?.status === 'declined' && latestOffer?.status_updated_at ? new Date(latestOffer.status_updated_at).toLocaleDateString() : undefined,
@@ -64,13 +71,13 @@ const transformedQuotes = computed((): IQuotee[] => {
         email: project.client?.email || '',
         avatar: hasClientPhoto ? getS3URL(project.client.photo) : 'https://randomuser.me/api/portraits/women/43.jpg',
         plan: project.client?.shopify_plan || 'Unknown',
-        avatarInfo: clientAvatarInfo, // Add avatar info for initials
+        avatarInfo: clientAvatarInfo,
       },
       expert: {
         name: expertName || 'Unknown Expert',
         email: project.active_assignment?.expert?.email || '',
         avatar: hasExpertPhoto ? getS3URL(project.active_assignment.expert.photo) : 'https://randomuser.me/api/portraits/men/44.jpg',
-        avatarInfo: expertAvatarInfo, // Add avatar info for initials
+        avatarInfo: expertAvatarInfo,
       }
     };
   });

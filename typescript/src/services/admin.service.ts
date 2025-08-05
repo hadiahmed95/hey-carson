@@ -28,7 +28,8 @@ class AdminService {
 
     // New quotes sent methods - reusing projects endpoint with version parameter
     async getQuotesSent(params: Record<string, any> = {}) {
-        return ApiService.get('http://127.0.0.1:8000/api/test-quotes-sent', { ...params, version: 'v2' });
+        const response = ApiService.get('http://127.0.0.1:8000/api/test-quotes-sent', { ...params, version: 'v2' });
+        return response;
     }
 
     async getPayouts(params: Record<string, any> = {}) {
