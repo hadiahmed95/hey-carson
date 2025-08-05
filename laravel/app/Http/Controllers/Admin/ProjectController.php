@@ -28,82 +28,64 @@ class ProjectController extends Controller
         $status = $request->get('status');
         $search = $request->get('search');
         $period = $request->get('period');
-        $version = $request->get('version', 'v1');
         $date = null;
 
+        // Handle period filtering
         if ($period === 'week') {
             $date = Carbon::now()->subWeek();
         } elseif ($period === 'month') {
             $date = Carbon::now()->subMonth();
         }
 
-        if ($version === 'v2') {
-            // For v2 (quotes sent), get projects with offers/quotes
-            $projects = Project::with([
-                'client', 
-                'activeAssignment', 
-                'activeAssignment.expert', 
-                'activeAssignment.expert.profile',
-                'activeAssignment.offers' => function($query) {
-                    $query->orderBy('created_at', 'desc');
-                }
-            ])
-            ->whereHas('activeAssignment.offers'); // Only projects with offers
-
-            if ($date) {
-                $projects = $projects->whereDate('created_at', '>', $date);
+        $projects = Project::with([
+            'client', 
+            'activeAssignment', 
+            'activeAssignment.expert', 
+            'activeAssignment.expert.profile',
+            'preferredExpert', 
+            'preferredExpert.profile',
+            // Add the missing V2 relationship for offers/quotes
+            'activeAssignment.offers' => function($query) {
+                $query->orderBy('created_at', 'desc');
             }
-
-            if ($search) {
-                $projects = $projects->where(function($query) use ($search) {
-                    $search = '%' . $search . '%';
-                    $query->where('name', 'like', $search)
-                        ->orWhere('description', 'like', $search)
-                        ->orWhere('url', 'like', $search)
-                        ->orWhereHas('client', function($clientQuery) use ($search) {
-                            $clientQuery->where('first_name', 'like', $search)
-                                       ->orWhere('last_name', 'like', $search)
-                                       ->orWhere('email', 'like', $search);
-                        })
-                        ->orWhereHas('activeAssignment.expert', function($expertQuery) use ($search) {
-                            $expertQuery->where('first_name', 'like', $search)
-                                       ->orWhere('last_name', 'like', $search)
-                                       ->orWhere('email', 'like', $search);
-                        });
-                });
-            }
-
-            if ($status && $status !== 'all') {
-                $projects = $projects->where('status', $status); // Use project status, not offer status
-            }
-
-            return response()->json(['quotes' => $projects->latest()->paginate(15)]);
-        }
-
-        // Original v1 logic (unchanged)
-        $projects = Project::with(['client', 'activeAssignment', 'activeAssignment.expert', 'activeAssignment.expert.profile', 'preferredExpert', 'preferredExpert.profile']);
-        
+        ]);
+            
+        // Date filtering
         if ($date) {
             $projects = $projects->whereDate('created_at', '>', $date);
         }
 
+        // Status filtering
         if ($status && $status !== 'all' && $status !== 'archived') {
             $projects = $projects->where('status', $status);
         }
 
+        // Limit filtering
         if ($request->get('limit')) {
             $projects = $projects->limit($request->get('limit'));
         }
 
+        // Search filtering - comprehensive search across all relevant fields
         if ($search) {
             $projects = $projects->where(function($query) use ($search) {
                 $search = '%' . $search . '%';
                 $query->where('name', 'like', $search)
                     ->orWhere('description', 'like', $search)
-                    ->orWhere('url', 'like', $search);
+                    ->orWhere('url', 'like', $search)
+                    ->orWhereHas('client', function($clientQuery) use ($search) {
+                        $clientQuery->where('first_name', 'like', $search)
+                                ->orWhere('last_name', 'like', $search)
+                                ->orWhere('email', 'like', $search);
+                    })
+                    ->orWhereHas('activeAssignment.expert', function($expertQuery) use ($search) {
+                        $expertQuery->where('first_name', 'like', $search)
+                                ->orWhere('last_name', 'like', $search)
+                                ->orWhere('email', 'like', $search);
+                    });
             });
         }
 
+        // Handle archived projects
         if ($status && $status === 'archived') {
             $projects = $projects->whereNotNull('deleted_at');
             return response()->json(['projects' => $projects->withTrashed()->latest()->paginate(15)]);
@@ -121,7 +103,6 @@ class ProjectController extends Controller
             // Get unique PROJECT statuses from database (same as old template)
             $statuses = \App\Models\Project::select('status')
                 ->distinct()
-                ->whereHas('activeAssignment.offers') // Only projects with offers
                 ->pluck('status')
                 ->map(function($status) {
                     return [

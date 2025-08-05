@@ -27,62 +27,6 @@ const filterOptions = ref<{
   statuses: []
 });
 
-// Transform quotes data to match IQuotee interface
-const transformedQuotes = computed((): IQuotee[] => {
-  return quotes.value.map(project => {
-    // Get the latest offer from activeAssignment
-    const latestOffer = project.active_assignment?.offers?.[0];
-    
-    const clientName = `${project.client?.first_name || ''} ${project.client?.last_name || ''}`.trim();
-    const expertName = `${project.active_assignment?.expert?.first_name || ''} ${project.active_assignment?.expert?.last_name || ''}`.trim();
-    
-    const hasClientPhoto = project.client?.photo && 
-                          project.client?.photo !== null && 
-                          project.client?.photo !== '';
-    
-    const hasExpertPhoto = project.active_assignment?.expert?.photo && 
-                          project.active_assignment?.expert?.photo !== null && 
-                          project.active_assignment?.expert?.photo !== '';
-
-    // Generate initials avatar for client if no photo
-    const clientAvatarInfo = hasClientPhoto ? undefined : generateInitialsAvatar(clientName);
-    const expertAvatarInfo = hasExpertPhoto ? undefined : generateInitialsAvatar(expertName);
-
-    const transformedStatus = project.status || 'unknown';
-
-    return {
-      id: latestOffer?.id || 0,
-      type: 'Quote',
-      hours: latestOffer?.hours || 0,
-      rate: latestOffer?.rate || 0,
-      created_at: latestOffer?.created_at || '',
-      title: project.name || 'Untitled Project',
-      link: project.url || '#',
-      hourlyRate: `$${latestOffer?.rate || 0}/hour`,
-      estimatedTime: `${latestOffer?.hours || 0} hours`,
-      deadline: latestOffer?.deadline ? new Date(latestOffer.deadline).toLocaleDateString() : 'No deadline',
-      total: `$${((latestOffer?.rate || 0) * (latestOffer?.hours || 0)).toFixed(2)}`,
-      status: transformedStatus,
-      sentDate: latestOffer?.created_at ? new Date(latestOffer.created_at).toLocaleDateString() : '',
-      paidDate: latestOffer?.status === 'accepted' && latestOffer?.status_updated_at ? new Date(latestOffer.status_updated_at).toLocaleDateString() : undefined,
-      rejectedDate: latestOffer?.status === 'declined' && latestOffer?.status_updated_at ? new Date(latestOffer.status_updated_at).toLocaleDateString() : undefined,
-      client: {
-        name: clientName || 'Unknown Client',
-        email: project.client?.email || '',
-        avatar: hasClientPhoto ? getS3URL(project.client.photo) : 'https://randomuser.me/api/portraits/women/43.jpg',
-        plan: project.client?.shopify_plan || 'Unknown',
-        avatarInfo: clientAvatarInfo,
-      },
-      expert: {
-        name: expertName || 'Unknown Expert',
-        email: project.active_assignment?.expert?.email || '',
-        avatar: hasExpertPhoto ? getS3URL(project.active_assignment.expert.photo) : 'https://randomuser.me/api/portraits/men/44.jpg',
-        avatarInfo: expertAvatarInfo,
-      }
-    };
-  });
-});
-
 const generateInitialsAvatar = (name: string): { initials: string; bgColor: string } => {
   if (!name) return { initials: 'NA', bgColor: 'bg-gray-400' };
   
@@ -144,15 +88,17 @@ const fetchQuotesSent = async (page = 1, resetData = false) => {
 
     const response = await adminStore.fetchQuotesSent(params);
     
+    const projectsData = response.projects || response.quotes; // Fallback for compatibility
+    
     if (resetData) {
-      quotes.value = response.quotes.data;
+      quotes.value = projectsData.data;
     } else {
-      quotes.value.push(...response.quotes.data);
+      quotes.value.push(...projectsData.data);
     }
     
-    totalQuotes.value = response.quotes.total;
-    currentPage.value = response.quotes.current_page;
-    lastPage.value = response.quotes.last_page;
+    totalQuotes.value = projectsData.total;
+    currentPage.value = projectsData.current_page;
+    lastPage.value = projectsData.last_page;
     
   } catch (error) {
     console.error('Error fetching quotes:', error);
@@ -160,6 +106,63 @@ const fetchQuotesSent = async (page = 1, resetData = false) => {
     isLoadingMore.value = false;
   }
 };
+
+const transformedQuotes = computed((): IQuotee[] => {
+  return quotes.value.map(project => {
+    // Get the latest offer from activeAssignment
+    const latestOffer = project.active_assignment?.offers?.[0];
+    
+    const clientName = `${project.client?.first_name || ''} ${project.client?.last_name || ''}`.trim();
+    const expertName = `${project.active_assignment?.expert?.first_name || ''} ${project.active_assignment?.expert?.last_name || ''}`.trim();
+    
+    const hasClientPhoto = project.client?.photo && 
+                          project.client?.photo !== null && 
+                          project.client?.photo !== '';
+    
+    const hasExpertPhoto = project.active_assignment?.expert?.photo && 
+                          project.active_assignment?.expert?.photo !== null && 
+                          project.active_assignment?.expert?.photo !== '';
+
+    // Generate initials avatar for client if no photo
+    const clientAvatarInfo = hasClientPhoto ? undefined : generateInitialsAvatar(clientName);
+    const expertAvatarInfo = hasExpertPhoto ? undefined : generateInitialsAvatar(expertName);
+
+    const transformedStatus = project.status || 'unknown';
+
+    return {
+      id: latestOffer?.id || 0,
+      type: 'Quote',
+      hours: latestOffer?.hours || 0,
+      rate: latestOffer?.rate || 0,
+      created_at: latestOffer?.created_at || '',
+      title: project.name || 'Untitled Project',
+      link: project.url || '#',
+      hourlyRate: `$${latestOffer?.rate || 0}/hour`,
+      estimatedTime: `${latestOffer?.hours || 0} hours`,
+      deadline: latestOffer?.deadline ? new Date(latestOffer.deadline).toLocaleDateString() : 'No deadline',
+      total: `$${((latestOffer?.rate || 0) * (latestOffer?.hours || 0)).toFixed(2)}`,
+      status: transformedStatus,
+      sentDate: latestOffer?.created_at ? new Date(latestOffer.created_at).toLocaleDateString() : 'N/A',
+      paidDate: latestOffer?.status === 'accepted' && latestOffer?.status_updated_at ? 
+        new Date(latestOffer.status_updated_at).toLocaleDateString() : undefined,
+      rejectedDate: latestOffer?.status === 'declined' && latestOffer?.status_updated_at ? 
+        new Date(latestOffer.status_updated_at).toLocaleDateString() : undefined,
+      client: {
+        name: clientName || 'Unknown Client',
+        email: project.client?.email || '',
+        avatar: hasClientPhoto ? getS3URL(project.client.photo) : 'https://randomuser.me/api/portraits/women/43.jpg',
+        plan: project.client?.shopify_plan || 'Unknown',
+        avatarInfo: clientAvatarInfo,
+      },
+      expert: {
+        name: expertName || 'Unknown Expert',
+        email: project.active_assignment?.expert?.email || '',
+        avatar: hasExpertPhoto ? getS3URL(project.active_assignment.expert.photo) : 'https://randomuser.me/api/portraits/men/44.jpg',
+        avatarInfo: expertAvatarInfo,
+      }
+    };
+  });
+});
 
 const loadMore = () => {
   if (currentPage.value < lastPage.value && !isLoadingMore.value) {
