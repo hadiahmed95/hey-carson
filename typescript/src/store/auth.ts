@@ -48,28 +48,6 @@ export const useAuthStore = defineStore('auth', {
             return await withLoader( async () => {
                 return await AuthService.resetPassword(payload);
             })
-        },
-        async loginAs(email: string, role: string) {
-            try {
-                const response = await ApiService.post('/login-as', {
-                    email,
-                    role
-                })
-                
-                this.token = response.data.token
-                this.user = response.data.user
-                
-                // Store in localStorage
-                localStorage.setItem('CURRENT_TOKEN', this.token)
-                localStorage.setItem('CURRENT_USER', JSON.stringify(this.user))
-                
-                // Set authorization header
-                api.defaults.headers.common['Authorization'] = 'Bearer ' + this.token;
-                
-                return response.data
-            } catch (error) {
-                throw error
-            }
         }
     }
 })

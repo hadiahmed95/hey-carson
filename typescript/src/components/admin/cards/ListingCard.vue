@@ -4,18 +4,11 @@ import ExternalLink from "../../../assets/icons/externalLink.svg";
 import { ref } from "vue";
 import type { IListing } from "../../../types.ts";
 
-const props = defineProps<{
+defineProps<{
   listing: IListing,
 }>()
 
 const action = ref('')
-
-// Handle Login As button click
-const handleLoginAs = () => {
-  if (props.listing.onLoginAs) {
-    props.listing.onLoginAs();
-  }
-}
 </script>
 
 <template>
@@ -23,34 +16,11 @@ const handleLoginAs = () => {
     <!-- Header -->
     <div class="grid grid-cols-5 gap-6 mb-5 items-start">
       <div class="flex gap-4 col-span-2">
-        <!-- Profile Image or Initials Avatar -->
-        <div class="w-[64px] h-[64px] rounded-full overflow-hidden">
-          <!-- Show initials avatar only if it's the default placeholder AND has avatarInfo -->
-          <div
-              v-if="listing.displayUrl === 'https://randomuser.me/api/portraits/men/32.jpg' && listing.avatarInfo"
-              :class="[
-                'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg',
-                listing.avatarInfo.bgColor
-              ]"
-          >
-            {{ listing.avatarInfo.initials }}
-          </div>
-          <!-- Show actual image for real photos -->
-          <img
-              v-else-if="listing.displayUrl && listing.displayUrl !== 'https://randomuser.me/api/portraits/men/32.jpg'"
-              :src="listing.displayUrl"
-              alt="Profile avatar"
-              class="w-full h-full rounded-full object-cover"
-          />
-          <!-- Fallback placeholder image -->
-          <img
-              v-else
-              src="https://randomuser.me/api/portraits/men/32.jpg"
-              alt="Profile avatar"
-              class="w-full h-full rounded-full object-cover"
-          />
-        </div>
-        
+        <img
+            :src="listing.displayUrl"
+            alt="Reviewer avatar"
+            class="w-[64px] h-[64px] rounded-full object-cover"
+        />
         <div>
           <div class="flex items-center gap-2">
             <p class="text-primary font-medium">{{ listing.name }}</p>
@@ -59,8 +29,7 @@ const handleLoginAs = () => {
                 :class="{
                   'text-pending bg-pending-light': listing.status === 'Pending',
                   'text-success bg-success-light': listing.status === 'Active',
-                  'text-link bg-link-light': listing.status === 'Claimed',
-                  'text-white bg-red-500': listing.status === 'Inactive'
+                  'text-link bg-link-light': listing.status === 'Claimed'
                 }"
             >
               {{ listing.status }}
@@ -99,11 +68,9 @@ const handleLoginAs = () => {
             <option value="last_year">Last Year</option>
           </select>
 
-          <!-- Only show Login As button for non-inactive users -->
           <button
-              v-if="listing.status !== 'Pending' && listing.status !== 'Inactive'"
-              @click="handleLoginAs"
-              class="bg-primary text-white text-h4 py-2 px-4 rounded-sm hover:bg-primary-dark"
+              v-if="listing.status !== 'Pending'"
+              class="bg-primary text-white text-h4 py-2 px-4 rounded-sm"
           >
             Login As
           </button>
