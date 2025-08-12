@@ -230,3 +230,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/admin/filter-options', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'getFilterOptions']);
 Route::get('/admin/listings', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'all']);
+Route::post('/admin/listings/{user}/status', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'updateStatus']);

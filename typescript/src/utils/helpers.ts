@@ -38,3 +38,25 @@ export function isValidUrl(url: string) {
         return false
     }
 }
+
+export function generateInitialsAvatar(name: string): { initials: string; bgColor: string } {
+    if (!name) return { initials: 'NA', bgColor: 'bg-coolGray' };
+    
+    const words = name.trim().split(' ');
+    const initials = words.slice(0, 2).map(word => word.charAt(0).toUpperCase()).join('');
+    
+    const colors = [
+        'bg-primary', 'bg-success', 'bg-link', 'bg-pending', 
+        'bg-info', 'bg-darkGreen', 'bg-brandBlue', 'bg-lightBlue',
+        'bg-orangeBrown', 'bg-deepBlue', 'bg-deepViolet', 'bg-coolGray'
+    ];
+    
+    // Use character sum to determine consistent color for same name
+    const charSum = initials.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const colorIndex = charSum % colors.length;
+    
+    return {
+        initials: initials || 'NA',
+        bgColor: colors[colorIndex] || 'bg-coolGray'
+    };
+}

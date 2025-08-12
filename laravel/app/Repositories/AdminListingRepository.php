@@ -3,39 +3,39 @@
 namespace App\Repositories;
 
 use App\Constants\Constants;
+use App\Models\Role;
 use App\Models\ServiceCategory;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Exception;
 
 class AdminListingRepository
 {
-    private int $expertRoleId;
     private int $paginationLimit;
 
     public function __construct()
     {
-        $this->expertRoleId = Constants::EXPERT_ROLE_ID;
         $this->paginationLimit = Constants::DEFAULT_PAGINATION_LIMIT;
     }
 
-    public function getExperts(Request $request): LengthAwarePaginator
+    public function getExperts(array $filters): LengthAwarePaginator
     {
         try {
-            $query = $this->buildExpertsQuery($request);
+            $query = $this->buildExpertsQuery($filters);
+            $perPage = $filters['per_page'] ?? $this->paginationLimit;
+            
             return $query->with(['profile', 'reviews', 'serviceCategories', 'activeAssignments'])
                         ->latest()
-                        ->paginate($this->paginationLimit);
+                        ->paginate($perPage);
         } catch (Exception $e) {
             throw new Exception('Failed to fetch experts: ' . $e->getMessage());
         }
     }
 
-    public function getExpertsCount(Request $request): int
+    public function getExpertsCount(array $filters): int
     {
         try {
-            return $this->buildExpertsQuery($request)->count('id');
+            return $this->buildExpertsQuery($filters)->count('id');
         } catch (Exception $e) {
             throw new Exception('Failed to count experts: ' . $e->getMessage());
         }
@@ -44,7 +44,7 @@ class AdminListingRepository
     public function getFilterOptions(): array
     {
         try {
-            $experts = User::where('role_id', $this->expertRoleId)->with('profile')->get();
+            $experts = User::where('role_id', Role::EXPERT)->with('profile')->get();
 
             $statuses = $experts->pluck('profile.status')
                 ->filter()
@@ -131,70 +131,77 @@ class AdminListingRepository
         }
     }
 
-    private function buildExpertsQuery(Request $request)
+    private function buildExpertsQuery(array $filters)
     {
         try {
-            $search = $request->get('search');
-            $userStatus = $request->get('status');
-            $city = $request->get('city');
-            $usertype = $request->get('usertype');
-            $expertType = $request->get('expert_type');
-            $serviceCategory = $request->get('service_category');
-            $shopifyPlan = $request->get('shopify_plan');
-            $language = $request->get('eng_level');
-            $role = $request->get('role');
+            $query = User::where('role_id', Role::EXPERT);
 
-            $experts = User::query()->where('role_id', $this->expertRoleId);
-
-            if ($search) {
-                $experts = $this->applySearchFilter($experts, $search);
+            if (!empty($filters['search'])) {
+                $this->applySearchFilter($query, $filters['search']);
             }
 
-            if ($userStatus) {
-                $experts = $experts->whereHas('profile', function ($query) use ($userStatus) {
-                    $query->where('status', $userStatus);
+            if (!empty($filters['status'])) {
+                $query->whereHas('profile', function ($q) use ($filters) {
+                    $q->where('status', $filters['status']);
                 });
             }
 
-            if ($city) {
-                $experts = $experts->whereHas('profile', function ($query) use ($city) {
-                    $query->where('country', $city);
+            if (!empty($filters['role'])) {
+                $query->whereHas('profile', function ($q) use ($filters) {
+                    $q->where('role', $filters['role']);
                 });
             }
 
-            if ($usertype) {
-                $experts = $experts->where('usertype', $usertype);
-            }
-
-            if ($expertType) {
-                $experts = $experts->whereHas('profile', function ($query) use ($expertType) {
-                    $query->where('expert_type', $expertType);
+            if (!empty($filters['country'])) {
+                $query->whereHas('profile', function ($q) use ($filters) {
+                    $q->where('country', 'LIKE', '%' . $filters['country'] . '%');
                 });
             }
 
-            if ($serviceCategory) {
-                $experts = $experts->whereHas('serviceCategories', function ($query) use ($serviceCategory) {
-                    $query->where('service_categories.name', $serviceCategory);
+            if (!empty($filters['city'])) {
+                $query->whereHas('profile', function ($q) use ($filters) {
+                    $q->where('country', 'LIKE', $filters['city'] . '%');
                 });
             }
 
-            if ($shopifyPlan) {
-                $experts = $experts->where('shopify_plan', $shopifyPlan);
-            }
-
-            if ($language) {
-                $experts = $experts->whereHas('profile', function ($query) use ($language) {
-                    $query->where('eng_level', $language);
+            if (!empty($filters['language'])) {
+                $query->whereHas('profile', function ($q) use ($filters) {
+                    $q->where('eng_level', $filters['language']);
                 });
             }
 
-            if ($role) {
-                $experts = $experts->whereHas('profile', function ($query) use ($role) {
-                    $query->where('role', $role);
+            if (!empty($filters['userType'])) {
+                $query->where('usertype', strtolower($filters['userType']));
+            }
+
+            if (!empty($filters['expertType'])) {
+                $query->whereHas('profile', function ($q) use ($filters) {
+                    $q->where('expert_type', strtolower($filters['expertType']));
                 });
             }
 
-            return $experts;
+            if (!empty($filters['serviceCategory'])) {
+                $query->whereHas('serviceCategories', function ($q) use ($filters) {
+                    $q->where('name', $filters['serviceCategory']);
+                });
+            }
+
+            if (!empty($filters['shopifyPlan'])) {
+                $query->where('shopify_plan', $filters['shopifyPlan']);
+            }
+
+            if (!empty($filters['hourlyRateMin']) || !empty($filters['hourlyRateMax'])) {
+                $query->whereHas('profile', function ($q) use ($filters) {
+                    if (!empty($filters['hourlyRateMin'])) {
+                        $q->where('hourly_rate', '>=', $filters['hourlyRateMin']);
+                    }
+                    if (!empty($filters['hourlyRateMax'])) {
+                        $q->where('hourly_rate', '<=', $filters['hourlyRateMax']);
+                    }
+                });
+            }
+
+            return $query;
         } catch (Exception $e) {
             throw new Exception('Failed to build experts query: ' . $e->getMessage());
         }
@@ -237,6 +244,23 @@ class AdminListingRepository
             });
         } catch (Exception $e) {
             throw new Exception('Failed to apply search filter: ' . $e->getMessage());
+        }
+    }
+
+    public function updateExpertStatus(int $expertId, string $action): void
+    {
+        try {
+            $expert = User::where('role_id', Role::EXPERT)
+                ->withTrashed()
+                ->findOrFail($expertId);
+            
+            if ($action === 'activate') {
+                $expert->profile->update(['status' => 'active']);
+            } elseif ($action === 'deactivate') {
+                $expert->profile->update(['status' => 'inactive']);
+            }
+        } catch (Exception $e) {
+            throw new Exception('Failed to update expert status: ' . $e->getMessage());
         }
     }
 }

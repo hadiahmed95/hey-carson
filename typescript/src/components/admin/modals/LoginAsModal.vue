@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseButton from '../../common/InputFields/BaseButton.vue'
 import { useAuthStore } from '@/store/auth.ts'
-import { getS3URL } from '@/utils/helpers.ts'
+import { getS3URL, generateInitialsAvatar } from '@/utils/helpers.ts'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -16,28 +16,6 @@ const props = defineProps<{
 const router = useRouter()
 const authStore = useAuthStore()
 const isLoading = ref(false)
-
-// Helper function to generate initials avatar
-const generateInitialsAvatar = (name: string): { initials: string; bgColor: string } => {
-  if (!name) return { initials: 'NA', bgColor: 'bg-coolGray' };
-  
-  const words = name.trim().split(' ');
-  const initials = words.slice(0, 2).map(word => word.charAt(0).toUpperCase()).join('');
-  
-  const colors = [
-    'bg-primary', 'bg-success', 'bg-link', 'bg-pending', 
-    'bg-info', 'bg-darkGreen', 'bg-brandBlue', 'bg-lightBlue',
-    'bg-orangeBrown', 'bg-deepBlue', 'bg-deepViolet', 'bg-coolGray'
-  ];
-  
-  const charSum = initials.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const colorIndex = charSum % colors.length;
-  
-  return {
-    initials: initials || 'NA',
-    bgColor: colors[colorIndex] || 'bg-coolGray'
-  };
-};
 
 // Computed properties for expert image display
 const expertName = computed(() => props.expert.display_name || `${props.expert.first_name} ${props.expert.last_name}`);
@@ -65,7 +43,7 @@ const loginAsExpert = async () => {
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
       <div class="flex items-center justify-between border-b p-4">
-        <h2 class="text-lg font-semibold text-primary">Login As Expert</h2>
+        <h2 class="text-h3 font-semibold text-primary">Login As Expert</h2>
         <button @click="emit('close')" class="text-gray-500 hover:text-gray-700 text-xl leading-none">
           ×
         </button>
@@ -79,7 +57,7 @@ const loginAsExpert = async () => {
             <div
                 v-if="!displayUrl && avatarInfo"
                 :class="[
-                  'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-sm',
+                  'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h5',
                   avatarInfo.bgColor
                 ]"
             >
@@ -95,33 +73,37 @@ const loginAsExpert = async () => {
             <!-- Fallback initials if neither condition is met -->
             <div
                 v-else
-                class="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-sm bg-coolGray"
+                class="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h5 bg-coolGray"
             >
               NA
             </div>
           </div>
           <div>
             <h3 class="font-medium text-primary">{{ expertName }}</h3>
-            <p class="text-sm text-gray-600">{{ expert.email }}</p>
+            <p class="text-h5 text-gray-600">{{ expert.email }}</p>
           </div>
         </div>
 
-        <p class="text-gray-600 text-sm mb-6">
+        <p class="text-gray-600 text-h5 mb-6">
           You are about to login as this expert. You will be redirected to their dashboard where you can view and manage their account.
         </p>
 
-        <div class="flex justify-end space-x-3">
-          <button 
-            @click="emit('close')"
-            class="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+        <div class="flex gap-3 justify-end">
+          <BaseButton
+              variant="secondary"
+              size="medium"
+              @click="emit('close')"
+              :disabled="isLoading"
+              class="px-4 py-2"
           >
             Cancel
-          </button>
-          <BaseButton 
-            @click="loginAsExpert"
-            :loading-button="isLoading"
-            :isPrimary="true"
-            class="px-4 py-2 text-sm"
+          </BaseButton>
+          <BaseButton
+              variant="primary"
+              size="medium"
+              @click="loginAsExpert"
+              :loading="isLoading"
+              class="px-4 py-2"
           >
             Login As Expert
           </BaseButton>
@@ -130,3 +112,7 @@ const loginAsExpert = async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+
+</style>
