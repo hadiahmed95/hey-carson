@@ -46,6 +46,7 @@
           lightPurple: 'var(--color-light-purple)',
           earthyOrangeBrown: 'var(--color-earthy-orange-brown)',
           deepViolet: 'var(--color-deep-violet)',
+          lightGrey: 'var(--color-light-grey)',
         },
         fontSize: {
           h1: ['32px', '40px'],

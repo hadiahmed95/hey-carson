@@ -40,7 +40,11 @@ export interface ILead {
 export interface IListing {
     id: number,
     name: string
-    displayUrl: string
+    displayUrl: string | null
+    avatarInfo?: {
+        initials: string
+        bgColor: string
+    }
     type: string
     email: string
     storeTitle: string
@@ -52,6 +56,10 @@ export interface IListing {
     status: string
     statusUpdatedAt: string
     servicesOffered: string[]
+    totalReviews?: number
+    averageRating?: number
+    expertData?: any
+    onLoginAs?: () => void
 }
 
 export interface IReview {
