@@ -227,3 +227,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/login-as/{user}', [\App\Http\Controllers\AuthController::class, 'loginAsUser']);
     });
 });
+
+Route::get('/admin/filter-options', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'getFilterOptions']);
+Route::get('/admin/listings', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'all']);
