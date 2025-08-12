@@ -5,17 +5,18 @@ import { useLoaderStore } from "@/store/loader.ts";
 import ListingCard from "../../components/admin/cards/ListingCard.vue";
 import EmptyDataPlaceholder from "../../components/common/EmptyDataPlaceholder.vue";
 import Search from "../../assets/icons/search.svg";
-import { getS3URL } from "@/utils/helpers.ts";
+import { getS3URL, generateInitialsAvatar } from "@/utils/helpers.ts";
 import LoginAsModal from "../../components/admin/modals/LoginAsModal.vue";
 
 const adminStore = useAdminStore();
 const loader = useLoaderStore();
 const isLoading = computed(() => loader.isLoadingState);
 
-const experts = ref<any[]>([]);
-const totalExperts = ref(0);
-const currentPage = ref(1);
-const lastPage = ref(1);
+const experts = computed(() => adminStore.experts);
+const totalExperts = computed(() => adminStore.totalExperts);
+const currentPage = computed(() => adminStore.currentPage);
+const lastPage = computed(() => adminStore.lastPage);
+
 const isLoadingMore = ref(false);
 
 const status = ref('');
@@ -84,27 +85,20 @@ const fetchFilterOptions = async () => {
   }
 };
 
-// Helper function to generate initials avatar
-const generateInitialsAvatar = (name: string): { initials: string; bgColor: string } => {
-  if (!name) return { initials: 'NA', bgColor: 'bg-coolGray' };
-  
-  const words = name.trim().split(' ');
-  const initials = words.slice(0, 2).map(word => word.charAt(0).toUpperCase()).join('');
-  
-  const colors = [
-    'bg-primary', 'bg-success', 'bg-link', 'bg-pending', 
-    'bg-info', 'bg-darkGreen', 'bg-brandBlue', 'bg-lightBlue',
-    'bg-orangeBrown', 'bg-deepBlue', 'bg-deepViolet', 'bg-coolGray'
-  ];
-  
-  const charSum = initials.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const colorIndex = charSum % colors.length;
-  
-  return {
-    initials: initials || 'NA',
-    bgColor: colors[colorIndex] || 'bg-coolGray'
-  };
-};
+// Get current filters
+const getCurrentFilters = () => ({
+    search: searchQuery.value,
+    status: status.value,
+    city: city.value,
+    usertype: plan.value,
+    expert_type: typeOfAccount.value,
+    service_category: servicesOffered.value,
+    shopify_plan: shopifyPlan.value,
+    eng_level: language.value,
+    role: role.value,
+    page: currentPage.value,
+    per_page: 15
+});
 
 const filteredAndMappedExperts = computed(() => {
   return experts.value.map((expert: any) => {
@@ -150,7 +144,7 @@ const fetchExperts = async (page = 1, resetData = false) => {
   if (isLoading.value && !isLoadingMore.value) return;
   
   if (resetData) {
-    currentPage.value = 1;
+    
   } else {
     isLoadingMore.value = true;
   }
@@ -170,24 +164,10 @@ const fetchExperts = async (page = 1, resetData = false) => {
     if (language.value) params.eng_level = language.value;
     if (role.value) params.role = role.value;
     
-    const response = await adminStore.fetchExperts(params);
-    
-    if (resetData) {
-      experts.value = response.experts.data || [];
-    } else {
-      experts.value.push(...(response.experts.data || []));
-    }
-    
-    totalExperts.value = response.experts_count || 0;
-    currentPage.value = response.experts.current_page || 1;
-    lastPage.value = response.experts.last_page || 1;
+    await adminStore.fetchExperts(params);
     
   } catch (error: any) {
     console.error('Error fetching experts:', error);
-    if (resetData) {
-      experts.value = [];
-      totalExperts.value = 0;
-    }
   } finally {
     isLoadingMore.value = false;
   }
@@ -247,7 +227,7 @@ onMounted(async () => {
           Listings <span class="text-gray-500">({{ totalExperts }})</span>
         </h1>
       </div>
-      <div class="flex items-center border border-grey rounded-sm bg-white py-1 px-3 w-[300px] max-w-md shadow-sm">
+      <div class="flex items-center border border-grey rounded-sm bg-white py-1 px-3 w-80 max-w-md shadow-sm">
         <Search />
         <input
             type="text"
@@ -401,6 +381,7 @@ onMounted(async () => {
           v-for="listingItem in filteredAndMappedExperts"
           :key="listingItem.id"
           :listing="listingItem"
+          :current-filters="getCurrentFilters()"
       />
       
       <div v-if="currentPage < lastPage" class="flex justify-center py-4">

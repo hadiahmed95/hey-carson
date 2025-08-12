@@ -19,6 +19,13 @@ class AdminService {
     async loginAsUser(userId: number) {
         return ApiService.post(`${this.base}/login-as/${userId}`, {});
     }
+
+    async updateExpertStatus(expertId: number, action: string, currentFilters: Record<string, any> = {}) {
+        return ApiService.post(`${this.base}/listings/${expertId}/status`, { 
+            action,
+            ...currentFilters 
+        });
+    }
 }
 
 export default new AdminService();

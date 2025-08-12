@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import ExternalLink from "../../../assets/icons/externalLink.svg";
-import { ref } from "vue";
+import { ref, computed, watch } from "vue";
 import type { IListing } from "../../../types.ts";
 import Star from "../../../assets/icons/star.svg";
+import { useAdminStore } from "@/store/admin.ts";
 
 const props = defineProps<{
   listing: IListing,
+  currentFilters: Record<string, any>
 }>()
 
+const adminStore = useAdminStore();
 const action = ref('')
 
 const handleLoginAs = () => {
@@ -15,6 +18,43 @@ const handleLoginAs = () => {
     props.listing.onLoginAs();
   }
 }
+
+// Computed property for action options based on status
+const actionOptions = computed(() => {
+  const status = props.listing.status?.toLowerCase();
+  
+  if (status === 'pending' || status === 'inactive') {
+    return [{ value: 'activate', label: 'Active' }];
+  } else if (status === 'active') {
+    return [{ value: 'deactivate', label: 'Deactivate' }];
+  }
+  
+  return [];
+});
+
+// Handle status change - use store method directly
+const handleStatusChange = async () => {
+  if (!action.value || !props.listing.id) return;
+  
+  try {
+    await adminStore.updateExpertStatusAndRefresh(
+      props.listing.id, 
+      action.value, 
+      props.currentFilters
+    );
+  } catch (error: any) {
+    console.error('Failed to update status:', error);
+  } finally {
+    action.value = '';
+  }
+}
+
+// Watch for action changes and trigger API call
+watch(action, (newValue) => {
+  if (newValue) {
+    handleStatusChange();
+  }
+});
 </script>
 
 <template>
@@ -23,12 +63,12 @@ const handleLoginAs = () => {
     <div class="grid grid-cols-5 gap-6 mb-5 items-start">
       <div class="flex gap-4 col-span-2">
         <!-- Avatar with initials or image -->
-        <div class="w-[64px] h-[64px] rounded-full overflow-hidden">
+        <div class="w-16 h-16 rounded-full overflow-hidden">
           <!-- Show initials avatar if no real photo -->
           <div
               v-if="!listing.displayUrl && listing.avatarInfo"
               :class="[
-                'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg',
+                'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h3',
                 listing.avatarInfo.bgColor
               ]"
           >
@@ -44,7 +84,7 @@ const handleLoginAs = () => {
           <!-- Fallback initials if neither condition is met -->
           <div
               v-else
-              class="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg bg-coolGray"
+              class="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h3 bg-coolGray"
           >
             NA
           </div>
@@ -97,11 +137,13 @@ const handleLoginAs = () => {
           <div class="flex items-center space-x-2">
             <select v-model="action" class="border rounded-sm px-1 py-2 text-h4 font-medium w-fit hover:bg-gray-100">
               <option value="">Actions</option>
-              <option value="last_7_days">Last 7 Days</option>
-              <option value="last_week">Last Week</option>
-              <option value="last_30_days">Last 30 Days</option>
-              <option value="last_month">Last Month</option>
-              <option value="last_year">Last Year</option>
+              <option 
+                v-for="option in actionOptions" 
+                :key="option.value" 
+                :value="option.value"
+              >
+                {{ option.label }}
+              </option>
             </select>
 
             <button
