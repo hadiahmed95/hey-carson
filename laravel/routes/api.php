@@ -157,6 +157,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/stats', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'stats']);
     });
 
+    Route::middleware('auth.role:' . Role::ADMIN)->prefix('/v2/admin')->group(function () {
+        Route::get('/filter-options', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'getFilterOptions']);
+        Route::get('/listings', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'all']);
+        Route::post('/listings/{user}/status', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'updateStatus']);
+        Route::post('/login-as/{user}', [\App\Http\Controllers\NewDashboard\AuthController::class, 'loginAsUser']);
+    });
+
     Route::middleware('auth.role:' . Role::EXPERT)->prefix('/expert')->group(function () {
         Route::get('/', \App\Http\Controllers\Expert\DashboardController::class);
         Route::get('/dashboard/{expertStat}', \App\Http\Controllers\Expert\NewDashboardController::class);
@@ -229,6 +236,3 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::post('/v2/login', [App\Http\Controllers\NewDashboard\AuthController::class, 'login']);
-Route::get('/admin/filter-options', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'getFilterOptions']);
-Route::get('/admin/listings', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'all']);
-Route::post('/admin/listings/{user}/status', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'updateStatus']);

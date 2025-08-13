@@ -24,7 +24,7 @@ const actionOptions = computed(() => {
   const status = props.listing.status?.toLowerCase();
   
   if (status === 'pending' || status === 'inactive') {
-    return [{ value: 'activate', label: 'Active' }];
+    return [{ value: 'activate', label: 'Activate' }];
   } else if (status === 'active') {
     return [{ value: 'deactivate', label: 'Deactivate' }];
   }
@@ -32,16 +32,11 @@ const actionOptions = computed(() => {
   return [];
 });
 
-// Handle status change - use store method directly
 const handleStatusChange = async () => {
   if (!action.value || !props.listing.id) return;
   
   try {
-    await adminStore.updateExpertStatusAndRefresh(
-      props.listing.id, 
-      action.value, 
-      props.currentFilters
-    );
+    await adminStore.updateExpertStatus(props.listing.id, action.value);
   } catch (error: any) {
     console.error('Failed to update status:', error);
   } finally {
@@ -97,10 +92,10 @@ watch(action, (newValue) => {
                 :class="{
                   'text-pending bg-pending-light': listing.status === 'Pending',
                   'text-success bg-success-light': listing.status === 'Active',
-                  'text-link bg-link-light': listing.status === 'Claimed' || !['Pending', 'Active', 'Claimed'].includes(listing.status)
+                  'text-link bg-link-light': !['Pending', 'Active'].includes(listing.status)
                 }"
             >
-              {{ listing.status }}
+              {{ (listing.status.toLocaleLowerCase() === "inactive") ? "Deactivated" : listing.status }}
             </h5>
           </div>
           <div class="space-y-1">

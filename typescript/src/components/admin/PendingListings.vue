@@ -72,6 +72,7 @@ const pendingListings: IListing[] = [
         v-for="listingItem in pendingListings"
         :key="listingItem.id"
         :listing="listingItem"
+        :currentFilters="{}"
     />
   </div>
 </template>

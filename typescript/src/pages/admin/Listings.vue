@@ -164,7 +164,7 @@ const fetchExperts = async (page = 1, resetData = false) => {
     if (language.value) params.eng_level = language.value;
     if (role.value) params.role = role.value;
     
-    await adminStore.fetchExperts(params);
+    await adminStore.fetchExperts(params, !resetData && page > 1);
     
   } catch (error: any) {
     console.error('Error fetching experts:', error);
