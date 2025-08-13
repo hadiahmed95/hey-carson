@@ -62,6 +62,20 @@ export const useAuthStore = defineStore('auth', {
             return await withLoader( async () => {
                 return await AuthService.resetPassword(payload);
             })
-        }
+        },
+        async v2Login(email: string, password: string) {
+            return await withLoader(async () => {
+                const response = await AuthService.v2Login({ email, password })
+                if (response.data.status && response.data.user && response.data.token) {
+                    api.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
+                    this.token = response.data.token
+                    this.user = response.data.user
+                    localStorage.setItem('CURRENT_USER', JSON.stringify(this.user))
+                    localStorage.setItem('CURRENT_TOKEN', this.token)
+                    return response.data
+                }
+                throw new Error('Login failed')
+            })
+        },
     }
 })

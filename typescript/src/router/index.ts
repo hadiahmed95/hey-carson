@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from '@/store/auth.ts'
 
 import ExpertLayout from "@/layouts/ExpertLayout.vue";
 import ExpertDashboard from "@/pages/expert/Dashboard.vue";
@@ -32,6 +33,7 @@ import AccountInfo from "@/components/client/freeQuote/AccountInfo.vue";
 
 import ExpertLogin from "@/components/expert/ExpertLogin.vue"
 import ClientLogin from "@/components/client/ClientLogin.vue"
+import AdminLogin from "@/components/admin/AdminLogin.vue"
 import Reviews from "@/pages/client/Reviews.vue"
 import ForgotPassword from "@/pages/ForgotPassword.vue";
 import ResetPassword from "@/pages/ResetPassword.vue";
@@ -68,6 +70,11 @@ const routes = [
         path: '/client/login',
         name: 'client-login',
         component: ClientLogin,
+    },
+    {
+        path: '/admin/login',
+        name: 'admin-login',
+        component: AdminLogin,
     },
     {
         path: '/sso-login',
@@ -278,6 +285,7 @@ const routes = [
     {
         path: "/admin",
         component: AdminLayout,
+        meta: { requiresAuth: true, requiredRole: 'admin' }, // ONLY admin routes protected
         children: [
             {
                 path: "dashboard",
@@ -364,4 +372,28 @@ const router = createRouter({
     routes,
 });
 
-export default router;
+// Navigation Guards - ONLY for admin routes
+router.beforeEach((to, _from, next) => {
+    if (to.path.startsWith('/admin') && to.meta.requiresAuth) {
+        const authStore = useAuthStore()
+        
+        if (!authStore.token || !authStore.user) {
+            next('/admin/login')
+            return
+        }
+        
+        if (to.meta.requiredRole) {
+            const userRole = authStore.user.role?.name?.toLowerCase()
+            const requiredRole = to.meta.requiredRole as string
+            
+            if (userRole !== requiredRole) {
+                next('/admin/login')
+                return
+            }
+        }
+    }
+    
+    next()
+})
+
+export default router

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import SideNavigation from "../components/SideNavigation.vue";
-import TopNavigation from "../components/expert/TopNavigation.vue";
+import AdminTopNavigation from "../components/admin/AdminTopNavigation.vue";
 
 import OverviewIcon from "../assets/icons/overview.svg";
 import LeadsIcon from "../assets/icons/leads.svg";
@@ -25,7 +25,7 @@ const navItems = [
 
 <template>
   <div class="flex flex-col min-h-screen bg-muted">
-    <TopNavigation
+    <AdminTopNavigation
         :message-count="4"
         :notification-count="2"
         profile-image="https://randomuser.me/api/portraits/men/32.jpg"

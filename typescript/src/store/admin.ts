@@ -43,11 +43,16 @@ export const useAdminStore = defineStore('admin', {
             }
         },
 
-        async fetchExperts(params: Record<string, any>) {
+        async fetchExperts(params: Record<string, any>, appendData = false) {
             return await withLoader(async () => {
                 const response = await AdminService.fetchExperts(params);
                 
-                this.experts = response.data.experts.data || [];
+                if (appendData && params.page > 1) {
+                    this.experts.push(...(response.data.experts.data || []));
+                } else {
+                    this.experts = response.data.experts.data || [];
+                }
+                
                 this.totalExperts = response.data.experts_count || 0;
                 this.currentPage = response.data.experts.current_page || 1;
                 this.lastPage = response.data.experts.last_page || 1;
@@ -70,14 +75,33 @@ export const useAdminStore = defineStore('admin', {
             });
         },
 
-        async updateExpertStatusAndRefresh(expertId: number, action: string, currentFilters: Record<string, any> = {}) {
+        async updateExpertStatus(expertId: number, action: string) {
             return await withLoader(async () => {
-                const response = await AdminService.updateExpertStatus(expertId, action, currentFilters);
+                const response = await AdminService.updateExpertStatus(expertId, action);
+                const expertIndex = this.experts.findIndex(expert => expert.id === expertId);
+                if (expertIndex !== -1 && response.data.expert) {
+                    this.experts[expertIndex] = { ...this.experts[expertIndex], ...response.data.expert };
+                }
                 
-                this.experts = response.data.experts.data || [];
-                this.totalExperts = response.data.experts_count || 0;
-                this.currentPage = response.data.experts.current_page || 1;
-                this.lastPage = response.data.experts.last_page || 1;
+                return response.data;
+            });
+        },
+
+        async updateExpertStatusAndRefresh(expertId: number, action: string) {
+            return await withLoader(async () => {
+                const response = await AdminService.updateExpertStatus(expertId, action);
+                
+                if (response.data.experts) {
+                    this.experts = response.data.experts.data || [];
+                    this.totalExperts = response.data.experts_count || 0;
+                    this.currentPage = response.data.experts.current_page || 1;
+                    this.lastPage = response.data.experts.last_page || 1;
+                } else {
+                    const expertIndex = this.experts.findIndex(expert => expert.id === expertId);
+                    if (expertIndex !== -1 && response.data.expert) {
+                        this.experts[expertIndex] = { ...this.experts[expertIndex], ...response.data.expert };
+                    }
+                }
                 
                 return response.data;
             });

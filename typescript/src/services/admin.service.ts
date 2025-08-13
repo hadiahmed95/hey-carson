@@ -1,7 +1,7 @@
 import ApiService from '@/services/api.service';
 
 class AdminService {
-    private base = '/admin';
+    private base = '/v2/admin';
 
     async fetchAdmin() {
         return ApiService.get(`${this.base}/profile`);
@@ -20,7 +20,13 @@ class AdminService {
         return ApiService.post(`${this.base}/login-as/${userId}`, {});
     }
 
-    async updateExpertStatus(expertId: number, action: string, currentFilters: Record<string, any> = {}) {
+    async updateExpertStatus(expertId: number, action: string) {
+        return ApiService.post(`${this.base}/listings/${expertId}/status`, { 
+            action
+        });
+    }
+
+    async updateExpertStatusAndRefresh(expertId: number, action: string, currentFilters: Record<string, any> = {}) {
         return ApiService.post(`${this.base}/listings/${expertId}/status`, { 
             action,
             ...currentFilters 
