@@ -13,11 +13,26 @@ class AdminListingRepository
 {
     private int $paginationLimit;
 
+    /**
+     * Class constructor.
+     *
+     * Initializes the default pagination limit using the constant defined in the Constants class.
+     */
     public function __construct()
     {
         $this->paginationLimit = Constants::DEFAULT_PAGINATION_LIMIT;
     }
 
+    /**
+     * Retrieve a paginated list of experts based on the provided filters.
+     *
+     * Applies filtering, eager loads related models, and paginates the result.
+     *
+     * @param array $filters Filters to apply (e.g., per_page, search, status).
+     * @return \Illuminate\Pagination\LengthAwarePaginator Paginated list of experts with related data.
+     *
+     * @throws \Exception If fetching experts fails.
+     */
     public function getExperts(array $filters): LengthAwarePaginator
     {
         try {
@@ -32,6 +47,16 @@ class AdminListingRepository
         }
     }
 
+    /**
+     * Get the total count of experts based on the provided filters.
+     *
+     * Uses the same filtering logic as getExperts to ensure consistency in results.
+     *
+     * @param array $filters Filters to apply when counting experts.
+     * @return int The total number of experts matching the filters.
+     *
+     * @throws \Exception If counting experts fails.
+     */
     public function getExpertsCount(array $filters): int
     {
         try {
@@ -41,6 +66,26 @@ class AdminListingRepository
         }
     }
 
+    /**
+     * Retrieve available filter options for experts listing.
+     *
+     * Gathers distinct values for various expert attributes such as status, role, country,
+     * language level, user type, expert type, service categories, Shopify plans, and
+     * city-country mapping based on expert profiles.
+     *
+     * @return array An associative array containing filter options:
+     *               - statuses
+     *               - roles
+     *               - countries
+     *               - citiesByCountry
+     *               - languages
+     *               - userTypes
+     *               - expertTypes
+     *               - serviceCategories
+     *               - shopifyPlans
+     *
+     * @throws \Exception If retrieving filter options fails.
+     */
     public function getFilterOptions(): array
     {
         try {
@@ -131,6 +176,33 @@ class AdminListingRepository
         }
     }
 
+    /**
+     * Build the base query for retrieving experts using provided filters.
+     *
+     * Applies various optional filters such as search term, status, role, country, city,
+     * language, user type, expert type, service category, Shopify plan, and hourly rate range.
+     *
+     * This method is intended to be used internally by other methods like getExperts()
+     * and getExpertsCount().
+     *
+     * @param array $filters Associative array of filters to apply:
+     *                       - search
+     *                       - status
+     *                       - role
+     *                       - country
+     *                       - city
+     *                       - language
+     *                       - userType
+     *                       - expertType
+     *                       - serviceCategory
+     *                       - shopifyPlan
+     *                       - hourlyRateMin
+     *                       - hourlyRateMax
+     *
+     * @return \Illuminate\Database\Eloquent\Builder The Eloquent query builder instance.
+     *
+     * @throws \Exception If building the query fails.
+     */
     private function buildExpertsQuery(array $filters)
     {
         try {
@@ -207,6 +279,20 @@ class AdminListingRepository
         }
     }
 
+    /**
+     * Apply search filter to the experts query.
+     *
+     * Searches by first name, last name, or email. If the search string contains a space,
+     * it attempts to split it into first and last names to match against both fields
+     * in multiple combinations (first-last, last-first).
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query  The query builder instance to modify.
+     * @param string $search The search keyword or phrase.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Modified query builder with applied search filters.
+     *
+     * @throws \Exception If applying the search filter fails.
+     */
     private function applySearchFilter($query, string $search)
     {
         try {
@@ -247,6 +333,19 @@ class AdminListingRepository
         }
     }
 
+    /**
+     * Update the status of an expert (activate or deactivate).
+     *
+     * Finds the expert by ID (including soft-deleted ones) and updates the related profile's status
+     * based on the specified action.
+     *
+     * @param int $expertId The ID of the expert whose status is to be updated.
+     * @param string $action The action to perform: 'activate' or 'deactivate'.
+     *
+     * @return void
+     *
+     * @throws \Exception If the expert is not found or the status update fails.
+     */
     public function updateExpertStatus(int $expertId, string $action): void
     {
         try {
