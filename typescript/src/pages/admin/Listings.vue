@@ -2,37 +2,70 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useAdminStore } from "@/store/admin.ts";
 import { useLoaderStore } from "@/store/loader.ts";
+import { getS3URL, generateInitialsAvatar } from "@/utils/helpers.ts";
+import type { IListing } from "@/types.ts";
 import ListingCard from "../../components/admin/cards/ListingCard.vue";
 import EmptyDataPlaceholder from "../../components/common/EmptyDataPlaceholder.vue";
 import Search from "../../assets/icons/search.svg";
-import { getS3URL, generateInitialsAvatar } from "@/utils/helpers.ts";
 import LoginAsModal from "../../components/admin/modals/LoginAsModal.vue";
 
 const adminStore = useAdminStore();
 const loader = useLoaderStore();
-const isLoading = computed(() => loader.isLoadingState);
 
+const isLoading = computed(() => loader.isLoadingState);
 const experts = computed(() => adminStore.experts);
 const totalExperts = computed(() => adminStore.totalExperts);
 const currentPage = computed(() => adminStore.currentPage);
 const lastPage = computed(() => adminStore.lastPage);
 
-const isLoadingMore = ref(false);
+// Computed cities based on selected country
+const availableCities = computed(() => {
+  if (!country.value || !filterOptions.value.citiesByCountry[country.value]) {
+    return [];
+  }
+  return filterOptions.value.citiesByCountry[country.value];
+});
 
-const status = ref('');
-const typeOfAccount = ref('');
-const plan = ref('');
-const role = ref('');
-const country = ref('');
-const city = ref('');
-const language = ref('');
-const servicesOffered = ref('');
-const shopifyPlan = ref('');
-const searchQuery = ref('');
+const filteredAndMappedExperts = computed((): IListing[] => {
+  return experts.value.map((expert: any): IListing => {
+    const mappedExpert: IListing = {
+      id: expert.id,
+      name: expert.display_name,
+      displayUrl: expert.has_real_photo ? getS3URL(expert.photo) : null,
+      avatarInfo: expert.has_real_photo ? undefined : generateInitialsAvatar(expert.display_name),
+      type: expert.expert_type_formatted,
+      email: expert.email,
+      storeTitle: expert.store_title,
+      storeUrl: expert.url,
+      country: expert.country_formatted,
+      jobTitle: expert.job_title_formatted,
+      language: expert.language_formatted,
+      minimumProjectBudget: expert.hourly_rate_formatted,
+      status: expert.status_formatted,
+      statusUpdatedAt: expert.status_updated_at_formatted,
+      servicesOffered: expert.services_offered_safe,
+      totalReviews: expert.total_reviews_safe,
+      averageRating: expert.average_rating_safe,
+      expertData: expert,
+      onLoginAs: () => openLoginAsModal(mappedExpert)
+    };
+    
+    return mappedExpert;
+  });
+});
+
+const hasFilters = computed(() => {
+  return status.value || typeOfAccount.value || plan.value || role.value || 
+         country.value || city.value || language.value || servicesOffered.value || shopifyPlan.value;
+});
+
+
+const [isLoadingMore, status, typeOfAccount, plan, role, country, city, language, servicesOffered, shopifyPlan, searchQuery] = 
+  [ref(false), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref('')];
 
 // Login As Modal
 const showLoginAsModal = ref(false);
-const selectedExpert = ref<any>(null);
+const selectedExpert = ref<IListing | null>(null);
 
 const filterOptions = ref<{
   statuses: string[];
@@ -56,19 +89,11 @@ const filterOptions = ref<{
   shopifyPlans: []
 });
 
-// Computed cities based on selected country
-const availableCities = computed(() => {
-  if (!country.value || !filterOptions.value.citiesByCountry[country.value]) {
-    return [];
-  }
-  return filterOptions.value.citiesByCountry[country.value];
-});
-
 // Login As functionality
 const openLoginAsModal = (expert: any) => {
   selectedExpert.value = expert;
   showLoginAsModal.value = true;
-};
+}; 
 
 const closeLoginAsModal = () => {
   showLoginAsModal.value = false;
@@ -90,62 +115,18 @@ const getCurrentFilters = () => ({
     search: searchQuery.value,
     status: status.value,
     city: city.value,
-    usertype: plan.value,
-    expert_type: typeOfAccount.value,
-    service_category: servicesOffered.value,
-    shopify_plan: shopifyPlan.value,
-    eng_level: language.value,
+    userType: plan.value,
+    expertType: typeOfAccount.value,
+    serviceCategory: servicesOffered.value,
+    shopifyPlan: shopifyPlan.value,
+    language: language.value,
     role: role.value,
-    page: currentPage.value,
-    per_page: 15
-});
-
-const filteredAndMappedExperts = computed(() => {
-  return experts.value.map((expert: any) => {
-    const name = expert.display_name || `${expert.first_name} ${expert.last_name}`;
-    const hasRealPhoto = expert.photo && 
-                         expert.photo !== null && 
-                         expert.photo !== '';
-    
-    return {
-      id: expert.id,
-      name,
-      displayUrl: hasRealPhoto ? getS3URL(expert.photo) : null,
-      avatarInfo: hasRealPhoto ? undefined : generateInitialsAvatar(name),
-      type: expert.profile?.expert_type ? expert.profile.expert_type.charAt(0).toUpperCase() + expert.profile.expert_type.slice(1) : 'Freelancer',
-      email: expert.email,
-      storeTitle: 'Check Website',
-      storeUrl: expert.url || 'https://www.trustpilot.com/',
-      country: expert.profile?.country || 'N/A',
-      jobTitle: expert.profile?.role || 'Expert',
-      language: expert.profile?.eng_level || 'English',
-      minimumProjectBudget: expert.hourly_rate_formatted || `$${expert.profile?.hourly_rate || 0}/hour`,
-      status: expert.status_info?.status 
-        ? expert.status_info.status.charAt(0).toUpperCase() + expert.status_info.status.slice(1) 
-        : expert.profile?.status 
-          ? expert.profile.status.charAt(0).toUpperCase() + expert.profile.status.slice(1)
-          : 'Pending',
-      statusUpdatedAt: expert.status_info?.updated_at || new Date().toLocaleDateString(),
-      servicesOffered: expert.services_offered || [],
-      totalReviews: expert.stats?.total_reviews || 0,
-      averageRating: expert.stats?.average_rating || 0,
-      expertData: expert,
-      onLoginAs: () => openLoginAsModal(expert)
-    };
-  });
-});
-
-const hasFilters = computed(() => {
-  return status.value || typeOfAccount.value || plan.value || role.value || 
-         country.value || city.value || language.value || servicesOffered.value || shopifyPlan.value;
+    page: currentPage.value
 });
 
 const fetchExperts = async (page = 1, resetData = false) => {
   if (isLoading.value && !isLoadingMore.value) return;
-  
-  if (resetData) {
-    
-  } else {
+  if (!resetData) {
     isLoadingMore.value = true;
   }
 
@@ -156,12 +137,13 @@ const fetchExperts = async (page = 1, resetData = false) => {
 
     if (searchQuery.value) params.search = searchQuery.value;
     if (status.value) params.status = status.value;
+    if (country.value) params.country = country.value;
     if (city.value) params.city = city.value;
-    if (plan.value) params.usertype = plan.value;
-    if (typeOfAccount.value) params.expert_type = typeOfAccount.value;
-    if (servicesOffered.value) params.service_category = servicesOffered.value;
-    if (shopifyPlan.value) params.shopify_plan = shopifyPlan.value;
-    if (language.value) params.eng_level = language.value;
+    if (plan.value) params.userType = plan.value;
+    if (typeOfAccount.value) params.expertType = typeOfAccount.value;
+    if (servicesOffered.value) params.serviceCategory = servicesOffered.value;
+    if (shopifyPlan.value) params.shopifyPlan = shopifyPlan.value;
+    if (language.value) params.language = language.value;
     if (role.value) params.role = role.value;
     
     await adminStore.fetchExperts(params, !resetData && page > 1);
@@ -198,19 +180,26 @@ const applyFilters = () => {
 };
 
 let searchTimeout: ReturnType<typeof setTimeout> | undefined;
-watch([searchQuery, status, role, language, city, typeOfAccount, plan, servicesOffered, shopifyPlan], () => {
+watch([searchQuery, status, role, language, typeOfAccount, plan, servicesOffered, shopifyPlan], () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     applyFilters();
   }, 500);
 });
 
-watch(country, (newCountry) => {
-  if (!newCountry) {
-    city.value = '';
-  } else {
-    city.value = '';
-  }
+watch(country, () => {
+  city.value = '';
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    applyFilters();
+  }, 500);
+});
+
+watch(city, () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    applyFilters();
+  }, 500);
 });
 
 onMounted(async () => {

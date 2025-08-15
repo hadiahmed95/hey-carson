@@ -3,21 +3,41 @@
 namespace App\Http\Controllers\NewDashboard\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ExpertResource;
 use App\Repositories\UserRepository;
-use App\Repositories\ExpertFundRepository;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Exception;
 
+/**
+ * Class ListingController
+ * 
+ * Handles admin operations for expert listings including filtering, status updates,
+ * and data retrieval for the admin dashboard.
+ * 
+ * @package App\Http\Controllers\NewDashboard\Admin
+ */
 class ListingController extends Controller
 {
+    /**
+     * ListingController constructor.
+     * 
+     * @param UserRepository $userRepository Repository for user operations
+     */
     public function __construct(
-        private ExpertFundRepository $expertFundRepository,
         private UserRepository $userRepository
     ) {}
 
+    /**
+     * Get available filter options for expert listings.
+     * 
+     * Retrieves all available filter options including statuses, roles, countries,
+     * languages, user types, expert types, service categories, and Shopify plans.
+     * 
+     * @return JsonResponse Filter options data or error response
+     */
     public function getFilterOptions(): JsonResponse
     {
         try {
@@ -28,6 +48,15 @@ class ListingController extends Controller
         }
     }
 
+    /**
+     * Get all experts with filtering and pagination.
+     * 
+     * Retrieves a paginated list of experts based on provided filters.
+     * Uses ExpertResource to apply business logic transformations.
+     * 
+     * @param Request $request HTTP request containing filter parameters
+     * @return JsonResponse Paginated experts data with business metrics or error response
+     */
     public function all(Request $request): JsonResponse
     {
         try {
@@ -48,40 +77,18 @@ class ListingController extends Controller
                 'per_page'
             ]);
 
-            $expertsCount = $this->userRepository->getExpertsCount($filters);
             $experts = $this->userRepository->getExperts($filters);
+            $expertsCount = $experts->total();
 
-            $experts->getCollection()->transform(function ($expert) {
-                $totalEarnings = $this->expertFundRepository->getTotalEarnings($expert->id);
-                $expert->totalEarnings = $totalEarnings;
-
-                $expert->services_offered = $expert->serviceCategories ? 
-                    $expert->serviceCategories->pluck('name')->toArray() : [];
-
-                $expert->display_name = $expert->first_name . ' ' . $expert->last_name;
-                $expert->avatar_url = $expert->photo ? asset('storage/' . $expert->photo) : null;
-                $expert->hourly_rate_formatted = '$' . number_format($expert->profile->hourly_rate ?? 0, 2);
-
-                $expert->account_type = $expert->profile->expert_type ?? 'freelancer';
-                $expert->company_type = $expert->company_type ?? 'Individual';
-
-                $expert->status_info = [
-                    'status' => $expert->profile->status ?? 'pending',
-                    'updated_at' => $expert->updated_at ? $expert->updated_at->format('j M, Y') : 'N/A',
-                ];
-
-                $expert->stats = [
-                    'total_reviews' => $expert->reviews ? $expert->reviews->count() : 0,
-                    'average_rating' => $expert->reviews && $expert->reviews->count() > 0 ? 
-                        round($expert->reviews->avg('rate'), 1) : 0,
-                    'total_projects' => $expert->activeAssignments ? $expert->activeAssignments->count() : 0,
-                ];
-
-                return $expert;
-            });
+            // Transform using resource class
+            $transformedExperts = $experts->setCollection(
+                $experts->getCollection()->map(function ($expert) {
+                    return new ExpertResource($expert);
+                })
+            );
 
             return response()->json([
-                'experts' => $experts,
+                'experts' => $transformedExperts,
                 'experts_count' => $expertsCount
             ]);
         } catch (Exception $e) {
@@ -89,53 +96,32 @@ class ListingController extends Controller
         }
     }
 
+    /**
+     * Update expert status (activate/deactivate).
+     * 
+     * Updates the status of an expert and returns the updated expert data
+     * with recalculated business metrics using ExpertResource.
+     * 
+     * @param Request $request HTTP request containing the action parameter
+     * @param User $user The expert user to update
+     * @return JsonResponse Updated expert data or error response
+     */
     public function updateStatus(Request $request, User $user): JsonResponse
     {
         try {
             $action = $request->get('action');
-            
             if (!in_array($action, ['activate', 'deactivate'])) {
                 return response()->json(['error' => 'Invalid action'], 400);
             }
 
-            // Update the status
-            $this->userRepository->updateExpertStatus($user->id, $action);
-            
-            $updatedExpert = User::with(['profile', 'serviceCategories', 'reviews', 'activeAssignments'])
-                ->where('id', $user->id)
-                ->first();
-                
-            $totalEarnings = $this->expertFundRepository->getTotalEarnings($updatedExpert->id);
-            $updatedExpert->totalEarnings = $totalEarnings;
-
-            $updatedExpert->services_offered = $updatedExpert->serviceCategories ? 
-            $updatedExpert->serviceCategories->pluck('name')->toArray() : [];
-
-            $updatedExpert->display_name = $updatedExpert->first_name . ' ' . $updatedExpert->last_name;
-            $updatedExpert->avatar_url = $updatedExpert->photo ? asset('storage/' . $updatedExpert->photo) : null;
-            $updatedExpert->hourly_rate_formatted = '$' . number_format($updatedExpert->profile->hourly_rate ?? 0, 2);
-
-            $updatedExpert->account_type = $updatedExpert->profile->expert_type ?? 'freelancer';
-            $updatedExpert->company_type = $updatedExpert->company_type ?? 'Individual';
-
-            $updatedExpert->status_info = [
-                'status' => $action === 'activate' ? 'active' : 'inactive',
-                'updated_at' => now()->format('j M, Y'),
-            ];
-
-            $updatedExpert->stats = [
-                'total_reviews' => $updatedExpert->reviews ? $updatedExpert->reviews->count() : 0,
-                'average_rating' => $updatedExpert->reviews && $updatedExpert->reviews->count() > 0 ? 
-                    round($updatedExpert->reviews->avg('rate'), 1) : 0,
-                'total_projects' => $updatedExpert->activeAssignments ? $updatedExpert->activeAssignments->count() : 0,
-            ];
+            $updatedExpert = $this->userRepository->updateExpertStatus($user->id, $action);
+            $expertResource = new ExpertResource($updatedExpert);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Status updated successfully',
-                'expert' => $updatedExpert
+                'expert' => $expertResource
             ]);
-            
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

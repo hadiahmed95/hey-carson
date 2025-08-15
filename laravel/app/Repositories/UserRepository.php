@@ -72,25 +72,6 @@ class UserRepository
     }
 
     /**
-     * Get the total count of experts based on the provided filters.
-     *
-     * Uses the same filtering logic as getExperts to ensure consistency in results.
-     *
-     * @param array $filters Filters to apply when counting experts.
-     * @return int The total number of experts matching the filters.
-     *
-     * @throws \Exception If counting experts fails.
-     */
-    public function getExpertsCount(array $filters): int
-    {
-        try {
-            return $this->buildExpertsQuery($filters)->count('id');
-        } catch (Exception $e) {
-            throw new Exception('Failed to count experts: ' . $e->getMessage());
-        }
-    }
-
-    /**
      * Retrieve available filter options for experts listing.
      *
      * Gathers distinct values for various expert attributes such as status, role, country,
@@ -232,60 +213,71 @@ class UserRepository
         try {
             $query = User::where('role_id', Role::EXPERT);
 
+            // Apply search filter
             if (!empty($filters['search'])) {
-                $this->applySearchFilter($query, $filters['search']);
+                $query = $this->applySearchFilter($query, $filters['search']);
             }
 
+            // Apply status filter through profile relationship
             if (!empty($filters['status'])) {
                 $query->whereHas('profile', function ($q) use ($filters) {
                     $q->where('status', $filters['status']);
                 });
             }
 
+            // Apply role filter through profile relationship
             if (!empty($filters['role'])) {
                 $query->whereHas('profile', function ($q) use ($filters) {
                     $q->where('role', $filters['role']);
                 });
             }
 
-            if (!empty($filters['country'])) {
+            // Apply country and city filters through profile relationship
+            if (!empty($filters['country']) || !empty($filters['city'])) {
                 $query->whereHas('profile', function ($q) use ($filters) {
-                    $q->where('country', 'LIKE', '%' . $filters['country'] . '%');
+                    // If city is provided (format: "City, Country"), use exact match
+                    if (!empty($filters['city'])) {
+                        $q->where('country', '=', $filters['city']);
+                    }
+                    // If only country is provided, use LIKE search
+                    elseif (!empty($filters['country'])) {
+                        $q->where('country', 'LIKE', '%' . $filters['country'] . '%');
+                    }
                 });
             }
 
-            if (!empty($filters['city'])) {
-                $query->whereHas('profile', function ($q) use ($filters) {
-                    $q->where('country', 'LIKE', $filters['city'] . '%');
-                });
-            }
-
+            // Apply language filter through profile relationship
             if (!empty($filters['language'])) {
                 $query->whereHas('profile', function ($q) use ($filters) {
                     $q->where('eng_level', $filters['language']);
                 });
             }
 
+            // Apply userType filter (directly on users table)
             if (!empty($filters['userType'])) {
-                $query->where('usertype', strtolower($filters['userType']));
+                $query->where('usertype', $filters['userType']);
             }
 
+            // Apply expertType filter through profile relationship
             if (!empty($filters['expertType'])) {
                 $query->whereHas('profile', function ($q) use ($filters) {
-                    $q->where('expert_type', strtolower($filters['expertType']));
+                    $q->where('expert_type', $filters['expertType']);
                 });
             }
 
+            // Apply serviceCategory filter through serviceCategories relationship
             if (!empty($filters['serviceCategory'])) {
                 $query->whereHas('serviceCategories', function ($q) use ($filters) {
                     $q->where('name', $filters['serviceCategory']);
                 });
             }
 
+            // Apply shopifyPlan filter (directly on users table)
             if (!empty($filters['shopifyPlan'])) {
                 $query->where('shopify_plan', $filters['shopifyPlan']);
             }
 
+            // Apply hourly rate filters through profile relationship
             if (!empty($filters['hourlyRateMin']) || !empty($filters['hourlyRateMax'])) {
                 $query->whereHas('profile', function ($q) use ($filters) {
                     if (!empty($filters['hourlyRateMin'])) {
@@ -298,6 +290,7 @@ class UserRepository
             }
 
             return $query;
+            
         } catch (Exception $e) {
             throw new Exception('Failed to build experts query: ' . $e->getMessage());
         }
@@ -357,30 +350,34 @@ class UserRepository
     }
 
     /**
-     * Update the status of an expert (activate or deactivate).
+     * Update the status of an expert (activate or deactivate) and return updated expert.
      *
      * Finds the expert by ID (including soft-deleted ones) and updates the related profile's status
-     * based on the specified action.
+     * based on the specified action. Returns the updated expert with relationships loaded.
      *
-     * @param int $expertId The ID of the expert whose status is to be updated.
-     * @param string $action The action to perform: 'activate' or 'deactivate'.
+     * @param int $expertId The ID of the expert to update
+     * @param string $action The action to perform ('activate' or 'deactivate')
+     * @return User The updated expert with relationships loaded
      *
-     * @return void
-     *
-     * @throws \Exception If the expert is not found or the status update fails.
+     * @throws \Exception If updating expert status fails or expert not found
      */
-    public function updateExpertStatus(int $expertId, string $action): void
+    public function updateExpertStatus(int $expertId, string $action): User
     {
         try {
-            $expert = User::where('role_id', Role::EXPERT)
-                ->withTrashed()
-                ->findOrFail($expertId);
+            $expert = User::with(['profile', 'serviceCategories', 'reviews', 'activeAssignments'])
+                ->where('id', $expertId)
+                ->firstOrFail();
+
+            $newStatus = $action === 'activate' ? 'active' : 'inactive';
             
-            if ($action === 'activate') {
-                $expert->profile->update(['status' => 'active']);
-            } elseif ($action === 'deactivate') {
-                $expert->profile->update(['status' => 'inactive']);
+            if ($expert->profile) {
+                $expert->profile->update(['status' => $newStatus]);
+                $expert->load('profile');
+            } else {
+                throw new Exception('Expert profile not found');
             }
+
+            return $expert;       
         } catch (Exception $e) {
             throw new Exception('Failed to update expert status: ' . $e->getMessage());
         }
