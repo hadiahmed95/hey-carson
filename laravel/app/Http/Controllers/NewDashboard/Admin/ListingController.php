@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\NewDashboard\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\AdminListingRepository;
+use App\Repositories\UserRepository;
 use App\Repositories\ExpertFundRepository;
 use App\Models\User;
 use App\Models\Role;
@@ -15,13 +15,13 @@ class ListingController extends Controller
 {
     public function __construct(
         private ExpertFundRepository $expertFundRepository,
-        private AdminListingRepository $adminListingRepository
+        private UserRepository $userRepository
     ) {}
 
     public function getFilterOptions(): JsonResponse
     {
         try {
-            $filterOptions = $this->adminListingRepository->getFilterOptions();
+            $filterOptions = $this->userRepository->getListingsFilterOptions();
             return response()->json($filterOptions);
         } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -48,8 +48,8 @@ class ListingController extends Controller
                 'per_page'
             ]);
 
-            $expertsCount = $this->adminListingRepository->getExpertsCount($filters);
-            $experts = $this->adminListingRepository->getExperts($filters);
+            $expertsCount = $this->userRepository->getExpertsCount($filters);
+            $experts = $this->userRepository->getExperts($filters);
 
             $experts->getCollection()->transform(function ($expert) {
                 $totalEarnings = $this->expertFundRepository->getTotalEarnings($expert->id);
@@ -99,7 +99,7 @@ class ListingController extends Controller
             }
 
             // Update the status
-            $this->adminListingRepository->updateExpertStatus($user->id, $action);
+            $this->userRepository->updateExpertStatus($user->id, $action);
             
             $updatedExpert = User::with(['profile', 'serviceCategories', 'reviews', 'activeAssignments'])
                 ->where('id', $user->id)
