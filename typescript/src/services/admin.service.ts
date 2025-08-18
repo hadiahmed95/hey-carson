@@ -32,6 +32,15 @@ class AdminService {
             ...currentFilters 
         });
     }
+
+    async fetchLeads(params: Record<string, any>) {
+        const queryString = new URLSearchParams(params).toString();
+        return ApiService.get(`${this.base}/leads?${queryString}`);
+    }
+
+    async fetchLeadFilterOptions() {
+        return ApiService.get(`${this.base}/leads/filter-options`);
+    }
 }
 
 export default new AdminService();

@@ -63,14 +63,6 @@ class AuthController extends Controller
      */
     public function loginAsUser(Request $request, User $user): JsonResponse {
         try {
-            // First, logout the current authenticated user
-            $currentUser = Auth::user();
-            if ($currentUser) {
-                Auth::logout();
-            }
-
-            Auth::login($user);
-
             // Load necessary relationships based on user role
             if ($user->role_id == Role::EXPERT) {
                 $user->load('serviceCategories');
@@ -80,17 +72,12 @@ class AuthController extends Controller
             // Create new token for the target user
             $token = $user->createToken("API TOKEN")->plainTextToken;
 
-            $response = response()->json([
+            return response()->json([
                 'user' => $user,
                 'status' => true,
                 'message' => 'Successfully logged in as user',
                 'token' => $token,
             ], 200);
-
-            // Clear any existing cookies
-            Cookie::queue(Cookie::forget('shopexperts_session'));
-
-            return $response;
 
         } catch (\Throwable $th) {
             return response()->json([

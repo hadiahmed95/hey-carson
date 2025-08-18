@@ -1,63 +1,28 @@
 <script setup lang="ts">
-import type { IQuotee } from '../../../types.ts'
+import type { IQuote } from '../../../types.ts'
 import { computed } from 'vue'
 import ExternalLink from "../../../assets/icons/externalLink.svg";
 
 const props = defineProps<{
-  quote: IQuotee
+  quote: IQuote
 }>()
 
 const statusStyle = computed(() => {
-  if (props.quote.deleted_at) {
-    return 'bg-red-500 text-white'
-  } else if (props.quote.status === 'pending_payment') {
-    return 'bg-red-500 text-white'
-  } else if (props.quote.status === 'in_progress') {
-    return 'bg-blue-500 text-white'
-  } else if (props.quote.status === 'expert_completed') {
-    return 'bg-blue-500 text-white'
-  } else if (props.quote.status === 'completed') {
-    return 'bg-green-500 text-white'
-  } else if (props.quote.status === 'pending_match') {
-    return 'bg-yellow-500 text-black'
-  } else if (props.quote.status === 'claimed') {
-    return 'bg-yellow-500 text-black'
-  } else if (props.quote.status === 'available') {
-    return 'bg-gray-500 text-white'
-  } else if (props.quote.status === 'matched') {
-    return 'bg-purple-500 text-white'
-  } else {
-    return 'bg-gray-400 text-white'
-  }
-})
-
-const displayStatus = computed(() => {
-  if (props.quote.deleted_at) {
-    return 'Archived'
-  } else if (props.quote.status === 'pending_payment') {
-    return 'Pending Payment'
-  } else if (props.quote.status === 'in_progress') {
-    return 'In Progress'
-  } else if (props.quote.status === 'expert_completed') {
-    return 'Awaiting Approval'
-  } else if (props.quote.status === 'completed') {
-    return 'Completed'
-  } else if (props.quote.status === 'pending_match') {
-    return 'Pending Match'
-  } else if (props.quote.status === 'claimed') {
-    return 'Read'
-  } else if (props.quote.status === 'available') {
-    return 'In Available'
-  } else if (props.quote.status === 'matched') {
-    return 'Matched'
-  } else {
-    return 'Missing Status'
+  switch (props.quote.status) {
+    case 'Paid':
+      return 'bg-softgreen text-success'
+    case 'Rejected':
+      return 'bg-softpink text-darkpink'
+    case 'Pending Payment':
+    default:
+      return 'bg-pending-light text-pending'
   }
 })
 </script>
 
 <template>
   <div class="bg-white rounded-md p-card-padding space-y-4 border border-grey">
+
     <div class="flex justify-between items-start">
       <div>
         <div class="text-paragraph font-semibold text-primary">{{ quote.title }}</div>
@@ -67,9 +32,9 @@ const displayStatus = computed(() => {
         </a>
       </div>
       <h5 class="flex flex-col items-end text-tertiary">
-        <span :class="['px-3 py-1 rounded-md font-medium', statusStyle]">{{ displayStatus }}</span>
-        <span v-if="quote.status === 'declined'" class="mt-1">Quote Rejected: {{ quote.rejectedDate }}</span>
-        <span v-if="quote.status === 'accepted'" class="mt-1">Quote Paid: {{ quote.paidDate }}</span>
+        <span :class="['px-3 py-1 rounded-md font-medium', statusStyle]">{{ quote.status }}</span>
+        <span v-if="quote.status === 'Rejected'" class="mt-1">Quote Rejected: {{ quote.rejectedDate }}</span>
+        <span v-if="quote.status === 'Paid'" class="mt-1">Quote Paid: {{ quote.paidDate }}</span>
         <span>Quote Sent: {{ quote.sentDate }}</span>
       </h5>
     </div>
@@ -95,12 +60,7 @@ const displayStatus = computed(() => {
 
     <div class="grid grid-cols-4 md:grid-cols-4 gap-4 border-t pt-4">
       <div class="flex items-start space-x-3">
-        <!-- Client Avatar with initials fallback -->
-        <div v-if="quote.client.avatarInfo" 
-             :class="['w-[64px] h-[64px] rounded-full flex items-center justify-center text-white font-semibold', quote.client.avatarInfo.bgColor]">
-          {{ quote.client.avatarInfo.initials }}
-        </div>
-        <img v-else
+        <img
             :src="quote.client.avatar"
             alt="Client avatar"
             class="w-[64px] h-[64px] rounded-full object-cover"
@@ -116,12 +76,7 @@ const displayStatus = computed(() => {
       </div>
 
       <div class="flex items-start space-x-3">
-        <!-- Expert Avatar with initials fallback -->
-        <div v-if="quote.expert.avatarInfo" 
-             :class="['w-[64px] h-[64px] rounded-full flex items-center justify-center text-white font-semibold', quote.expert.avatarInfo.bgColor]">
-          {{ quote.expert.avatarInfo.initials }}
-        </div>
-        <img v-else
+        <img
             :src="quote.expert.avatar"
             alt="Expert avatar"
             class="w-[64px] h-[64px] rounded-full object-cover"
@@ -135,6 +90,7 @@ const displayStatus = computed(() => {
           </a>
         </div>
       </div>
+
     </div>
   </div>
 </template>

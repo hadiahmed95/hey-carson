@@ -9,6 +9,24 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Auth;
 
+// Resources for V2
+// Client Resources
+use App\Http\Controllers\NewDashboard\Client\OverviewController as ClientOverviewController;
+use App\Http\Controllers\NewDashboard\Client\RequestController as ClientRequestController;
+use App\Http\Controllers\NewDashboard\Client\PackagedServiceController as ClientPackagedServiceController;
+use App\Http\Controllers\NewDashboard\Client\ReviewController as ClientReviewController;
+use App\Http\Controllers\NewDashboard\Client\TransactionController as ClientTransactionController;
+
+// Expert Resources
+use App\Http\Controllers\NewDashboard\Expert\SignupController as ExpertSignupController;
+use App\Http\Controllers\Expert\ReviewController as ExpertReviewController;
+use App\Http\Controllers\Expert\LeadController as ExpertLeadController;
+
+// Admin Resources
+use App\Http\Controllers\NewDashboard\AuthController as V2AuthController;
+use App\Http\Controllers\NewDashboard\Admin\ListingController as AdminListingController;
+use App\Http\Controllers\NewDashboard\Admin\LeadController as AdminLeadController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -72,7 +90,6 @@ Route::get('/php-get-info', function () {
 Route::post('/inbound-processing', [InboundEmailsController::class, 'inboundData']);
 Route::get('/inbound-email-logs/{date}', [\App\Http\Controllers\Logs::class, 'inboundEmailLogs'])->middleware('verify.token');
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/v2/expert/register', [\App\Http\Controllers\NewDashboard\Expert\SignupController::class, 'register']);
 Route::post('/free-quote', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'freeQuote']);
 Route::post('/get-matched', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'getMatched']);
 Route::post('/register/check', [AuthController::class, 'checkData']);
@@ -132,36 +149,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/projects/{project}/offer/{offer}/decline', [\App\Http\Controllers\Client\OfferController::class, 'decline']);
         Route::get('/questions', [\App\Http\Controllers\Client\QuestionController::class, 'all']);
         Route::post('/questions', [\App\Http\Controllers\Client\QuestionController::class, 'create']);
-    });
-
-    Route::middleware('auth.role:' . Role::CLIENT)->prefix('/v2/client')->group(function () {
-        Route::get('/latest-requests', [\App\Http\Controllers\NewDashboard\Client\OverviewController::class, 'latestRequests']);
-        Route::get('/featured-services-and-experts', [\App\Http\Controllers\NewDashboard\Client\OverviewController::class, 'featuredServicesAndExperts']);
-        Route::get('/requests', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'requests']);
-        Route::post('/create-request', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'create']);
-        Route::get('/packaged-services', [\App\Http\Controllers\NewDashboard\Client\PackagedServiceController::class, 'packagedServices']);
-        Route::get('/review-requests', [\App\Http\Controllers\NewDashboard\Client\ReviewController::class, 'reviewRequests']);
-        Route::post('/reviews', [\App\Http\Controllers\NewDashboard\Client\ReviewController::class, 'store']);
-        Route::get('/reviews', [\App\Http\Controllers\NewDashboard\Client\ReviewController::class, 'all']);
-        Route::put('/reviews/{id}', [\App\Http\Controllers\NewDashboard\Client\ReviewController::class, 'update']);
-        Route::get('/request/{request}', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'request']);
-        Route::get('/transactions', [\App\Http\Controllers\NewDashboard\Client\TransactionController::class, 'transactions']);
-    });
-
-    Route::middleware('auth.role:' . Role::EXPERT)->prefix('/v2/expert')->group(function () {
-//        Route::get('/review-requests', [\App\Http\Controllers\Expert\ReviewController::class, 'reviewRequests']);
-//        Route::post('/reviews', [\App\Http\Controllers\Expert\ReviewController::class, 'store']);
-        Route::get('/reviews', [\App\Http\Controllers\Expert\ReviewController::class, 'all']);
-//        Route::put('/reviews/{id}', [\App\Http\Controllers\Expert\ReviewController::class, 'update']);
-        Route::get('/leads', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'leads']);
-        Route::get('/stats', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'stats']);
-    });
-
-    Route::middleware('auth.role:' . Role::ADMIN)->prefix('/v2/admin')->group(function () {
-        Route::get('/filter-options', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'getFilterOptions']);
-        Route::get('/listings', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'all']);
-        Route::post('/listings/{user}/status', [App\Http\Controllers\NewDashboard\Admin\ListingController::class, 'updateStatus']);
-        Route::post('/login-as/{user}', [\App\Http\Controllers\NewDashboard\AuthController::class, 'loginAsUser']);
     });
 
     Route::middleware('auth.role:' . Role::EXPERT)->prefix('/expert')->group(function () {
@@ -235,4 +222,49 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-Route::post('/v2/login', [App\Http\Controllers\NewDashboard\AuthController::class, 'login']);
+// V2 Routes
+Route::prefix('v2')->group(function () {
+    Route::post('/expert/register', [ExpertSignupController::class, 'register']);
+    Route::post('/login', [V2AuthController::class, 'login']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        // Client Routes
+        Route::middleware('auth.role:' . Role::CLIENT)->prefix('client')->group(function () {
+            Route::get('/latest-requests', [ClientOverviewController::class, 'latestRequests']);
+            Route::get('/featured-services-and-experts', [ClientOverviewController::class, 'featuredServicesAndExperts']);
+            Route::get('/requests', [ClientRequestController::class, 'requests']);
+            Route::post('/create-request', [ClientRequestController::class, 'create']);
+            Route::get('/packaged-services', [ClientPackagedServiceController::class, 'packagedServices']);
+            Route::get('/review-requests', [ClientReviewController::class, 'reviewRequests']);
+            Route::post('/reviews', [ClientReviewController::class, 'store']);
+            Route::get('/reviews', [ClientReviewController::class, 'all']);
+            Route::put('/reviews/{id}', [ClientReviewController::class, 'update']);
+            Route::get('/request/{request}', [ClientRequestController::class, 'request']);
+            Route::get('/transactions', [ClientTransactionController::class, 'transactions']);
+        });
+
+        // Expert Routes
+        Route::middleware('auth.role:' . Role::EXPERT)->prefix('expert')->group(function () {
+            // Route::get('/review-requests', [ExpertReviewController::class, 'reviewRequests']);
+            // Route::post('/reviews', [ExpertReviewController::class, 'store']);
+            Route::get('/reviews', [ExpertReviewController::class, 'all']);
+            // Route::put('/reviews/{id}', [ExpertReviewController::class, 'update']);
+            Route::get('/leads', [ExpertLeadController::class, 'leads']);
+            Route::get('/stats', [ExpertLeadController::class, 'stats']);
+        });
+
+        // Admin Routes
+        Route::middleware('auth.role:' . Role::ADMIN)->prefix('admin')->group(function () {
+            Route::post('/login-as/{user}', [V2AuthController::class, 'loginAsUser']);
+            
+            // Listings Routes
+            Route::get('/filter-options', [AdminListingController::class, 'getFilterOptions']);
+            Route::get('/listings', [AdminListingController::class, 'all']);
+            Route::post('/listings/{user}/status', [AdminListingController::class, 'updateStatus']);
+
+            // Leads Routes
+            Route::get('/leads/filter-options', [AdminLeadController::class, 'getFilterOptions']);
+            Route::get('/leads', [AdminLeadController::class, 'all']);
+        });
+    });
+});

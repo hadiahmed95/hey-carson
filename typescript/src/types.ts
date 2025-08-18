@@ -305,37 +305,10 @@ export interface IQuotee {
     id: number
     type: string
     hours: number
-    rate: number
-    created_at: string
-    title: string
-    link: string
-    hourlyRate: string
-    estimatedTime: string
     deadline: string
-    total: string
+    rate: number
     status: string
-    sentDate: string
-    paidDate?: string
-    rejectedDate?: string
-    client: {
-        name: string
-        email: string
-        avatar: string
-        plan: string
-        avatarInfo?: {
-            initials: string
-            bgColor: string
-        }
-    }
-    expert: {
-        name: string
-        email: string
-        avatar: string
-        avatarInfo?: {
-            initials: string
-            bgColor: string
-        }
-    }
+    created_at: string
 }
 
 export interface IExpertt {
@@ -446,7 +419,7 @@ export interface ILeadd {
     website: string,
     email: string,
     plan: string,
-    displayUrl: string,
+    displayUrl: string | null,
     avatarInfo?: {
         initials: string
         bgColor: string

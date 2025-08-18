@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import BaseButton from '../../common/InputFields/BaseButton.vue'
 import { useAuthStore } from '@/store/auth.ts'
-import { getS3URL } from '@/utils/helpers.ts'
+import { getS3URL, generateInitialsAvatar } from '@/utils/helpers.ts'
+import BaseButton from '../../common/InputFields/BaseButton.vue'
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -17,11 +17,17 @@ const router = useRouter()
 const authStore = useAuthStore()
 const isLoading = ref(false)
 
+// Computed properties for user image display using helper
+const userName = computed(() => `${props.user.first_name} ${props.user.last_name}`);
+const hasRealPhoto = computed(() => props.user.photo && props.user.photo !== null && props.user.photo !== '');
+const displayUrl = computed(() => hasRealPhoto.value ? getS3URL(props.user.photo) : null);
+const avatarInfo = computed(() => hasRealPhoto.value ? undefined : generateInitialsAvatar(userName.value));
+
 const loginAsUser = async () => {
   isLoading.value = true
   try {
-    // Login as user (client) using their credentials
-    await authStore.loginAs(props.user.email, 'client')
+    // Login as user using their user ID
+    await authStore.loginAs(props.user.id)
     // Redirect to client dashboard
     await router.push('/client/dashboard')
     emit('close')
@@ -31,21 +37,13 @@ const loginAsUser = async () => {
     isLoading.value = false
   }
 }
-
-// Handle image error
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement;
-  if (target) {
-    target.src = 'https://randomuser.me/api/portraits/men/32.jpg';
-  }
-}
 </script>
 
 <template>
   <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg max-w-md w-full mx-4">
       <div class="flex items-center justify-between border-b p-4">
-        <h2 class="text-lg font-semibold text-primary">Login As Client</h2>
+        <h2 class="text-h3 font-semibold text-primary">Login As Lead</h2>
         <button @click="emit('close')" class="text-gray-500 hover:text-gray-700 text-xl leading-none">
           ×
         </button>
@@ -53,39 +51,68 @@ const handleImageError = (event: Event) => {
 
       <div class="p-6">
         <div class="flex items-center space-x-4 mb-6">
-          <img 
-            :src="user.photo ? getS3URL(user.photo) : 'https://randomuser.me/api/portraits/men/32.jpg'" 
-            alt="User avatar" 
-            class="w-12 h-12 rounded-full object-cover"
-            @error="handleImageError"
-          />
+          <!-- Profile Image or Initials Avatar using helper -->
+          <div class="w-12 h-12 rounded-full overflow-hidden">
+            <!-- Show actual image for real photos -->
+            <img
+                v-if="displayUrl"
+                :src="displayUrl"
+                alt="User avatar"
+                class="w-full h-full rounded-full object-cover"
+            />
+            <!-- Show initials avatar if no real photo -->
+            <div
+                v-else-if="avatarInfo"
+                :class="[
+                  'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h5',
+                  avatarInfo.bgColor
+                ]"
+            >
+              {{ avatarInfo.initials }}
+            </div>
+            <!-- Fallback -->
+            <div
+                v-else
+                class="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h5 bg-coolGray"
+            >
+              NA
+            </div>
+          </div>
           <div>
-            <h3 class="font-medium text-primary">{{ user.first_name }} {{ user.last_name }}</h3>
-            <p class="text-sm text-gray-600">{{ user.email }}</p>
+            <h3 class="font-medium text-primary">{{ userName }}</h3>
+            <p class="text-h5 text-gray-600">{{ user.email }}</p>
           </div>
         </div>
 
-        <p class="text-gray-600 text-sm mb-6">
-          You are about to login as this client. You will be redirected to their dashboard where you can view and manage their account.
+        <p class="text-gray-600 text-h5 mb-6">
+          You are about to login as this lead. You will be redirected to their dashboard where you can view and manage their account.
         </p>
 
-        <div class="flex justify-end space-x-3">
-          <button 
-            @click="emit('close')"
-            class="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+        <div class="flex gap-3 justify-end">
+          <BaseButton
+              variant="secondary"
+              size="medium"
+              @click="emit('close')"
+              :disabled="isLoading"
+              class="px-4 py-2"
           >
             Cancel
-          </button>
-          <BaseButton 
-            @click="loginAsUser"
-            :loading-button="isLoading"
-            :isPrimary="true"
-            class="px-4 py-2 text-sm"
+          </BaseButton>
+          <BaseButton
+              variant="primary"
+              size="medium"
+              @click="loginAsUser"
+              :loading="isLoading"
+              class="px-4 py-2"
           >
-            Login As Client
+            Login As Lead
           </BaseButton>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+
+</style>

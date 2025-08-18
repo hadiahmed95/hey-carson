@@ -74,11 +74,6 @@ class ExpertController extends Controller
             $experts = $experts->whereRaw('CONCAT(first_name, " ", last_name) LIKE ?', ["%{$search}%"]);
         }
 
-        // Shopify plan filter
-        if ($shopify_plan) {
-            $experts = $experts->where('shopify_plan', $shopify_plan);
-        }
-
         if ($filters) {
             $experts = $experts->whereHas('profile', function ($query) use ($filters) {
                 foreach($filters as $key => $filter) {
