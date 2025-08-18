@@ -18,7 +18,7 @@ const authStore = useAuthStore()
 const isLoading = ref(false)
 
 // Computed properties for expert image display
-const expertName = computed(() => props.expert.display_name || `${props.expert.first_name} ${props.expert.last_name}`);
+const expertName = computed(() => props.expert.name || `${props.expert.first_name} ${props.expert.last_name}`);
 const hasRealPhoto = computed(() => props.expert.photo && props.expert.photo !== null && props.expert.photo !== '');
 const displayUrl = computed(() => hasRealPhoto.value ? getS3URL(props.expert.photo) : null);
 const avatarInfo = computed(() => hasRealPhoto.value ? undefined : generateInitialsAvatar(expertName.value));

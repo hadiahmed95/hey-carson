@@ -3,3 +3,4 @@
 /laravel/.composer/
 /example
 .DS_Store
+laravel/.DS_Store
