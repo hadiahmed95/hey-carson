@@ -21,12 +21,10 @@ class ClientController extends Controller
     {
         $this->paymentRepository = $paymentRepository;
     }
-    
     public function all(Request $request)
     {
         $search = $request->get('search');
         $period =  $request->get('period');
-        $shopifyPlan = $request->get('shopify_plan');
         $date = null;
 
         if ($period === 'week') {
@@ -35,28 +33,7 @@ class ClientController extends Controller
             $date = Carbon::now()->subMonth();
         }
 
-        $clients = User::query()->where('role_id', 2);
-        
-        $clients = $clients->addSelect([
-            // Direct Chats = requests where type='Direct Message'
-            'direct_messages_count' => \DB::table('requests')
-                ->select(\DB::raw('COUNT(*)'))
-                ->where('type', 'Direct Message')
-                ->whereColumn('client_id', 'users.id'),
-                
-            // Quote Requests = requests where type='Quote Request'
-            'quote_requests_count' => \DB::table('requests')
-                ->select(\DB::raw('COUNT(*)'))
-                ->where('type', 'Quote Request')
-                ->whereColumn('client_id', 'users.id'),
-                
-            // Lifetime spend
-            'lifetime_spend' => \DB::table('payments')
-                ->select(\DB::raw('COALESCE(SUM(total), 0)'))
-                ->whereColumn('user_id', 'users.id')
-                ->where('status', 'paid')
-        ]);
-        
+        $clients = User::query()->where('role_id', 2)->withCount('projects');
         if ($date) {
             $clients = $clients->whereDate('created_at', '>', $date);
         }
@@ -71,10 +48,6 @@ class ClientController extends Controller
             });
         }
 
-        if ($shopifyPlan && $shopifyPlan !== '') {
-            $clients = $clients->where('shopify_plan', $shopifyPlan);
-        }
-
         return response()->json([
             'clients' => $clients->latest()->paginate(15),
             'clients_count' => $clientsCount
@@ -82,24 +55,10 @@ class ClientController extends Controller
     }
 
     /**
-     * Get filter options for leads
+     * @param Request $request
+     * @param User $user
+     * @return JsonResponse
      */
-    public function getLeadFilterOptions()
-    {
-        $shopifyPlans = User::where('role_id', 2)
-            ->whereNotNull('shopify_plan')
-            ->where('shopify_plan', '!=', '')
-            ->distinct()
-            ->pluck('shopify_plan')
-            ->sort()
-            ->values()
-            ->toArray();
-
-        return response()->json([
-            'shopifyPlans' => $shopifyPlans
-        ]);
-    }
-
     public function show(Request $request, User $user): JsonResponse
     {
         $balance = Cache::remember(

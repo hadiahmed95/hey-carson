@@ -26,6 +26,7 @@ use App\Http\Controllers\Expert\LeadController as ExpertLeadController;
 use App\Http\Controllers\NewDashboard\AuthController as V2AuthController;
 use App\Http\Controllers\NewDashboard\Admin\ListingController as AdminListingController;
 use App\Http\Controllers\NewDashboard\Admin\LeadController as AdminLeadController;
+use App\Http\Controllers\NewDashboard\Admin\ReviewController as AdminReviewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -261,6 +262,11 @@ Route::prefix('v2')->group(function () {
             Route::get('/filter-options', [AdminListingController::class, 'getFilterOptions']);
             Route::get('/listings', [AdminListingController::class, 'all']);
             Route::post('/listings/{user}/status', [AdminListingController::class, 'updateStatus']);
+
+            // Reviews Routes
+            Route::get('/reviews/filter-options', [AdminReviewController::class, 'getFilterOptions']);
+            Route::get('/reviews', [AdminReviewController::class, 'all']);
+            Route::post('/reviews/{review}/status', [AdminReviewController::class, 'updateStatus']);
         });
     });
 });

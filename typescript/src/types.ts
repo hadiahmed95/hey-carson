@@ -305,37 +305,10 @@ export interface IQuotee {
     id: number
     type: string
     hours: number
-    rate: number
-    created_at: string
-    title: string
-    link: string
-    hourlyRate: string
-    estimatedTime: string
     deadline: string
-    total: string
+    rate: number
     status: string
-    sentDate: string
-    paidDate?: string
-    rejectedDate?: string
-    client: {
-        name: string
-        email: string
-        avatar: string
-        plan: string
-        avatarInfo?: {
-            initials: string
-            bgColor: string
-        }
-    }
-    expert: {
-        name: string
-        email: string
-        avatar: string
-        avatarInfo?: {
-            initials: string
-            bgColor: string
-        }
-    }
+    created_at: string
 }
 
 export interface IExpertt {
@@ -362,7 +335,35 @@ export interface IProfile {
 }
 
 export interface IRevieww {
-    id: number
+    id: number;
+    reviewer: {
+        id: number;
+        name: string;
+        photo: string;
+        storeTitle: string;
+        storeUrl: string;
+        recurringClient: boolean;
+        rating: number;
+        comment: string;
+        recommendation: string;
+        isShopexpertUser: boolean;
+    };
+    expert: {
+        id: number;
+        name: string;
+        photo: string;
+        company_type: string;
+        recurringExpert: boolean;
+        isShopexpertUser: boolean;
+        rank: string;
+        storeUrl: string;
+        storeTitle: string;
+    };
+    postedAt: string;
+    projectValue: string;
+    reviewSource: string;
+    response: string;
+    status: string;
 }
 
 export interface IRequest {
@@ -442,19 +443,6 @@ export interface Card {
 
 export interface ILeadd {
     id: number,
-    name: string,
-    website: string,
-    email: string,
-    plan: string,
-    displayUrl: string,
-    avatarInfo?: {
-        initials: string
-        bgColor: string
-    },
-    directChatCount: number,
-    quoteRequestCount: number,
-    lifetimeSpendCount: string,
-    joinedOn: string,
     type: string
     created_at: string
     project: {
@@ -468,7 +456,6 @@ export interface ILeadd {
         photo?: string
         shopify_plan?: string
     }
-    onLoginAs?: () => void
 }
 
 export interface IExpertStat {

@@ -32,6 +32,21 @@ class AdminService {
             ...currentFilters 
         });
     }
+
+    async fetchReviews(params: Record<string, any>) {
+        const queryString = new URLSearchParams(params).toString();
+        return ApiService.get(`${this.base}/reviews?${queryString}`);
+    }
+
+    async fetchReviewFilterOptions() {
+        return ApiService.get(`${this.base}/reviews/filter-options`);
+    }
+
+    async updateReviewStatus(reviewId: number, status: string) {
+        return ApiService.post(`${this.base}/reviews/${reviewId}/status`, { 
+            status
+        });
+    }
 }
 
 export default new AdminService();
