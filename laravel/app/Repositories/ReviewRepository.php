@@ -156,6 +156,11 @@ class ReviewRepository
                 ->filter()
                 ->unique()
                 ->map(function($projectValue) {
+                    // Handle special case for "under_100"
+                    if ($projectValue === 'under_100') {
+                        return 'Under $100';
+                    }
+                    
                     if (strpos($projectValue, '_') !== false) {
                         $parts = explode('_', $projectValue);
                         if (count($parts) === 2) {

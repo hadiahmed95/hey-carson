@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import ReviewCard from "../../components/common/cards/ReviewCard.vue";
 import Search from "../../assets/icons/search.svg";
 import AdminService from "@/services/admin.service";
 import { useAlertStore } from "@/store/alert.ts";
 import type { IRevieww } from "@/types.ts";
+import EmptyDataPlaceholder from "@/components/common/EmptyDataPlaceholder.vue";
 
 const status = ref('')
 const rating = ref('')
@@ -29,6 +30,16 @@ const pagination = ref({
 const isLoading = ref(false);
 const isLoadingMore = ref(false);
 const alertStore = useAlertStore();
+
+// Computed property to check if any filters are active
+const hasFilters = computed(() => {
+  return status.value !== '' || 
+         rating.value !== '' || 
+         likelyToRecommend.value !== '' || 
+         projectValue.value !== '' || 
+         reviewSource.value !== '' || 
+         searchQuery.value !== '';
+});
 
 const fetchFilterOptions = async () => {
   try {
@@ -59,8 +70,8 @@ const fetchReviews = async (page = 1, resetData = false) => {
     const response = await AdminService.fetchReviews(params);
     
     if (response.data.reviews) {
-      const transformedReviews: IRevieww[] = response.data.reviews.map(review => ({
-        id: review.id,
+      const transformedReviews: IRevieww[] = response.data.reviews.map((review: any) => ({
+        id: review.id || 0, // Ensure id is always a number
         reviewer: {
           id: review.reviewer?.id || 0,
           name: review.reviewer?.name || 'Unknown Client',
@@ -82,33 +93,33 @@ const fetchReviews = async (page = 1, resetData = false) => {
           isShopexpertUser: review.expert?.isShopexpertUser || false,
           rank: review.expert?.rank || 'senior',
           storeUrl: review.expert?.storeUrl || '#',
-          storeTitle: review.expert?.storeUrl || 'No Store URL',
+          storeTitle: review.expert?.storeTitle || 'No Store',
         },
         postedAt: review.postedAt || 'Unknown Date',
         projectValue: review.projectValue || 'Not specified',
-        reviewSource: review.reviewSource || 'Not specified',
+        reviewSource: review.reviewSource || 'Unknown',
         response: review.response || '',
         status: review.status || 'pending',
       }));
 
-      if (resetData || page === 1) {
+      if (resetData) {
         reviews.value = transformedReviews;
       } else {
-        reviews.value = [...reviews.value, ...transformedReviews];
+        reviews.value.push(...transformedReviews);
       }
 
-      if (response.data.pagination) {
-        pagination.value = response.data.pagination;
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching reviews:", error);
-    if (resetData || page === 1) {
+      pagination.value = response.data.pagination || {
+        current_page: 1,
+        last_page: 1,
+        total: 0,
+      };
+    } else {
+      // Fallback with mock data if no real data
       reviews.value = [{
         id: 1,
         reviewer: {
           id: 1,
-          name: "Michael O.",
+          name: "John Doe",
           photo: "https://randomuser.me/api/portraits/men/79.jpg",
           storeTitle: "SuperSport",
           storeUrl: "https://www.trustpilot.com/",
@@ -152,7 +163,7 @@ const handleApproveReview = async (reviewId: number) => {
   try {
     await AdminService.updateReviewStatus(reviewId, 'approved');
     const reviewIndex = reviews.value.findIndex(r => r.id === reviewId);
-    if (reviewIndex !== -1) {
+    if (reviewIndex !== -1 && reviews.value[reviewIndex]) {
       reviews.value[reviewIndex].status = 'approved';
     }
   } catch (error) {
@@ -164,7 +175,7 @@ const handleDeclineReview = async (reviewId: number) => {
   try {
     await AdminService.updateReviewStatus(reviewId, 'rejected');
     const reviewIndex = reviews.value.findIndex(r => r.id === reviewId);
-    if (reviewIndex !== -1) {
+    if (reviewIndex !== -1 && reviews.value[reviewIndex]) {
       reviews.value[reviewIndex].status = 'rejected';
     }
   } catch (error) {
@@ -176,12 +187,23 @@ const handleHideReview = async (reviewId: number) => {
   try {
     await AdminService.updateReviewStatus(reviewId, 'hidden');
     const reviewIndex = reviews.value.findIndex(r => r.id === reviewId);
-    if (reviewIndex !== -1) {
+    if (reviewIndex !== -1 && reviews.value[reviewIndex]) {
       reviews.value[reviewIndex].status = 'hidden';
     }
   } catch (error) {
     alertStore.show("Failed to hide review", "error");
   }
+};
+
+// Function to reset all filters
+const resetFilters = () => {
+  status.value = '';
+  rating.value = '';
+  likelyToRecommend.value = '';
+  projectValue.value = '';
+  reviewSource.value = '';
+  searchQuery.value = '';
+  fetchReviews(1, true);
 };
 
 const applyFilters = () => {
@@ -209,15 +231,38 @@ const getRecommendationValue = (displayValue: string) => {
 };
 
 const getProjectValueValue = (displayValue: string) => {
-  // Convert "$100-$1,000" back to "100_1000" for API
+  // Handle special cases first
+  if (displayValue === 'Under $100') {
+    return 'under_100';
+  }
+  
+  // Handle other special cases if they exist
+  if (displayValue.startsWith('Over $')) {
+    // Example: "Over $10,000" -> "over_10000"
+    const amount = displayValue.replace('Over $', '').replace(/,/g, '');
+    return `over_${amount}`;
+  }
+  
+  // Convert standard range format: "$100-$1,000" back to "100_1000" for API
   if (displayValue.includes('$') && displayValue.includes('-')) {
     const parts = displayValue.replace(/\$/g, '').replace(/,/g, '').split('-');
     if (parts.length === 2) {
       return parts[0] + '_' + parts[1];
     }
   }
+  
+  // Return as-is for any other format
   return displayValue;
 };
+
+// Watch for all filters with debouncing (like in Listings.vue)
+let searchTimeout: ReturnType<typeof setTimeout> | undefined;
+watch([searchQuery, status, rating, likelyToRecommend, projectValue, reviewSource], () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    applyFilters();
+  }, 500);
+});
 
 onMounted(() => {
   fetchFilterOptions(); // Fetch filter options first
@@ -226,62 +271,91 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="flex-1 p-8 overflow-y-auto bg-secondary font-light space-y-8">
+  <main class="flex-1 p-8 overflow-y-auto bg-secondary font-light space-y-6">
     <div class="flex flex-row justify-between">
-      <h1>
-        Reviews <span class="text-gray-500">({{ pagination.total || reviews.length }})</span>
-      </h1>
-
-      <div class="flex items-center border border-grey rounded-sm bg-white py-1 px-3 w-[300px] max-w-md shadow-sm">
+      <div>
+        <h1>
+          Reviews <span class="text-gray-500">({{ pagination.total }})</span>
+        </h1>
+      </div>
+      <div class="flex items-center border border-grey rounded-sm bg-white py-1 px-3 w-80 max-w-md shadow-sm">
         <Search />
         <input
             type="text"
-            placeholder="Search Reviews ..."
+            placeholder="Search reviews..."
             class="w-full ml-3 text-h4 outline-none placeholder-tertiary"
             v-model="searchQuery"
-            @input="applyFilters"
         />
       </div>
     </div>
 
-    <div class="text-paragraph space-x-3">
-      <select v-model="status" @change="applyFilters" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
+    <div class="mt-1 text-paragraph flex flex-wrap items-center gap-3">
+      <!-- Status Filter -->
+      <select v-model="status" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Status: All</option>
         <option v-for="statusOption in filterOptions.statuses" :key="statusOption" :value="getStatusValue(statusOption)">
           {{ statusOption }}
         </option>
       </select>
 
-      <select v-model="rating" @change="applyFilters" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
+      <!-- Rating Filter -->
+      <select v-model="rating" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Rating: All</option>
         <option v-for="ratingOption in filterOptions.ratings" :key="ratingOption" :value="getRatingValue(ratingOption)">
           {{ ratingOption }}
         </option>
       </select>
 
-      <select v-model="likelyToRecommend" @change="applyFilters" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
+      <!-- Recommendation Filter -->
+      <select v-model="likelyToRecommend" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Likely To Recommend: All</option>
         <option v-for="recommendation in filterOptions.recommendations" :key="recommendation" :value="getRecommendationValue(recommendation)">
           {{ recommendation }}
         </option>
       </select>
 
-      <select v-model="projectValue" @change="applyFilters" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
+      <!-- Project Value Filter -->
+      <select v-model="projectValue" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Project Value: All</option>
         <option v-for="value in filterOptions.projectValues" :key="value" :value="getProjectValueValue(value)">
           {{ value }}
         </option>
       </select>
 
-      <select v-model="reviewSource" @change="applyFilters" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
+      <!-- Review Source Filter -->
+      <select v-model="reviewSource" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Review Source: All</option>
         <option v-for="source in filterOptions.reviewSources" :key="source" :value="source">
           {{ source }}
         </option>
       </select>
+
+      <!-- Clear filters button -->
+      <button 
+        v-if="hasFilters" 
+        @click="resetFilters"
+        class="border rounded-sm px-3 py-1 text-h4 bg-gray-100 hover:bg-gray-200"
+      >
+        Clear All
+      </button>
     </div>
 
-    <div>
+    <!-- Loading State -->
+    <div v-if="isLoading" class="space-y-4">
+      <div v-for="i in 5" :key="i" class="bg-white border rounded-md shadow-sm p-6">
+        <div class="flex space-x-4">
+          <div class="w-16 h-16 bg-gray-300 rounded-full"></div>
+          <div class="flex-1 space-y-2">
+            <div class="h-4 bg-gray-300 rounded w-1/4"></div>
+            <div class="h-3 bg-gray-300 rounded w-1/2"></div>
+            <div class="h-3 bg-gray-300 rounded w-1/3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews Data -->
+    <div v-else-if="reviews.length > 0">
       <ReviewCard
           v-for="(review, index) in reviews"
           :key="index"
@@ -290,6 +364,14 @@ onMounted(() => {
           @approve-review="handleApproveReview"
           @decline-review="handleDeclineReview"
           @hide-review="handleHideReview"
+      />
+    </div>
+
+    <!-- Empty State -->
+    <div v-else>
+      <EmptyDataPlaceholder
+        title="No reviews found"
+        description="Try adjusting your filters or search criteria."
       />
     </div>
 
@@ -303,6 +385,5 @@ onMounted(() => {
         {{ isLoadingMore ? 'Loading...' : 'Load More' }}
       </button>
     </div>
-    
   </main>
 </template>
