@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
-import ReviewCard from "../../components/common/cards/ReviewCard.vue";
+import ReviewCard from "../../components/admin/cards/ReviewCard.vue";
 import Search from "../../assets/icons/search.svg";
 import AdminService from "@/services/admin.service";
 import { useAlertStore } from "@/store/alert.ts";

@@ -101,6 +101,18 @@ export interface IReview {
     status?: string;
 }
 
+export interface ReviewRequestsResponse {
+    pending_review_requests: IReview[];
+}
+
+export interface ClientReviewsResponse {
+    written_reviews: IReview[];
+}
+
+export interface ExpertReviewsResponse {
+    reviews: IReview[];
+}
+
 export interface ITransaction {
     type: string
     paymentMethod: string
@@ -347,7 +359,6 @@ export interface IRevieww {
         name: string;
         photo: string;
         company_type: string;
-        recurringExpert: boolean;
         isShopexpertUser: boolean;
         rank: string;
         storeUrl: string;
@@ -358,21 +369,6 @@ export interface IRevieww {
     reviewSource: string;
     response: string;
     status: string;
-    // Additional properties from IReview
-    projectId?: number;
-    projectTitle?: string;
-}
-
-export interface ReviewRequestsResponse {
-    pending_review_requests: IRevieww[];
-}
-
-export interface ClientReviewsResponse {
-    written_reviews: IRevieww[];
-}
-
-export interface ExpertReviewsResponse {
-    reviews: IRevieww[];
 }
 
 export interface IRequest {

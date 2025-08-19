@@ -8,14 +8,14 @@ import Recurring from '../../../assets/icons/recurring.svg';
 import Info from "../../../assets/icons/info-sm.svg";
 import ReviewModal from '../../../components/client//modals/ReviewModal.vue';
 import { useClientStore } from "@/store/client.ts";
-import type { IReview } from "@/types.ts";
-import {getS3URL} from "@/utils/helpers.ts";
+import { getS3URL, generateInitialsAvatar } from "@/utils/helpers.ts";
 import ReviewResponse from "@/components/expert/cards/ReviewResponse.vue";
+import type { IRevieww } from "@/types.ts";
 
 const clientStore = useClientStore();
 
 const props = defineProps<{
-  review: IReview;
+  review: IRevieww;
   isAdmin?: boolean;
   isClient?: boolean;
   isExpert?: boolean;
@@ -23,8 +23,30 @@ const props = defineProps<{
   isWrittenReview?: boolean;
 }>();
 
+const emit = defineEmits<{
+  (e: 'approve-review', reviewId: number): void;
+  (e: 'decline-review', reviewId: number): void;
+  (e: 'hide-review', reviewId: number): void;
+}>();
+
 const showModal = ref(false);
 const showResponseBox = ref(false);
+
+const handleApprove = () => {
+  emit('approve-review', props.review.id);
+};
+
+const handleDecline = () => {
+  emit('decline-review', props.review.id);
+};
+
+const handleHide = () => {
+  emit('hide-review', props.review.id);
+};
+
+const handleShow = () => {
+  emit('approve-review', props.review.id); // Reuse approve-review event to set status to approved
+};
 
 // Optional: pre-fill existing values (not required for modal since state is handled inside ReviewModal)
 watchEffect(() => {
@@ -54,10 +76,36 @@ async function handleModalSubmit(payload: any) {
     <!-- Header -->
     <div class="flex justify-between items-start">
       <div v-if="isAdmin || isExpert" class="flex items-center space-x-4">
-        <img :src="getS3URL(review.reviewer.photo)" alt="Reviewer avatar" class="w-12 h-12 rounded-full object-cover" />
+        <div class="w-12 h-12 rounded-full overflow-hidden">
+          <!-- Show initials avatar if no real photo -->
+          <div
+              v-if="!review.reviewer?.photo && review.reviewer?.name"
+              :class="[
+                'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg',
+                generateInitialsAvatar(review.reviewer.name).bgColor
+              ]"
+          >
+            {{ generateInitialsAvatar(review.reviewer.name).initials }}
+          </div>
+          <!-- Show actual image for real photos -->
+          <img
+              v-else-if="review.reviewer?.photo"
+              :src="getS3URL(review.reviewer.photo)"
+              alt="Reviewer avatar"
+              class="w-12 h-12 rounded-full object-cover"
+          />
+          <!-- Fallback initials if neither condition is met -->
+          <div
+              v-else
+              class="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg bg-coolGray"
+          >
+            NA
+          </div>
+        </div>
         <div>
           <div class="flex items-center space-x-2">
             <p class="font-normal">{{ review.reviewer.name }}</p>
+            <!-- CHANGED: Now shows recurring for CLIENT (reviewer) when they are a recurring client -->
             <Recurring v-if="review.reviewer.recurringClient" />
             <div
                 v-if="review.reviewer.isShopexpertUser"
@@ -67,18 +115,46 @@ async function handleModalSubmit(payload: any) {
               Hired on shopexperts
             </div>
           </div>
-          <a v-if="review.reviewer.storeTitle" :href="review.reviewer.storeUrl ? review.reviewer.storeUrl : '#'" class="flex text-link text-h4 hover:underline items-center gap-1">
+          <a v-if="review.reviewer.storeTitle" 
+            :href="review.reviewer.storeUrl.startsWith('http') ? review.reviewer.storeUrl : `https://${review.reviewer.storeUrl}`" 
+            target="_blank" 
+            class="flex text-link text-h4 hover:underline items-center gap-1">
             {{ review.reviewer.storeTitle }}
             <ExternalLink />
           </a>
         </div>
       </div>
       <div v-else class="flex items-center space-x-4">
-        <img :src="getS3URL(review?.expert?.photo)" alt="Expert avatar" class="w-12 h-12 rounded-full object-cover" />
+        <div class="w-12 h-12 rounded-full overflow-hidden">
+          <!-- Show initials avatar if no real photo -->
+          <div
+              v-if="!review.expert?.photo && review.expert?.name"
+              :class="[
+                'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg',
+                generateInitialsAvatar(review.expert.name).bgColor
+              ]"
+          >
+            {{ generateInitialsAvatar(review.expert.name).initials }}
+          </div>
+          <!-- Show actual image for real photos -->
+          <img
+              v-else-if="review.expert?.photo"
+              :src="getS3URL(review?.expert?.photo)"
+              alt="Expert avatar"
+              class="w-12 h-12 rounded-full object-cover"
+          />
+          <!-- Fallback initials if neither condition is met -->
+          <div
+              v-else
+              class="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg bg-coolGray"
+          >
+            NA
+          </div>
+        </div>
         <div>
           <div class="flex items-center space-x-2">
             <p class="font-normal">{{ review.expert.name }}</p>
-            <Recurring v-if="review.expert?.recurringExpert" />
+            <!-- REMOVED: No more recurring button for expert -->
             <div
                 v-if="review.expert?.isShopexpertUser"
                 class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-accent bg-accent-light text-sm font-medium text-gray-900"
@@ -96,12 +172,15 @@ async function handleModalSubmit(payload: any) {
           <h5 v-if="isAdmin"
               class="font-normal px-2 py-1 rounded-sm"
               :class="{
-                'text-pending bg-pending-light': review.status === 'Pending Review',
-                'text-success bg-success-light': review.status === 'Approved'
+                'text-pending bg-pending-light': review.status === 'pending' || review.status === 'rejected' || review.status === 'hidden',
+                'text-success bg-success-light': review.status === 'approved'
               }">
-            {{ review.status }}
+            {{ review.status === 'pending' ? 'Pending Approval' : 
+               review.status === 'approved' ? 'Published' : 
+               review.status === 'rejected' ? 'Rejected' : 
+               review.status === 'hidden' ? 'Hidden' : review.status }}
           </h5>
-          <h5>Requested: {{ review.postedAt }}</h5>
+          <h5>Posted: {{ review.postedAt }}</h5>
         </div>
       </div>
     </div>
@@ -150,28 +229,65 @@ async function handleModalSubmit(payload: any) {
     <!-- Footer -->
     <div v-if="isAdmin" class="pt-6 border-t border-grey flex justify-between">
       <div class="flex items-start gap-2">
-        <img :src="review.expert.photo" alt="Reviewer avatar" class="w-12 h-12 rounded-full object-cover" />
+        <div class="w-12 h-12 rounded-full overflow-hidden">
+          <!-- Show initials avatar if no real photo -->
+          <div
+              v-if="!review.expert?.photo && review.expert?.name"
+              :class="[
+                'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg',
+                generateInitialsAvatar(review.expert.name).bgColor
+              ]"
+          >
+            {{ generateInitialsAvatar(review.expert.name).initials }}
+          </div>
+          <!-- Show actual image for real photos -->
+          <img
+              v-else-if="review.expert?.photo"
+              :src="getS3URL(review.expert.photo)"
+              alt="Expert avatar"
+              class="w-12 h-12 rounded-full object-cover"
+          />
+          <!-- Fallback initials if neither condition is met -->
+          <div
+              v-else
+              class="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-lg bg-coolGray"
+          >
+            NA
+          </div>
+        </div>
         <div>
           <div class="text-h4 text-tertiary">Expert</div>
           <p class="text-primary font-medium">{{ review.expert.name }}</p>
-          <a :href="review.expert.storeUrl" class="flex text-link text-h4 hover:underline items-center gap-1">
+          <a :href="review.expert.storeUrl.startsWith('http') ? review.expert.storeUrl : `https://${review.expert.storeUrl}`" 
+            target="_blank" 
+            class="flex text-link text-h4 hover:underline items-center gap-1">
             {{ review.expert.storeTitle }}
             <ExternalLink />
           </a>
         </div>
       </div>
       <div class="flex items-center space-x-4">
-        <div v-if="review.status === 'Pending Review'" class="space-x-4">
-          <button class="rounded-sm bg-primary text-h4 text-white border py-1 px-2">
+        <div v-if="review.status === 'pending'" class="space-x-4">
+          <button @click="handleApprove" class="rounded-sm bg-primary text-h4 text-white border py-1 px-2">
             Approve Review
           </button>
-          <button class="rounded-sm bg-white text-h4 text-primary border py-1 px-2">
+          <button @click="handleDecline" class="rounded-sm bg-white text-h4 text-primary border py-1 px-2">
             Decline Review
           </button>
         </div>
-        <div v-else>
-          <button class="rounded-sm bg-white text-h4 text-primary border py-1 px-2">
+        <div v-else-if="review.status === 'approved'">
+          <button @click="handleHide" class="rounded-sm bg-white text-h4 text-primary border py-1 px-2">
             Hide Review
+          </button>
+        </div>
+        <div v-else-if="review.status === 'hidden'">
+          <button @click="handleShow" class="rounded-sm bg-primary text-h4 text-white border py-1 px-2">
+            Show Review
+          </button>
+        </div>
+        <div v-else-if="review.status === 'rejected'">
+          <button @click="handleApprove" class="rounded-sm bg-primary text-h4 text-white border py-1 px-2">
+            Approve Review
           </button>
         </div>
         <button class="flex gap-2 text-h4 hover:underline">
@@ -201,7 +317,7 @@ async function handleModalSubmit(payload: any) {
     </div>
 
     <!-- Fallback for other roles -->
-    <div class="pt-4 border-t border-grey" >
+    <div v-if="!isAdmin && !isClient" class="pt-4 border-t border-grey" >
       <button v-if="!showResponseBox" @click="showResponseBox = !showResponseBox" class="flex items-center space-x-2 font-medium text-h4 hover:underline">
         <Pencil />
         <span>Write Your Response</span>

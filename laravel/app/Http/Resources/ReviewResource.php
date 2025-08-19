@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Models\Review;
 
 class ReviewResource extends JsonResource
 {
@@ -31,18 +32,30 @@ class ReviewResource extends JsonResource
                 'storeUrl' => $this->client?->url,
                 'recurringClient' => $this->getRecurringClientStatus(),
                 'isShopexpertUser' => $this->client?->usertype === 'paid',
+                // Add missing fields for frontend compatibility
+                'rating' => $this->rate,
+                'comment' => $this->comment,
+                'recommendation' => $this->formatRecommendation($this->recommendation),
+                'quality' => $this->quality,
+                'communication' => $this->communication,
+                'timeToStart' => $this->timeToStart,
+                'valueForMoney' => $this->valueForMoney,
+                'valueRange' => $this->valueRange,
             ],
             'expert' => [
                 'id' => $this->expert?->id,
                 'name' => $this->expert ? $this->expert->first_name . ' ' . $this->expert->last_name : null,
                 'photo' => $this->expert?->photo,
                 'company_type' => $this->expert?->profile?->expert_type ?? 'Agency',
-                'recurringExpert' => $this->getRecurringExpertStatus(),
                 'isShopexpertUser' => $this->expert?->usertype === 'paid',
                 'rank' => $this->expert?->profile?->role ?? 'Senior',
-                'storeUrl' => $this->expert?->url,
-                'storeTitle' => $this->expert?->url,
+                'storeUrl' => $this->expert?->url ?? '#',
+                'storeTitle' => $this->expert?->url ?? 'No Store',
             ],
+            // Add missing fields for frontend compatibility
+            'projectId' => $this->project_id,
+            'projectTitle' => $this->project?->name,
+            'response' => $this->response ?? '',
         ];
     }
 
@@ -64,14 +77,17 @@ class ReviewResource extends JsonResource
     {
         if (!$projectValue) return 'Not specified';
         
+        // Handle special case for "under_100"
+        if ($projectValue === 'under_100') {
+            return 'Under $100';
+        }
+        
         // Handle formats like "100_1000" or "1000_5000"
         if (strpos($projectValue, '_') !== false) {
             $parts = explode('_', $projectValue);
-            if (count($parts) === 2) {
-                // Convert to numeric values first, then format
-                $min = is_numeric($parts[0]) ? (float)$parts[0] : 0;
-                $max = is_numeric($parts[1]) ? (float)$parts[1] : 0;
-                
+            if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
+                $min = (float)$parts[0];
+                $max = (float)$parts[1];
                 return '$' . number_format($min, 0) . '-$' . number_format($max, 0);
             }
         }
@@ -89,22 +105,30 @@ class ReviewResource extends JsonResource
             return false;
         }
 
-        return \App\Models\Review::where('expert_id', $this->expert_id)
+        return Review::where('expert_id', $this->expert_id)
             ->where('client_id', $this->client_id)
             ->count() > 1;
     }
 
     /**
-     * Check if expert is a recurring expert for this client.
+     * Format status for display
      */
-    private function getRecurringExpertStatus(): bool
+    public static function formatStatus($status)
     {
-        if (!$this->client || !$this->expert) {
-            return false;
+        switch($status) {
+            case 'pending': return 'Pending Approval';
+            case 'approved': return 'Published';
+            case 'rejected': return 'Rejected';
+            case 'hidden': return 'Hidden';
+            default: return ucfirst($status);
         }
+    }
 
-        return \App\Models\Review::where('expert_id', $this->expert_id)
-            ->where('client_id', $this->client_id)
-            ->count() > 1;
+    /**
+     * Format rating for display
+     */
+    public static function formatRating($rating)
+    {
+        return $rating . ' Star' . ($rating != 1 ? 's' : '');
     }
 }

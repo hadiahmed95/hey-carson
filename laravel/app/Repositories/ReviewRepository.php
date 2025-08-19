@@ -6,8 +6,6 @@ use Exception;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Constants\Constants;
 use App\Models\Review;
-use App\Models\Role;
-use App\Models\User;
 
 class ReviewRepository
 {
@@ -51,9 +49,8 @@ class ReviewRepository
      * Build the query for retrieving reviews based on filters.
      *
      * @param array $filters The filters to apply.
-     * @return \Illuminate\Database\Eloquent\Builder The query builder instance.
      */
-    private function buildReviewsQuery(array $filters): \Illuminate\Database\Eloquent\Builder
+    private function buildReviewsQuery(array $filters)
     {
         $query = Review::query();
 
@@ -151,7 +148,7 @@ class ReviewRepository
                 ->sort()
                 ->values();
 
-            // Format project values properly
+            // Format project values properly - COMPLETE IMPLEMENTATION
             $projectValues = $reviews->pluck('valueRange')
                 ->filter()
                 ->unique()
@@ -161,14 +158,17 @@ class ReviewRepository
                         return 'Under $100';
                     }
                     
+                    // Handle numeric range formats like "100_1000"
                     if (strpos($projectValue, '_') !== false) {
                         $parts = explode('_', $projectValue);
-                        if (count($parts) === 2) {
-                            $min = is_numeric($parts[0]) ? (float)$parts[0] : 0;
-                            $max = is_numeric($parts[1]) ? (float)$parts[1] : 0;
+                        if (count($parts) === 2 && is_numeric($parts[0]) && is_numeric($parts[1])) {
+                            $min = (float)$parts[0];
+                            $max = (float)$parts[1];
                             return '$' . number_format($min, 0) . '-$' . number_format($max, 0);
                         }
                     }
+                    
+                    // Return as-is for any other format
                     return $projectValue;
                 })
                 ->sort()
