@@ -1,25 +1,22 @@
 <script setup lang="ts">
+import ExternalLink from "../../../assets/icons/externalLink.svg";
 import { ref, computed, watch } from "vue";
 import type { IListing } from "../../../types.ts";
-import { useAdminStore } from "@/store/admin.ts";
-import ExternalLink from "../../../assets/icons/externalLink.svg";
 import Star from "../../../assets/icons/star.svg";
-
+import { useAdminStore } from "@/store/admin.ts";
 
 const props = defineProps<{
   listing: IListing,
   currentFilters: Record<string, any>
 }>()
 
-const emit = defineEmits<{
-  (e: 'openLoginModal', expert: IListing): void
-}>()
-
 const adminStore = useAdminStore();
 const action = ref('')
 
 const handleLoginAs = () => {
-  emit('openLoginModal', props.listing);
+  if (props.listing.onLoginAs) {
+    props.listing.onLoginAs();
+  }
 }
 
 // Computed property for action options based on status
@@ -27,7 +24,7 @@ const actionOptions = computed(() => {
   const status = props.listing.status?.toLowerCase();
   
   if (status === 'pending' || status === 'inactive') {
-    return [{ value: 'activate', label: 'Activate' }];
+    return [{ value: 'activate', label: 'Active' }];
   } else if (status === 'active') {
     return [{ value: 'deactivate', label: 'Deactivate' }];
   }
@@ -35,11 +32,16 @@ const actionOptions = computed(() => {
   return [];
 });
 
+// Handle status change - use store method directly
 const handleStatusChange = async () => {
   if (!action.value || !props.listing.id) return;
   
   try {
-    await adminStore.updateExpertStatus(props.listing.id, action.value);
+    await adminStore.updateExpertStatusAndRefresh(
+      props.listing.id, 
+      action.value, 
+      props.currentFilters
+    );
   } catch (error: any) {
     console.error('Failed to update status:', error);
   } finally {
@@ -95,10 +97,10 @@ watch(action, (newValue) => {
                 :class="{
                   'text-pending bg-pending-light': listing.status === 'Pending',
                   'text-success bg-success-light': listing.status === 'Active',
-                  'text-link bg-link-light': !['Pending', 'Active'].includes(listing.status)
+                  'text-link bg-link-light': listing.status === 'Claimed' || !['Pending', 'Active', 'Claimed'].includes(listing.status)
                 }"
             >
-              {{ (listing.status.toLocaleLowerCase() === "inactive") ? "Deactivated" : listing.status }}
+              {{ listing.status }}
             </h5>
           </div>
           <div class="space-y-1">

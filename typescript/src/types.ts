@@ -39,25 +39,25 @@ export interface ILead {
 
 export interface IListing {
     id: number,
-    name: string
+    display_name: string
     displayUrl: string | null
     avatarInfo?: {
         initials: string
         bgColor: string
     }
-    type: string
+    expert_type_formatted: string
     email: string
-    storeTitle: string
-    storeUrl: string
-    country: string
-    jobTitle: string
-    language: string
-    minimumProjectBudget: string
-    status: string
-    statusUpdatedAt: string
-    servicesOffered: string[]
-    totalReviews?: number
-    averageRating?: number
+    store_title: string
+    url: string
+    country_formatted: string
+    job_title_formatted: string
+    language_formatted: string
+    hourly_rate_formatted: string
+    status_formatted: string
+    status_updated_at_formatted: string
+    services_offered_safe: string[]
+    total_reviews_safe?: number
+    average_rating_safe?: number
     expertData?: any
 }
 
