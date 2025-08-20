@@ -43,7 +43,6 @@ class ExpertResource extends JsonResource
         
         // Presentation formatting with all defaults and null checks
         $displayName = $this->first_name . ' ' . $this->last_name;
-        $hasRealPhoto = $this->photo && $this->photo !== null && $this->photo !== '';
         $hourlyRate = $profile ? ($profile->hourly_rate ?? 0) : 0;
         $formattedHourlyRate = '$' . number_format($hourlyRate, 2);
         $expertStatus = $profile && $profile->status 
@@ -71,8 +70,6 @@ class ExpertResource extends JsonResource
             
             // Presentation formatting (ready for UI with all defaults and null safety)
             'display_name' => $displayName,
-            'has_real_photo' => $hasRealPhoto,
-            'avatar_url' => $hasRealPhoto ? asset('storage/' . $this->photo) : null,
             'expert_type_formatted' => $profile && $profile->expert_type 
                 ? ucfirst($profile->expert_type) 
                 : 'N/A', // Default type

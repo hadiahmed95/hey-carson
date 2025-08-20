@@ -29,24 +29,8 @@ const availableCities = computed(() => {
 
 const mapExpertToIListing = (expert: any): IListing => {
   return {
-    id: expert.id,
-    name: expert.display_name,
     displayUrl: expert.has_real_photo ? getS3URL(expert.photo) : null,
     avatarInfo: expert.has_real_photo ? undefined : generateInitialsAvatar(expert.display_name),
-    type: expert.expert_type_formatted,
-    email: expert.email,
-    storeTitle: expert.store_title,
-    storeUrl: expert.url,
-    country: expert.country_formatted,
-    jobTitle: expert.job_title_formatted,
-    language: expert.language_formatted,
-    minimumProjectBudget: expert.hourly_rate_formatted,
-    status: expert.status_formatted,
-    statusUpdatedAt: expert.status_updated_at_formatted,
-    servicesOffered: expert.services_offered_safe,
-    totalReviews: expert.total_reviews_safe,
-    averageRating: expert.average_rating_safe,
-    expertData: expert
   } as IListing;
 };
 
