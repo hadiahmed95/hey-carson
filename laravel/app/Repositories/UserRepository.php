@@ -313,37 +313,7 @@ class UserRepository
     private function applySearchFilter($query, string $search)
     {
         try {
-            return $query->where(function ($query) use ($search) {
-                if (strpos($search, ' ') !== false) {
-                    $searchTerms = array_filter(explode(' ', trim($search)));
-
-                    if (count($searchTerms) >= 2) {
-                        list ($firstName, $lastName) = $searchTerms;
-                        
-                        $query->where(function ($nameQuery) use ($firstName, $lastName, $search) {
-                            $nameQuery->where(function ($q) use ($firstName, $lastName) {
-                                $q->where('first_name', 'LIKE', "%{$firstName}%")
-                                    ->where('last_name', 'LIKE', "%{$lastName}%");
-                            })
-                                ->orWhere(function ($q) use ($firstName, $lastName) {
-                                    $q->where('first_name', 'LIKE', "%{$lastName}%")
-                                        ->where('last_name', 'LIKE', "%{$firstName}%");
-                                })
-                                ->orWhere('first_name', 'LIKE', "%{$search}%")
-                                ->orWhere('last_name', 'LIKE', "%{$search}%")
-                                ->orWhere('email', 'LIKE', "%{$search}%");
-                        });
-                    } else {
-                        $query->where('first_name', 'LIKE', "%{$search}%")
-                            ->orWhere('last_name', 'LIKE', "%{$search}%")
-                            ->orWhere('email', 'LIKE', "%{$search}%");
-                    }
-                } else {
-                    $query->where('first_name', 'LIKE', "%{$search}%")
-                        ->orWhere('last_name', 'LIKE', "%{$search}%")
-                        ->orWhere('email', 'LIKE', "%{$search}%");
-                }
-            });
+            return $query->whereRaw('CONCAT(first_name, " ", last_name) LIKE ?', ["%{$search}%"]);
         } catch (Exception $e) {
             throw new Exception('Failed to apply search filter: ' . $e->getMessage());
         }

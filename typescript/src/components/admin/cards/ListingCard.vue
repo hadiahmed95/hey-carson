@@ -1,22 +1,25 @@
 <script setup lang="ts">
-import ExternalLink from "../../../assets/icons/externalLink.svg";
 import { ref, computed, watch } from "vue";
 import type { IListing } from "../../../types.ts";
-import Star from "../../../assets/icons/star.svg";
 import { useAdminStore } from "@/store/admin.ts";
+import ExternalLink from "../../../assets/icons/externalLink.svg";
+import Star from "../../../assets/icons/star.svg";
+
 
 const props = defineProps<{
   listing: IListing,
   currentFilters: Record<string, any>
 }>()
 
+const emit = defineEmits<{
+  (e: 'openLoginModal', expert: IListing): void
+}>()
+
 const adminStore = useAdminStore();
 const action = ref('')
 
 const handleLoginAs = () => {
-  if (props.listing.onLoginAs) {
-    props.listing.onLoginAs();
-  }
+  emit('openLoginModal', props.listing);
 }
 
 // Computed property for action options based on status

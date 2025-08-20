@@ -47,7 +47,6 @@ class AuthController extends Controller
                 'message' => 'User Logged In Successfully',
                 'token' => $user->createToken("API TOKEN")->plainTextToken,
             ], 200);
-
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => false,
@@ -67,6 +66,7 @@ class AuthController extends Controller
             if ($user->role_id == Role::EXPERT) {
                 $user->load('serviceCategories');
             }
+
             $user->load('profile', 'role');
 
             // Create new token for the target user
@@ -78,7 +78,6 @@ class AuthController extends Controller
                 'message' => 'Successfully logged in as user',
                 'token' => $token,
             ], 200);
-
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => false,
