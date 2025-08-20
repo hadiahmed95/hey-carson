@@ -65,7 +65,7 @@ const redirectBasedOnRole = (user: any) => {
 
 const login = async () => {
     try {
-        const result = await authStore.v2Login(email.value, password.value)
+        const result = await authStore.TempLogin(email.value, password.value)
         
         // Redirect based on user role name
         redirectBasedOnRole(result.user)

@@ -63,9 +63,9 @@ export const useAuthStore = defineStore('auth', {
                 return await AuthService.resetPassword(payload);
             })
         },
-        async v2Login(email: string, password: string) {
+        async TempLogin(email: string, password: string) {
             return await withLoader(async () => {
-                const response = await AuthService.v2Login({ email, password })
+                const response = await AuthService.TempLogin({ email, password })
                 if (response.data.status && response.data.user && response.data.token) {
                     api.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
                     this.token = response.data.token

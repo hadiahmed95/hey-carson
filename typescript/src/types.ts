@@ -59,7 +59,6 @@ export interface IListing {
     totalReviews?: number
     averageRating?: number
     expertData?: any
-    onLoginAs?: () => void
 }
 
 export interface IReview {
