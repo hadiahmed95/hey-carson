@@ -11,6 +11,7 @@ import ExpertChatroom from "@/components/expert/cards/Chatroom.vue";
 import AdminLayout from "@/layouts/AdminLayout.vue";
 import AdminDashboard from "@/pages/admin/Dashboard.vue";
 import AdminListings from "@/pages/admin/Listings.vue";
+import AdminClients from "@/pages/admin/Clients.vue";
 import AdminLeads from "@/pages/admin/Leads.vue";
 import AdminQuoteSent from "@/pages/admin/QuoteSent.vue";
 import AdminReferrals from "@/pages/admin/Referrals.vue";
@@ -296,6 +297,11 @@ const routes = [
                 path: "listings",
                 name: "admin-listings",
                 component: AdminListings,
+            },
+            {
+                path: "clients",
+                name: "admin-clients",
+                component: AdminClients,
             },
             {
                 path: "leads",

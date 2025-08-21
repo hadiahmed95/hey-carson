@@ -33,13 +33,13 @@ class AdminService {
         });
     }
 
-    async fetchLeads(params: Record<string, any>) {
+    async fetchClients(params: Record<string, any>) {
         const queryString = new URLSearchParams(params).toString();
-        return this.api.get(`/leads?${queryString}`);
+        return this.api.get(`/clients?${queryString}`);
     }
 
-    async fetchLeadFilterOptions() {
-        return this.api.get(`/leads/filter-options`);
+    async fetchClientFilterOptions() {
+        return this.api.get(`/clients/filter-options`);
     }
 }
 

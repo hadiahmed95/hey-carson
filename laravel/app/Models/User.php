@@ -188,7 +188,7 @@ class User extends Authenticatable
     /**
      * @return BelongsToMany
      */
-    public function leads(): BelongsToMany
+    public function clients(): BelongsToMany
     {
         return $this->belongsToMany(Lead::class, 'expert_lead', 'expert_id', 'lead_id');
     }
