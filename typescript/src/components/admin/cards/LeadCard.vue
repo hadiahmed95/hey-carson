@@ -6,11 +6,13 @@ const props = defineProps<{
   lead: ILeadd,
 }>()
 
+const emit = defineEmits<{
+  (e: 'openLoginModal', expert: ILeadd): void
+}>()
+
 // Handle Login As button click
 const handleLoginAs = () => {
-  if (props.lead.onLoginAs) {
-    props.lead.onLoginAs();
-  }
+  emit('openLoginModal', props.lead);
 }
 </script>
 

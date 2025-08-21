@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import AdminService from '@/services/admin.service';
 import { withLoader } from '@/utils/helpers.ts';
+import type { IListing } from '@/types.ts';
 
 interface Admin {
     id: number;
@@ -12,7 +13,7 @@ interface AdminState {
     admin: Admin | null;
     loading: boolean;
     error: string | null;
-    experts: any[];
+    experts: IListing[];
     totalExperts: number;
     currentPage: number;
     lastPage: number;

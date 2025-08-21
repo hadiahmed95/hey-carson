@@ -39,27 +39,22 @@ export interface ILead {
 
 export interface IListing {
     id: number,
-    name: string
-    displayUrl: string | null
-    avatarInfo?: {
-        initials: string
-        bgColor: string
-    }
-    type: string
+    display_name: string
+    photo: string
+    expert_type_formatted: string
     email: string
-    storeTitle: string
-    storeUrl: string
-    country: string
-    jobTitle: string
-    language: string
-    minimumProjectBudget: string
-    status: string
-    statusUpdatedAt: string
-    servicesOffered: string[]
-    totalReviews?: number
-    averageRating?: number
+    store_title: string
+    url: string
+    country_formatted: string
+    job_title_formatted: string
+    language_formatted: string
+    hourly_rate_formatted: string
+    status_formatted: string
+    status_updated_at_formatted: string
+    services_offered_safe: string[]
+    total_reviews_safe?: number
+    average_rating_safe?: number
     expertData?: any
-    onLoginAs?: () => void
 }
 
 export interface IReview {
@@ -441,7 +436,6 @@ export interface ILeadd {
         photo?: string
         shopify_plan?: string
     }
-    onLoginAs?: () => void
 }
 
 export interface IExpertStat {

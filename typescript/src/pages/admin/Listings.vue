@@ -8,6 +8,7 @@ import ListingCard from "../../components/admin/cards/ListingCard.vue";
 import EmptyDataPlaceholder from "../../components/common/EmptyDataPlaceholder.vue";
 import Search from "../../assets/icons/search.svg";
 import LoginAsModal from "../../components/admin/modals/LoginAsModal.vue";
+import LoadingCard from "@/components/common/LoadingCard.vue";
 
 const adminStore = useAdminStore();
 const loader = useLoaderStore();
@@ -26,34 +27,6 @@ const availableCities = computed(() => {
   return filterOptions.value.citiesByCountry[country.value];
 });
 
-const filteredAndMappedExperts = computed((): IListing[] => {
-  return experts.value.map((expert: any): IListing => {
-    const mappedExpert: IListing = {
-      id: expert.id,
-      name: expert.display_name,
-      displayUrl: expert.has_real_photo ? getS3URL(expert.photo) : null,
-      avatarInfo: expert.has_real_photo ? undefined : generateInitialsAvatar(expert.display_name),
-      type: expert.expert_type_formatted,
-      email: expert.email,
-      storeTitle: expert.store_title,
-      storeUrl: expert.url,
-      country: expert.country_formatted,
-      jobTitle: expert.job_title_formatted,
-      language: expert.language_formatted,
-      minimumProjectBudget: expert.hourly_rate_formatted,
-      status: expert.status_formatted,
-      statusUpdatedAt: expert.status_updated_at_formatted,
-      servicesOffered: expert.services_offered_safe,
-      totalReviews: expert.total_reviews_safe,
-      averageRating: expert.average_rating_safe,
-      expertData: expert,
-      onLoginAs: () => openLoginAsModal(mappedExpert)
-    };
-    
-    return mappedExpert;
-  });
-});
-
 const hasFilters = computed(() => {
   return status.value || typeOfAccount.value || plan.value || role.value || 
          country.value || city.value || language.value || servicesOffered.value || shopifyPlan.value;
@@ -62,6 +35,8 @@ const hasFilters = computed(() => {
 
 const [isLoadingMore, status, typeOfAccount, plan, role, country, city, language, servicesOffered, shopifyPlan, searchQuery] = 
   [ref(false), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref('')];
+
+const isResetting = ref(false);
 
 // Login As Modal
 const showLoginAsModal = ref(false);
@@ -162,6 +137,8 @@ const loadMore = () => {
 };
 
 const resetFilters = () => {
+ isResetting.value = true;
+ 
   status.value = '';
   typeOfAccount.value = '';
   plan.value = '';
@@ -172,7 +149,13 @@ const resetFilters = () => {
   servicesOffered.value = '';
   shopifyPlan.value = '';
   searchQuery.value = '';
+ 
   fetchExperts(1, true);
+ 
+  // Reset flag after a short delay
+  setTimeout(() => {
+    isResetting.value = false;
+  }, 100);
 };
 
 const applyFilters = () => {
@@ -180,22 +163,15 @@ const applyFilters = () => {
 };
 
 let searchTimeout: ReturnType<typeof setTimeout> | undefined;
-watch([searchQuery, status, role, language, typeOfAccount, plan, servicesOffered, shopifyPlan], () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    applyFilters();
-  }, 500);
-});
-
-watch(country, () => {
-  city.value = '';
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    applyFilters();
-  }, 500);
-});
-
-watch(city, () => {
+watch([searchQuery, status, role, language, typeOfAccount, plan, servicesOffered, shopifyPlan, country, city], () => {
+  // Skip if we're resetting
+  if (isResetting.value) return;
+ 
+  // Clear city when country changes
+  if (country.value === '') {
+    city.value = '';
+  }
+  
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     applyFilters();
@@ -220,7 +196,7 @@ onMounted(async () => {
         <Search />
         <input
             type="text"
-            placeholder="Search by name or email..."
+            placeholder="Search by name"
             class="w-full ml-3 text-h4 outline-none placeholder-tertiary"
             v-model="searchQuery"
         />
@@ -351,26 +327,16 @@ onMounted(async () => {
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="space-y-4">
-      <div v-for="i in 5" :key="i" class="bg-white border rounded-md shadow-sm p-6">
-        <div class="flex space-x-4">
-          <div class="w-16 h-16 bg-gray-300 rounded-full"></div>
-          <div class="flex-1 space-y-2">
-            <div class="h-4 bg-gray-300 rounded w-1/4"></div>
-            <div class="h-3 bg-gray-300 rounded w-1/2"></div>
-            <div class="h-3 bg-gray-300 rounded w-1/3"></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <LoadingCard v-if="isLoading" />
 
     <!-- Data State -->
-    <div v-else-if="filteredAndMappedExperts.length > 0">
+    <div v-else-if="experts.length > 0">
       <ListingCard
-          v-for="listingItem in filteredAndMappedExperts"
+          v-for="listingItem in experts"
           :key="listingItem.id"
           :listing="listingItem"
           :current-filters="getCurrentFilters()"
+          @openLoginModal="openLoginAsModal"
       />
       
       <div v-if="currentPage < lastPage" class="flex justify-center py-4">
@@ -396,7 +362,16 @@ onMounted(async () => {
     <!-- Login As Modal -->
     <LoginAsModal 
       v-if="showLoginAsModal && selectedExpert"
-      :expert="selectedExpert"
+      :user="selectedExpert"
+      :userId="selectedExpert.id"
+      :userName="selectedExpert.display_name"
+      :userEmail="selectedExpert.email"
+      :userPhoto="selectedExpert.photo ? getS3URL(selectedExpert.photo) : null"
+      :userAvatarInfo="selectedExpert.photo ? undefined : generateInitialsAvatar(selectedExpert.display_name)"
+      modalTitle="Login as Expert"
+      modalDescription="You are about to login as this expert. You will be redirected to their dashboard where you can view and manage their account."
+      buttonText="Login As Expert"
+      redirectPath="/expert/dashboard"
       @close="closeLoginAsModal"
     />
   </main>

@@ -261,7 +261,7 @@ Route::prefix('v2')->group(function () {
             Route::get('/filter-options', [AdminListingController::class, 'getFilterOptions']);
             Route::get('/listings', [AdminListingController::class, 'all']);
             Route::post('/listings/{user}/status', [AdminListingController::class, 'updateStatus']);
-
+            
             // Leads Routes
             Route::get('/leads/filter-options', [AdminLeadController::class, 'getFilterOptions']);
             Route::get('/leads', [AdminLeadController::class, 'all']);

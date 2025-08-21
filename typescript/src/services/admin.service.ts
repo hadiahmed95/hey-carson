@@ -1,33 +1,33 @@
-import ApiService from '@/services/api.service';
+import { createApi } from '@/services/api.service';
 
 class AdminService {
-    private base = '/v2/admin';
+    private api = createApi('admin'); // Creates /api/v2/admin base
 
     async fetchAdmin() {
-        return ApiService.get(`${this.base}/profile`);
+        return this.api.get('/profile');
     }
 
     async fetchExperts(params: Record<string, any>) {
         const queryString = new URLSearchParams(params).toString();
-        return ApiService.get(`${this.base}/listings?${queryString}`);
+        return this.api.get(`/listings?${queryString}`);
     }
 
     async fetchExpertFilterOptions() {
-        return ApiService.get(`${this.base}/filter-options`);
+        return this.api.get('/filter-options');
     }
 
     async loginAsUser(userId: number) {
-        return ApiService.post(`${this.base}/login-as/${userId}`, {});
+        return this.api.post(`/login-as/${userId}`, {});
     }
 
     async updateExpertStatus(expertId: number, action: string) {
-        return ApiService.post(`${this.base}/listings/${expertId}/status`, { 
+        return this.api.post(`/listings/${expertId}/status`, { 
             action
         });
     }
 
     async updateExpertStatusAndRefresh(expertId: number, action: string, currentFilters: Record<string, any> = {}) {
-        return ApiService.post(`${this.base}/listings/${expertId}/status`, { 
+        return this.api.post(`/listings/${expertId}/status`, { 
             action,
             ...currentFilters 
         });
@@ -35,11 +35,11 @@ class AdminService {
 
     async fetchLeads(params: Record<string, any>) {
         const queryString = new URLSearchParams(params).toString();
-        return ApiService.get(`${this.base}/leads?${queryString}`);
+        return this.api.get(`/leads?${queryString}`);
     }
 
     async fetchLeadFilterOptions() {
-        return ApiService.get(`${this.base}/leads/filter-options`);
+        return this.api.get(`/leads/filter-options`);
     }
 }
 

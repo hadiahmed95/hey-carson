@@ -27,11 +27,15 @@
       </select>
     </div>
 
+    <!-- Loading State -->
+    <LoadingCard v-if="isLoading" />
+
     <div>
       <LeadCard
           v-for="lead in transformedLeads"
           :key="lead.id"
           :lead="lead"
+          @openLoginModal="openLoginAsModal"
       />
       
       <!-- Load More Button -->
@@ -48,9 +52,18 @@
     </div>
 
     <!-- Login As Modal -->
-    <LoginAsLeadModal
+    <LoginAsModal
       v-if="showLoginAsModal && selectedLead"
       :user="selectedLead"
+      :userId="selectedLead.id"
+      :userName="selectedLead.display_name"
+      :userEmail="selectedLead.email"
+      :userPhoto="selectedLead.photo ? getS3URL(selectedLead.photo) : null"
+      :userAvatarInfo="selectedLead.photo ? undefined : generateInitialsAvatar(selectedLead.display_name)"
+      modalTitle="Login as Client"
+      modalDescription="You are about to login as this client. You will be redirected to their dashboard where you can view and manage their account."
+      buttonText="Login As Client"
+      redirectPath="/client/dashboard"
       @close="closeLoginAsModal"
     />
   </main>
@@ -64,7 +77,8 @@ import type { ILeadd } from "../../types.ts";
 import { getS3URL, generateInitialsAvatar } from "@/utils/helpers.ts";
 import LeadCard from "../../components/admin/cards/LeadCard.vue";
 import Search from "../../assets/icons/search.svg";
-import LoginAsLeadModal from "../../components/admin/modals/LoginAsLeadModal.vue";
+import LoginAsModal from "../../components/admin/modals/LoginAsModal.vue";
+import LoadingCard from "@/components/common/LoadingCard.vue";
 
 
 const adminStore = useAdminStore();
@@ -75,7 +89,6 @@ const totalLeads = ref(0);
 const currentPage = ref(1);
 const lastPage = ref(1);
 const isLoadingMore = ref(false);
-
 const shopifyPlan = ref('');
 const searchQuery = ref('');
 
@@ -124,10 +137,6 @@ const transformedLeads = computed((): ILeadd[] => {
         url: lead.url,
         photo: lead.photo,
         shopify_plan: lead.shopify_plan
-      },
-      onLoginAs: () => {
-        console.log('Login As clicked for lead:', lead.id);
-        openLoginAsModal(lead);
       }
     };
   });
