@@ -107,5 +107,19 @@ export const useAdminStore = defineStore('admin', {
                 return response.data;
             });
         },
+
+        async fetchLeads(params: Record<string, any>) {
+            return await withLoader(async () => {
+                const response = await AdminService.fetchLeads(params);                
+                return response.data;
+            });
+        },
+
+        async fetchLeadFilterOptions() {
+            return await withLoader(async () => {
+                const response = await AdminService.fetchLeadFilterOptions();
+                return response.data;
+            });
+        },
     },
 });

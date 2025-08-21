@@ -352,4 +352,90 @@ class UserRepository
             throw new Exception('Failed to update expert status: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Retrieve a paginated list of leads (clients) based on the provided filters.
+     *
+     * Applies filtering, eager loads related data, and paginates the result.
+     * Includes counts from requests table for direct messages and quote requests.
+     *
+     * @param array $filters Filters to apply (e.g., per_page, search, shopify_plan).
+     * @return \Illuminate\Pagination\LengthAwarePaginator Paginated list of leads with related data.
+     *
+     * @throws \Exception If fetching leads fails.
+     */
+    public function getLeads(array $filters): LengthAwarePaginator
+    {
+        try {
+            $query = $this->buildLeadsQuery($filters);
+            $perPage = $filters['per_page'] ?? $this->paginationLimit;
+            
+            return $query->latest()
+                        ->paginate($perPage);
+        } catch (Exception $e) {
+            throw new Exception('Failed to fetch leads: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Build the base query for leads with filters and related data.
+     *
+     * @param array $filters Filters to apply (search, shopify_plan, etc.)
+     * @return \Illuminate\Database\Eloquent\Builder Query builder instance with counts and sums
+     */
+    private function buildLeadsQuery(array $filters): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = User::where('role_id', Role::CLIENT)
+            ->withCount([
+                'directMessages as direct_messages_count' => function ($query) {
+                    $query->where('type', 'Direct Message');
+                },
+                'quoteRequests as quote_requests_count' => function ($query) {
+                    $query->where('type', 'Quote Request');
+                }
+            ])
+            ->withSum('paidPayments as lifetime_spend', 'total');
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $query = $this->applySearchFilter($query, $filters['search']);
+        }
+
+        // Apply shopify_plan filter
+        if (!empty($filters['shopify_plan'])) {
+            $query->where('shopify_plan', $filters['shopify_plan']);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Retrieve available filter options for leads listing.
+     *
+     * Gathers distinct Shopify plans from client users.
+     *
+     * @return array An associative array containing filter options:
+     *               - shopifyPlans
+     *
+     * @throws \Exception If retrieving filter options fails.
+     */
+    public function getLeadsFilterOptions(): array
+    {
+        try {
+            $shopifyPlans = User::where('role_id', Role::CLIENT)
+                ->whereNotNull('shopify_plan')
+                ->where('shopify_plan', '!=', '')
+                ->distinct()
+                ->pluck('shopify_plan')
+                ->sort()
+                ->values()
+                ->toArray();
+
+            return [
+                'shopifyPlans' => $shopifyPlans,
+            ];
+        } catch (Exception $e) {
+            throw new Exception('Failed to retrieve leads filter options: ' . $e->getMessage());
+        }
+    }
 }

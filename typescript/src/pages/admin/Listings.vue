@@ -27,17 +27,6 @@ const availableCities = computed(() => {
   return filterOptions.value.citiesByCountry[country.value];
 });
 
-const mapExpertToIListing = (expert: any): IListing => {
-  return {
-    displayUrl: expert.has_real_photo ? getS3URL(expert.photo) : null,
-    avatarInfo: expert.has_real_photo ? undefined : generateInitialsAvatar(expert.display_name),
-  } as IListing;
-};
-
-const filteredAndMappedExperts = computed((): IListing[] => {
-  return experts.value.map(mapExpertToIListing);
-});
-
 const hasFilters = computed(() => {
   return status.value || typeOfAccount.value || plan.value || role.value || 
          country.value || city.value || language.value || servicesOffered.value || shopifyPlan.value;
@@ -46,6 +35,8 @@ const hasFilters = computed(() => {
 
 const [isLoadingMore, status, typeOfAccount, plan, role, country, city, language, servicesOffered, shopifyPlan, searchQuery] = 
   [ref(false), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref(''), ref('')];
+
+const isResetting = ref(false);
 
 // Login As Modal
 const showLoginAsModal = ref(false);
@@ -146,6 +137,8 @@ const loadMore = () => {
 };
 
 const resetFilters = () => {
+ isResetting.value = true;
+ 
   status.value = '';
   typeOfAccount.value = '';
   plan.value = '';
@@ -156,7 +149,13 @@ const resetFilters = () => {
   servicesOffered.value = '';
   shopifyPlan.value = '';
   searchQuery.value = '';
+ 
   fetchExperts(1, true);
+ 
+  // Reset flag after a short delay
+  setTimeout(() => {
+    isResetting.value = false;
+  }, 100);
 };
 
 const applyFilters = () => {
@@ -165,6 +164,9 @@ const applyFilters = () => {
 
 let searchTimeout: ReturnType<typeof setTimeout> | undefined;
 watch([searchQuery, status, role, language, typeOfAccount, plan, servicesOffered, shopifyPlan, country, city], () => {
+  // Skip if we're resetting
+  if (isResetting.value) return;
+ 
   // Clear city when country changes
   if (country.value === '') {
     city.value = '';
@@ -328,9 +330,9 @@ onMounted(async () => {
     <LoadingCard v-if="isLoading" />
 
     <!-- Data State -->
-    <div v-else-if="filteredAndMappedExperts.length > 0">
+    <div v-else-if="experts.length > 0">
       <ListingCard
-          v-for="listingItem in filteredAndMappedExperts"
+          v-for="listingItem in experts"
           :key="listingItem.id"
           :listing="listingItem"
           :current-filters="getCurrentFilters()"
@@ -362,10 +364,10 @@ onMounted(async () => {
       v-if="showLoginAsModal && selectedExpert"
       :user="selectedExpert"
       :userId="selectedExpert.id"
-      :userName="selectedExpert.name"
+      :userName="selectedExpert.display_name"
       :userEmail="selectedExpert.email"
-      :userPhoto="selectedExpert.displayUrl"
-      :userAvatarInfo="selectedExpert.avatarInfo"
+      :userPhoto="selectedExpert.photo ? getS3URL(selectedExpert.photo) : null"
+      :userAvatarInfo="selectedExpert.photo ? undefined : generateInitialsAvatar(selectedExpert.display_name)"
       modalTitle="Login as Expert"
       modalDescription="You are about to login as this expert. You will be redirected to their dashboard where you can view and manage their account."
       buttonText="Login As Expert"

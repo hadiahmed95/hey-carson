@@ -4,24 +4,27 @@ import { ref, computed, watch } from "vue";
 import type { IListing } from "../../../types.ts";
 import Star from "../../../assets/icons/star.svg";
 import { useAdminStore } from "@/store/admin.ts";
+import { getS3URL, generateInitialsAvatar } from "@/utils/helpers.ts";
 
 const props = defineProps<{
   listing: IListing,
   currentFilters: Record<string, any>
 }>()
 
+const emit = defineEmits<{
+  (e: 'openLoginModal', expert: IListing): void
+}>()
+
 const adminStore = useAdminStore();
 const action = ref('')
 
 const handleLoginAs = () => {
-  if (props.listing.onLoginAs) {
-    props.listing.onLoginAs();
-  }
+  emit('openLoginModal', props.listing);
 }
 
 // Computed property for action options based on status
 const actionOptions = computed(() => {
-  const status = props.listing.status?.toLowerCase();
+  const status = props.listing.status_formatted?.toLowerCase();
   
   if (status === 'pending' || status === 'inactive') {
     return [{ value: 'activate', label: 'Active' }];
@@ -37,11 +40,7 @@ const handleStatusChange = async () => {
   if (!action.value || !props.listing.id) return;
   
   try {
-    await adminStore.updateExpertStatusAndRefresh(
-      props.listing.id, 
-      action.value, 
-      props.currentFilters
-    );
+    await adminStore.updateExpertStatusAndRefresh(props.listing.id, action.value);
   } catch (error: any) {
     console.error('Failed to update status:', error);
   } finally {
@@ -64,57 +63,50 @@ watch(action, (newValue) => {
       <div class="flex gap-4 col-span-2">
         <!-- Avatar with initials or image -->
         <div class="w-16 h-16 rounded-full overflow-hidden">
-          <!-- Show initials avatar if no real photo -->
-          <div
-              v-if="!listing.displayUrl && listing.avatarInfo"
-              :class="[
-                'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h3',
-                listing.avatarInfo.bgColor
-              ]"
-          >
-            {{ listing.avatarInfo.initials }}
-          </div>
-          <!-- Show actual image for real photos -->
+          <!-- Show actual image if photo exists -->
           <img
-              v-else-if="listing.displayUrl"
-              :src="listing.displayUrl"
+              v-if="listing.photo && listing.photo !== null && listing.photo !== ''"
+              :src="getS3URL(listing.photo)"
               alt="Expert avatar"
               class="w-full h-full rounded-full object-cover"
           />
-          <!-- Fallback initials if neither condition is met -->
+          <!-- Show initials avatar if no photo -->
           <div
               v-else
-              class="w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h3 bg-coolGray"
+             :class="[
+               'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h3',
+               generateInitialsAvatar(listing.display_name).bgColor
+             ]"
           >
-            NA
+           {{ generateInitialsAvatar(listing.display_name).initials }}
           </div>
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <p class="text-primary font-medium">{{ listing.name }}</p>
+            <p class="text-primary font-medium">{{ listing.display_name }}</p>
             <h5
                 class="font-medium px-2 py-0.5 rounded-sm capitalize"
                 :class="{
-                  'text-pending bg-pending-light': listing.status === 'Pending',
-                  'text-success bg-success-light': listing.status === 'Active',
-                  'text-link bg-link-light': listing.status === 'Claimed' || !['Pending', 'Active', 'Claimed'].includes(listing.status)
-                }"
+                  'text-pending bg-pending-light': listing.status_formatted === 'Pending',
+                  'text-success bg-success-light': listing.status_formatted === 'Active',
+                  'text-link bg-link-light': !['Pending', 'Active'].includes(listing.status_formatted)
+               }"
             >
-              {{ listing.status }}
+              {{ (listing.status_formatted.toLocaleLowerCase() === "inactive") ? "Deactivated" : listing.status_formatted }}
             </h5>
           </div>
           <div class="space-y-1">
-            <h4 class="font-light">{{ listing.type }}</h4>
-            <div v-if="listing.totalReviews && listing.totalReviews > 0" class="flex items-center gap-1 text-h4">
+            <h4 class="font-light">{{ listing.expert_type_formatted }}</h4>
+            <div v-if="listing.total_reviews_safe && listing.total_reviews_safe > 0" class="flex items-center gap-1 text-h4">
               <Star class="w-4 h-4 text-success flex-shrink-0" />
-              <span class="text-primary font-medium">{{ listing.averageRating }}</span>
-              <span class="text-light-grey">({{ listing.totalReviews }} reviews)</span>
+              <span class="text-primary font-medium">{{ listing.average_rating_safe }}</span>
+              <span class="text-light-grey">({{ listing.total_reviews_safe }} reviews)</span>
             </div>
             <a :href="`mailto:${listing.email}`" class="text-h4 text-link hover:underline">
               {{ listing.email }}
             </a>
-            <a :href="listing.storeUrl.startsWith('http') ? listing.storeUrl : `https://${listing.storeUrl}`" target="_blank" class="flex items-center gap-1 text-h4 text-link hover:underline">
-              {{ listing.storeTitle }}
+            <a :href="listing.url.startsWith('http') ? listing.url : `https://${listing.url}`" target="_blank" class="flex items-center gap-1 text-h4 text-link hover:underline">
+              {{ listing.store_title }}
               <ExternalLink />
             </a>
           </div>
@@ -122,14 +114,14 @@ watch(action, (newValue) => {
       </div>
 
       <h4 class="flex flex-col">
-        <span>{{ listing.jobTitle }}</span>
-        <span>{{ listing.country }}</span>
-        <span>{{ listing.language }}</span>
+        <span>{{ listing.job_title_formatted }}</span>
+        <span>{{ listing.country_formatted }}</span>
+        <span>{{ listing.language_formatted }}</span>
       </h4>
 
       <h4 class="flex flex-col">
         <span>Min. Project Budget</span>
-        <span class="font-medium text-h3">{{ listing.minimumProjectBudget }}</span>
+        <span class="font-medium text-h3">{{ listing.hourly_rate_formatted }}</span>
       </h4>
 
       <div class="font-light text-h5">
@@ -147,7 +139,7 @@ watch(action, (newValue) => {
             </select>
 
             <button
-                v-if="listing.status === 'Active'"
+                v-if="listing.status_formatted === 'Active'"
                 @click="handleLoginAs"
                 class="bg-primary text-white text-h4 py-2 px-4 rounded-sm hover:bg-primary-dark"
             >
@@ -155,18 +147,18 @@ watch(action, (newValue) => {
             </button>
           </div>
 
-          <h5 class="text-right text-light-grey">Submitted on: {{ listing.statusUpdatedAt }}</h5>
+          <h5 class="text-right text-light-grey">Submitted on: {{ listing.status_updated_at_formatted }}</h5>
         </div>
       </div>
     </div>
 
     <!--  Body  -->
-    <div v-if="listing.servicesOffered && listing.servicesOffered.length > 0">
+    <div v-if="listing.services_offered_safe && listing.services_offered_safe.length > 0">
       <h4 class="text-gray-500 font-normal pb-2">Services Offered</h4>
       <div class="flex flex-row">
         <h4
             class="text-h4 font-normal py-1 px-2 border mr-2 rounded-full"
-            v-for="(service, index) in listing.servicesOffered"
+            v-for="(service, index) in listing.services_offered_safe"
             :key="index"
         >
           {{ service }}

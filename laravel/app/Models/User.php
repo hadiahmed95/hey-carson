@@ -192,4 +192,34 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Lead::class, 'expert_lead', 'expert_id', 'lead_id');
     }
+
+    /**
+     * Get the direct message requests for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function directMessages()
+    {
+        return $this->hasMany(Request::class, 'client_id');
+    }
+
+    /**
+     * Get the quote requests for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function quoteRequests()
+    {
+        return $this->hasMany(Request::class, 'client_id');
+    }
+
+    /**
+     * Get the paid payments for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function paidPayments()
+    {
+        return $this->hasMany(Payment::class, 'user_id')->where('status', 'paid');
+    }
 }

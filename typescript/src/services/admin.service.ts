@@ -33,19 +33,13 @@ class AdminService {
         });
     }
 
-    async fetchReviews(params: Record<string, any>) {
+    async fetchLeads(params: Record<string, any>) {
         const queryString = new URLSearchParams(params).toString();
-        return ApiService.get(`${this.base}/reviews?${queryString}`);
+        return this.api.get(`/leads?${queryString}`);
     }
 
-    async fetchReviewFilterOptions() {
-        return ApiService.get(`${this.base}/reviews/filter-options`);
-    }
-
-    async updateReviewStatus(reviewId: number, status: string) {
-        return ApiService.post(`${this.base}/reviews/${reviewId}/status`, { 
-            status
-        });
+    async fetchLeadFilterOptions() {
+        return this.api.get(`/leads/filter-options`);
     }
 }
 

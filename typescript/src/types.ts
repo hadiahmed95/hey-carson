@@ -40,11 +40,7 @@ export interface ILead {
 export interface IListing {
     id: number,
     display_name: string
-    displayUrl: string | null
-    avatarInfo?: {
-        initials: string
-        bgColor: string
-    }
+    photo: string
     expert_type_formatted: string
     email: string
     store_title: string
@@ -447,6 +443,19 @@ export interface Card {
 
 export interface ILeadd {
     id: number,
+    name: string,
+    website: string,
+    email: string,
+    plan: string,
+    displayUrl: string | null,
+    avatarInfo?: {
+        initials: string
+        bgColor: string
+    },
+    directChatCount: number,
+    quoteRequestCount: number,
+    lifetimeSpendCount: string,
+    joinedOn: string,
     type: string
     created_at: string
     project: {
