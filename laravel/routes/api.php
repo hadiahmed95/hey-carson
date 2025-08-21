@@ -25,8 +25,7 @@ use App\Http\Controllers\Expert\LeadController as ExpertLeadController;
 // Admin Resources
 use App\Http\Controllers\NewDashboard\AuthController as V2AuthController;
 use App\Http\Controllers\NewDashboard\Admin\ListingController as AdminListingController;
-use App\Http\Controllers\NewDashboard\Admin\LeadController as AdminLeadController;
-use App\Http\Controllers\NewDashboard\Admin\ReviewController as AdminReviewController;
+use App\Http\Controllers\NewDashboard\Admin\ClientController as AdminClientController;
 
 /*
 |--------------------------------------------------------------------------
@@ -262,15 +261,10 @@ Route::prefix('v2')->group(function () {
             Route::get('/filter-options', [AdminListingController::class, 'getFilterOptions']);
             Route::get('/listings', [AdminListingController::class, 'all']);
             Route::post('/listings/{user}/status', [AdminListingController::class, 'updateStatus']);
-
-            // Leads Routes
-            Route::get('/leads/filter-options', [AdminLeadController::class, 'getFilterOptions']);
-            Route::get('/leads', [AdminLeadController::class, 'all']);
             
-            // Reviews Routes
-            Route::get('/reviews/filter-options', [AdminReviewController::class, 'getFilterOptions']);
-            Route::get('/reviews', [AdminReviewController::class, 'all']);
-            Route::post('/reviews/{review}/status', [AdminReviewController::class, 'updateStatus']);
+            // Clients Routes
+            Route::get('/clients/filter-options', [AdminClientController::class, 'getFilterOptions']);
+            Route::get('/clients', [AdminClientController::class, 'all']);
         });
     });
 });

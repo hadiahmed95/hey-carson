@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import AdminService from '@/services/admin.service';
 import { withLoader } from '@/utils/helpers.ts';
-import type { IListing } from '@/types.ts';
+import type { IListing, ILeadd } from '@/types.ts';
 
 interface Admin {
     id: number;
@@ -17,6 +17,7 @@ interface AdminState {
     totalExperts: number;
     currentPage: number;
     lastPage: number;
+    clients: ILeadd[];
 }
 
 export const useAdminStore = defineStore('admin', {
@@ -28,6 +29,7 @@ export const useAdminStore = defineStore('admin', {
         totalExperts: 0,
         currentPage: 1,
         lastPage: 1,
+        clients: [],
     }),
 
     actions: {
@@ -108,16 +110,17 @@ export const useAdminStore = defineStore('admin', {
             });
         },
 
-        async fetchLeads(params: Record<string, any>) {
+        async fetchClients(params: Record<string, any>) {
             return await withLoader(async () => {
-                const response = await AdminService.fetchLeads(params);                
+                const response = await AdminService.fetchClients(params);  
+                this.clients = response.data.clients.data || [];              
                 return response.data;
             });
         },
 
-        async fetchLeadFilterOptions() {
+        async fetchClientFilterOptions() {
             return await withLoader(async () => {
-                const response = await AdminService.fetchLeadFilterOptions();
+                const response = await AdminService.fetchClientFilterOptions();
                 return response.data;
             });
         },

@@ -299,7 +299,7 @@ class UserRepository
     /**
      * Apply search filter to the experts query.
      *
-     * Searches by first name, last name, or email. If the search string contains a space,
+     * Searches by first name, last name. If the search string contains a space,
      * it attempts to split it into first and last names to match against both fields
      * in multiple combinations (first-last, last-first).
      *
@@ -314,6 +314,33 @@ class UserRepository
     {
         try {
             return $query->whereRaw('CONCAT(first_name, " ", last_name) LIKE ?', ["%{$search}%"]);
+        } catch (Exception $e) {
+            throw new Exception('Failed to apply search filter: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Apply search filter to the clients query.
+     *
+     * Searches by first name, last name, email, or email. If the search string contains a space,
+     * it attempts to split it into first and last names to match against both fields
+     * in multiple combinations (first-last, last-first).
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query  The query builder instance to modify.
+     * @param string $search The search keyword or phrase.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Modified query builder with applied search filters.
+     *
+     * @throws \Exception If applying the search filter fails.
+     */
+    private function applyClientSearchFilter($query, string $search)
+    {
+        try {
+            return $query->where(function ($query) use ($search) {
+                $query->whereRaw('CONCAT(first_name, " ", last_name) LIKE ?', ["%{$search}%"])
+                    ->orWhere('email', '=', $search)
+                    ->orWhere('url', '=', $search);
+            });
         } catch (Exception $e) {
             throw new Exception('Failed to apply search filter: ' . $e->getMessage());
         }
@@ -354,36 +381,36 @@ class UserRepository
     }
 
     /**
-     * Retrieve a paginated list of leads (clients) based on the provided filters.
+     * Retrieve a paginated list of clients based on the provided filters.
      *
      * Applies filtering, eager loads related data, and paginates the result.
      * Includes counts from requests table for direct messages and quote requests.
      *
      * @param array $filters Filters to apply (e.g., per_page, search, shopify_plan).
-     * @return \Illuminate\Pagination\LengthAwarePaginator Paginated list of leads with related data.
+     * @return \Illuminate\Pagination\LengthAwarePaginator Paginated list of clients with related data.
      *
-     * @throws \Exception If fetching leads fails.
+     * @throws \Exception If fetching clients fails.
      */
-    public function getLeads(array $filters): LengthAwarePaginator
+    public function getClients(array $filters): LengthAwarePaginator
     {
         try {
-            $query = $this->buildLeadsQuery($filters);
+            $query = $this->buildClientsQuery($filters);
             $perPage = $filters['per_page'] ?? $this->paginationLimit;
             
             return $query->latest()
                         ->paginate($perPage);
         } catch (Exception $e) {
-            throw new Exception('Failed to fetch leads: ' . $e->getMessage());
+            throw new Exception('Failed to fetch clients: ' . $e->getMessage());
         }
     }
 
     /**
-     * Build the base query for leads with filters and related data.
+     * Build the base query for clients with filters and related data.
      *
      * @param array $filters Filters to apply (search, shopify_plan, etc.)
      * @return \Illuminate\Database\Eloquent\Builder Query builder instance with counts and sums
      */
-    private function buildLeadsQuery(array $filters): \Illuminate\Database\Eloquent\Builder
+    private function buildClientsQuery(array $filters): \Illuminate\Database\Eloquent\Builder
     {
         $query = User::where('role_id', Role::CLIENT)
             ->withCount([
@@ -398,7 +425,7 @@ class UserRepository
 
         // Apply search filter
         if (!empty($filters['search'])) {
-            $query = $this->applySearchFilter($query, $filters['search']);
+            $query = $this->applyClientSearchFilter($query, $filters['search']);
         }
 
         // Apply shopify_plan filter
@@ -410,7 +437,7 @@ class UserRepository
     }
 
     /**
-     * Retrieve available filter options for leads listing.
+     * Retrieve available filter options for clients listing.
      *
      * Gathers distinct Shopify plans from client users.
      *
@@ -419,7 +446,7 @@ class UserRepository
      *
      * @throws \Exception If retrieving filter options fails.
      */
-    public function getLeadsFilterOptions(): array
+    public function getClientsFilterOptions(): array
     {
         try {
             $shopifyPlans = User::where('role_id', Role::CLIENT)
@@ -435,7 +462,7 @@ class UserRepository
                 'shopifyPlans' => $shopifyPlans,
             ];
         } catch (Exception $e) {
-            throw new Exception('Failed to retrieve leads filter options: ' . $e->getMessage());
+            throw new Exception('Failed to retrieve clients filter options: ' . $e->getMessage());
         }
     }
 }
