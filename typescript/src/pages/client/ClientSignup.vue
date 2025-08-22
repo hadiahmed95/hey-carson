@@ -6,7 +6,7 @@
     <div class="flex flex-col md:flex-row w-full h-screen">
       <!-- Left Side: Signup Form -->
       <div class="border rounded-md md:w-[34.5rem] flex flex-col bg-white h-full overflow-y-scroll">
-        <div class="flex flex-col h-full px-8 py-6 gap-14">
+        <div class="flex flex-col lg:h-full h-fit px-8 py-6 gap-14">
 
           <!-- Group 1: Logo -->
           <Logo />
@@ -58,7 +58,7 @@
               <BaseInput
                   label="Shopify Store/Website URL"
                   type="text"
-                  placeholder="https://your-store-name.myshopify.com"
+                  placeholder="Please enter your store url"
                   v-model="storeUrl"
                   :error="errors.storeUrl"
               />
@@ -90,14 +90,11 @@
       </div>
 
       <!-- Right Side: Visual Section -->
-      <div class="w-full md:w-2/3 h-full px-6">
-        <div class="grid grid-rows-3 h-full">
-          <div></div>
-          <div></div>
-
-          <div class="flex flex-col justify-end max-w-3xl mx-auto gap-8">
+      <div class="w-full md:w-2/3 hidden lg:block h-full px-6">
+        <div class="flex justify-center">
+          <div class="flex flex-col mt-28 justify-end max-w-3xl gap-8">
             <div class="flex flex-col gap-2">
-              <h2 class="text-primary text-h1 font-sm font-archivo">Finding your next Shopify expert</h2>
+              <h1 class="text-primary font-sm font-archivo">Finding your next Shopify expert</h1>
               <p class="italic text-3xl text-primary">just got way easier.</p>
             </div>
 
@@ -193,7 +190,7 @@ const validateForm = () => {
     errors.value.storeUrl = 'Store URL is required.'
     isValid = false
   } else if (!validURL(storeUrl.value)) {
-    errors.value.storeUrl = 'Please enter a valid URL (e.g., https://yourstore.com).'
+    errors.value.storeUrl = 'Please enter a valid URL.'
     isValid = false
   }
   if (!password.value) {
@@ -222,10 +219,27 @@ const signUp = async () => {
       new_dashboard: true,
     }
 
-    await registerStore.signupClient(payload)
+    try {
+      const res = await registerStore.signupClient(payload);
+      console.log(res)
 
-    if (authStore.token && authStore.user) {
-      await router.push('/client/dashboard')
+      if (authStore.token && authStore.user) {
+        await router.push('/client/dashboard');
+      }
+    } catch (err: any) {
+      if (err.response?.status === 422) {
+        const api = err.response.data;
+
+        const serverErrors = api.errors || {};
+        errors.value.firstName = serverErrors.first_name?.[0] || '';
+        errors.value.lastName = serverErrors.last_name?.[0] || '';
+        errors.value.email = serverErrors.email?.[0] || '';
+        errors.value.storeUrl = serverErrors.url?.[0] || '';
+        errors.value.password = serverErrors.password?.[0] || '';
+        console.log(errors.value)
+      } else {
+        console.error('Unexpected signup error', err);
+      }
     }
   }
 }

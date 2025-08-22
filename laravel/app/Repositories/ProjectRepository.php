@@ -126,89 +126,6 @@ class ProjectRepository
     }
 
     /**
-     * Get project requests for the logged-in client.
-     *
-     * @param int|null $limit
-     * @return Collection
-     */
-    public function getRequestsForClient(?int $limit = null): Collection
-    {
-        $user = \Auth::user();
-
-        $requests = Request::query()
-            ->where('client_id', $user->id)
-            ->with(['project', 'expert.profile', 'expert.reviews'])
-            ->latest()
-            ->when($limit, fn($q) => $q->take($limit))
-            ->get();
-
-
-        $requests->each(function ($request) {
-            $expert = $request->expert;
-
-            if ($expert && $expert->relationLoaded('reviews')) {
-                $reviews = $expert->reviews;
-
-                $expert->reviews_stat = [
-                    'rating' => round($reviews->avg('rate') ?? 0, 2),
-                    'reviews_count' => $reviews->count(),
-                ];
-            }
-
-            if ($request->type === 'Quote Request' && $expert) {
-                $expert->load(['quotes' => function ($q) use ($request) {
-                    $q->where('project_id', $request->project_id);
-                }]);
-            }
-        });
-
-        $expertIds = $requests->pluck('project')
-            ->filter()
-            ->flatMap(fn($project) => is_array($project->additional_experts) ? $project->additional_experts : [])
-            ->unique()
-            ->values();
-
-        $additionalExpertProfiles = User::query()
-            ->whereIn('id', $expertIds)
-            ->with(['profile', 'reviews'])
-            ->get()
-            ->map(function ($expert) {
-                $reviews = $expert->reviews;
-
-                $expert->reviews_stat = [
-                    'rating' => round($reviews->avg('rate') ?? 0, 2),
-                    'reviews_count' => $reviews->count(),
-                ];
-
-                return $expert;
-            })
-            ->keyBy('id');
-
-        $requests->each(function ($request) use ($additionalExpertProfiles) {
-            $project = $request->project;
-
-            if ($project && is_array($project->additional_experts)) {
-                $project->additional_expert_profiles = collect($project->additional_experts)
-                    ->map(function ($id) use ($additionalExpertProfiles, $request) {
-                        $expert = $additionalExpertProfiles->get($id);
-
-                        if ($expert && $request->type === 'Quote Request') {
-                            $expert->load(['quotes' => function ($q) use ($request) {
-                                $q->where('project_id', $request->project_id);
-                            }]);
-                        }
-
-                        return $expert;
-                    })
-                    ->filter()
-                    ->values();
-            }
-        });
-
-        return $requests;
-    }
-
-    /**
      * @param Project $project
      * @param int $expertId
      * @param mixed $user
@@ -680,5 +597,89 @@ class ProjectRepository
         }
 
         return $totalProjectsCount - $projects->count();
+    }
+
+    /**
+     * Create a new project
+     *
+     * @param array $data
+     * @return Project
+     */
+    public function createProjectForReviews(array $data): Project
+    {
+        return Project::create([
+            'name' => $data['name'],
+            'client_id' => $data['client_id'],
+            'description' => $data['description'] ?? '',
+            'status' => $data['status'] ?? Project::FOR_REVIEWS,
+        ]);
+    }
+
+    /**
+     * Find project by ID
+     *
+     * @param int $id
+     * @return Project|null
+     */
+    public function findById(int $id): ?Project
+    {
+        return Project::find($id);
+    }
+
+    /**
+     * Check if project exists
+     *
+     * @param int $id
+     * @return bool
+     */
+    public function exists(int $id): bool
+    {
+        return Project::where('id', $id)->exists();
+    }
+
+    /**
+     * Format project data for response
+     *
+     * @param Project $project
+     * @return array
+     */
+    public function formatProjectData(Project $project): array
+    {
+        return [
+            'id' => $project->id,
+            'name' => $project->name,
+            'client_id' => $project->client_id,
+            'status' => $project->status,
+        ];
+    }
+
+    /**
+     * Get project names for expert with optional client filter
+     *
+     * @param int $expertId
+     * @param int|null $clientId
+     * @param int $limit
+     * @return Collection
+     */
+    public function getProjectNamesForExpert(int $expertId, int $clientId = null, int $limit = 20)
+    {
+        $query = Project::whereHas('activeAssignment', function($query) use ($expertId) {
+            $query->where('expert_id', $expertId);
+        });
+
+        if ($clientId) {
+            $query->where('client_id', $clientId);
+        }
+
+        return $query->select('id', 'name')
+            ->latest()
+            ->limit($limit)
+            ->get()
+            ->map(function ($project) {
+                return [
+                    'id' => $project->id,
+                    'name' => $project->name,
+                ];
+            });
     }
 }

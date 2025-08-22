@@ -32,15 +32,6 @@ class AdminService {
             ...currentFilters 
         });
     }
-
-    async fetchClients(params: Record<string, any>) {
-        const queryString = new URLSearchParams(params).toString();
-        return this.api.get(`/clients?${queryString}`);
-    }
-
-    async fetchClientFilterOptions() {
-        return this.api.get(`/clients/filter-options`);
-    }
 }
 
 export default new AdminService();

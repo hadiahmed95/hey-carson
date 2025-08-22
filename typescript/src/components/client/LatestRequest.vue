@@ -23,25 +23,24 @@
         class="flex flex-col gap-3"
     />
   </div>
-  <PaymentModal v-if="showPaymentModal" @close="showPaymentModal = false"/>
+<!--  <PaymentModal v-if="showPaymentModal" @close="showPaymentModal = false"/>-->
 </template>
 
 <script setup lang="ts">
 import ExpertDirectMessageCard from "./cards/ExpertDirectMessageCard.vue";
 import ExpertQuoteRequestCard from "./cards/ExpertQuoteRequestCard.vue";
-import {computed, onMounted, ref} from "vue";
+import {computed, onMounted} from "vue";
 import { useClientStore } from "@/store/client.ts";
 import ExpertMatchedRequestCard from "@/components/client/cards/ExpertMatchedRequestCard.vue";
 import LoadingCard from "@/components/common/LoadingCard.vue";
 import {useLoaderStore} from "@/store/loader.ts";
 import EmptyDataPlaceholder from "@/components/common/EmptyDataPlaceholder.vue";
-import PaymentModal from "@/components/client/modals/PaymentModal.vue";
+// import PaymentModal from "@/components/client/modals/PaymentModal.vue";
 
 const loader = useLoaderStore();
-const showPaymentModal = ref(false);
-const isLoading = computed(() => loader.isLoadingState);
-
 const clientStore = useClientStore();
+
+const isLoading = computed(() => loader.isLoadingState);
 
 onMounted(async () => {
   await clientStore.fetchLatestRequests();

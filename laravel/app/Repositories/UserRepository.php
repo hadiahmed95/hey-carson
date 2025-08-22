@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use Exception;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Constants\Constants;
 use App\Models\Role;
@@ -20,9 +21,31 @@ class UserRepository
      *
      * Initializes the default pagination limit using the constant defined in the Constants class.
      */
-    public function __construct()
+    public function __construct(private User $model)
     {
         $this->paginationLimit = Constants::DEFAULT_PAGINATION_LIMIT;
+    }
+
+    public function findById(int $id): ?User
+    {
+        return $this->model->find($id);
+    }
+
+    public function findByIdWithRelations(int $id, array $relations = []): ?User
+    {
+        /** @var User|null $user */
+        $user = $this->model->query()->with($relations)->find($id);
+        return $user;
+    }
+
+    public function update(User $user, array $data): bool
+    {
+        return $user->update($data);
+    }
+
+    public function refresh(User $user): User
+    {
+        return $user->refresh();
     }
 
     /**
@@ -299,7 +322,7 @@ class UserRepository
     /**
      * Apply search filter to the experts query.
      *
-     * Searches by first name, last name. If the search string contains a space,
+     * Searches by first name, last name, or email. If the search string contains a space,
      * it attempts to split it into first and last names to match against both fields
      * in multiple combinations (first-last, last-first).
      *
@@ -314,33 +337,6 @@ class UserRepository
     {
         try {
             return $query->whereRaw('CONCAT(first_name, " ", last_name) LIKE ?', ["%{$search}%"]);
-        } catch (Exception $e) {
-            throw new Exception('Failed to apply search filter: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Apply search filter to the clients query.
-     *
-     * Searches by first name, last name, email, or email. If the search string contains a space,
-     * it attempts to split it into first and last names to match against both fields
-     * in multiple combinations (first-last, last-first).
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query  The query builder instance to modify.
-     * @param string $search The search keyword or phrase.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder Modified query builder with applied search filters.
-     *
-     * @throws \Exception If applying the search filter fails.
-     */
-    private function applyClientSearchFilter($query, string $search)
-    {
-        try {
-            return $query->where(function ($query) use ($search) {
-                $query->whereRaw('CONCAT(first_name, " ", last_name) LIKE ?', ["%{$search}%"])
-                    ->orWhere('email', '=', $search)
-                    ->orWhere('url', '=', $search);
-            });
         } catch (Exception $e) {
             throw new Exception('Failed to apply search filter: ' . $e->getMessage());
         }
@@ -380,89 +376,75 @@ class UserRepository
         }
     }
 
-    /**
-     * Retrieve a paginated list of clients based on the provided filters.
+
+    /* Create a new user
      *
-     * Applies filtering, eager loads related data, and paginates the result.
-     * Includes counts from requests table for direct messages and quote requests.
-     *
-     * @param array $filters Filters to apply (e.g., per_page, search, shopify_plan).
-     * @return \Illuminate\Pagination\LengthAwarePaginator Paginated list of clients with related data.
-     *
-     * @throws \Exception If fetching clients fails.
+     * @param array $data
+     * @return User
      */
-    public function getClients(array $filters): LengthAwarePaginator
+    public function createUserForReview(array $data): User
     {
-        try {
-            $query = $this->buildClientsQuery($filters);
-            $perPage = $filters['per_page'] ?? $this->paginationLimit;
-            
-            return $query->latest()
-                        ->paginate($perPage);
-        } catch (Exception $e) {
-            throw new Exception('Failed to fetch clients: ' . $e->getMessage());
-        }
+        $nameParts = explode(' ', trim($data['full_name']), 2);
+        $firstName = $nameParts[0];
+        $lastName = $nameParts[1] ?? '';
+
+        $clientRoleId = Role::where('name', 'client')->first()->id;
+
+        return User::create([
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => $data['email'],
+            'password' => Hash::make('password123'), // Default password
+            'role_id' => $clientRoleId,
+            'url' => $data['website'] ?? null,
+            //'company_name' => $data['company_name'] ?? null, //Todo: Needs to add company_name in the users table
+            'is_hired_on_shopexperts' => $data['is_hired_on_shopexperts'] ?? false,
+        ]);
     }
 
     /**
-     * Build the base query for clients with filters and related data.
+     * Format user data for response
      *
-     * @param array $filters Filters to apply (search, shopify_plan, etc.)
-     * @return \Illuminate\Database\Eloquent\Builder Query builder instance with counts and sums
+     * @param User $user
+     * @return array
      */
-    private function buildClientsQuery(array $filters): \Illuminate\Database\Eloquent\Builder
+    public function formatUserData(User $user): array
     {
-        $query = User::where('role_id', Role::CLIENT)
-            ->withCount([
-                'directMessages as direct_messages_count' => function ($query) {
-                    $query->where('type', 'Direct Message');
-                },
-                'quoteRequests as quote_requests_count' => function ($query) {
-                    $query->where('type', 'Quote Request');
-                }
-            ])
-            ->withSum('paidPayments as lifetime_spend', 'total');
-
-        // Apply search filter
-        if (!empty($filters['search'])) {
-            $query = $this->applyClientSearchFilter($query, $filters['search']);
-        }
-
-        // Apply shopify_plan filter
-        if (!empty($filters['shopify_plan'])) {
-            $query->where('shopify_plan', $filters['shopify_plan']);
-        }
-
-        return $query;
+        return [
+            'id' => $user->id,
+            'full_name' => trim($user->first_name . ' ' . $user->last_name),
+            'email' => $user->email,
+            'website' => $user->url ?? '',
+            'company_name' => $user->company_name ?? '',
+            'is_hired_on_shopexperts' => $user->is_hired_on_shopexperts ?? false,
+        ];
     }
 
     /**
-     * Retrieve available filter options for clients listing.
+     * Search users by full name
      *
-     * Gathers distinct Shopify plans from client users.
-     *
-     * @return array An associative array containing filter options:
-     *               - shopifyPlans
-     *
-     * @throws \Exception If retrieving filter options fails.
+     * @param string $search
+     * @param int $limit
+     * @return Collection
      */
-    public function getClientsFilterOptions(): array
+    public function searchByName(string $search, int $limit = 20): Collection
     {
-        try {
-            $shopifyPlans = User::where('role_id', Role::CLIENT)
-                ->whereNotNull('shopify_plan')
-                ->where('shopify_plan', '!=', '')
-                ->distinct()
-                ->pluck('shopify_plan')
-                ->sort()
-                ->values()
-                ->toArray();
-
-            return [
-                'shopifyPlans' => $shopifyPlans,
-            ];
-        } catch (Exception $e) {
-            throw new Exception('Failed to retrieve clients filter options: ' . $e->getMessage());
+        if (empty($search)) {
+            return collect([]);
         }
+
+        return User::whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+            ->where('role_id', Role::CLIENT)
+            ->select('id', 'first_name', 'last_name', 'email', 'url')
+            ->limit($limit)
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'full_name' => $user->first_name . ' ' . $user->last_name,
+                    'email' => $user->email,
+                    'website' => $user->url ?? '',
+                ];
+            });
     }
 }

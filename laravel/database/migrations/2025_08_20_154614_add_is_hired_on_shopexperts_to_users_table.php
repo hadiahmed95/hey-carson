@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('reviews', function (Blueprint $table) {
-            $table->string('status')->default('pending')->after('valueRange');
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('is_hired_on_shopexperts')->default(true)->after('email_verified_at');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('reviews', function (Blueprint $table) {
-            $table->dropColumn('status');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('is_hired_on_shopexperts');
         });
     }
 };

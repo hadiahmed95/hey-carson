@@ -330,40 +330,7 @@ export interface IProfile {
 }
 
 export interface IRevieww {
-    id: number;
-    reviewer: {
-        id: number;
-        name: string;
-        photo: string;
-        storeTitle: string;
-        storeUrl: string;
-        recurringClient: boolean;
-        rating: number;
-        comment: string;
-        recommendation: string;
-        isShopexpertUser: boolean;
-        // Additional properties from IReview
-        quality?: number;
-        communication?: number;
-        timeToStart?: number;
-        valueForMoney?: number;
-        valueRange?: string; // 'anonymous' or ''
-    };
-    expert: {
-        id: number;
-        name: string;
-        photo: string;
-        company_type: string;
-        isShopexpertUser: boolean;
-        rank: string;
-        storeUrl: string;
-        storeTitle: string;
-    };
-    postedAt: string;
-    projectValue: string;
-    reviewSource: string;
-    response: string;
-    status: string;
+    id: number
 }
 
 export interface IRequest {
@@ -375,13 +342,12 @@ export interface IRequest {
     project: {
         name: string
         description?: string
-        status?: string | null
+        status: string
         is_additional_experts: boolean
         history: IStatusHistory[]
         invoices: ITranscationn[]
         active_assignment?: IAssignment
         additional_expert_profiles?: IExpertt[] | null
-        quotes?: IQuotee[];
     }
 }
 
@@ -441,41 +407,19 @@ export interface Card {
     default: boolean
 }
 
-export interface ILeadd {
-    id: number,
-    name: string,
-    url: string,
-    email: string,
-    shopify_plan: string,
-    photo: string | null;
-    direct_messages_count: number,
-    quote_requests_count: number,
-    lifetime_spend: string,
-    type: string
-    created_at: string
-    project: {
-        name: string
-    }
-    client: {
-        first_name: string
-        last_name: string
-        email: string
-        url?: string
-        photo?: string
-        shopify_plan?: string
-    }
+export interface PayPalConnectionInterface {
+    title: string;
+    icon: any;
+    description: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    feeNote: string;
+    isPaypal: boolean;
+    email: string;
 }
 
-export interface IClient {
+export interface ILeadd {
     id: number,
-    name: string,
-    url: string,
-    email: string,
-    shopify_plan: string,
-    photo: string | null;
-    direct_messages_count: number,
-    quote_requests_count: number,
-    lifetime_spend: string,
     type: string
     created_at: string
     project: {
@@ -496,4 +440,56 @@ export interface IExpertStat {
     cta_clicks: number
     listing_page_visits: number
     unique_visits: number
+}
+
+export interface IProjectName {
+    id: number
+    name: string
+}
+
+export interface ILeadDetail {
+    id: number;
+    type: string;
+    created_at: string;
+    project: {
+        id: number;
+        name: string;
+        description?: string;
+        status?: string;
+        messages?: any[];
+        history: IStatusHistory[]
+        invoices: ITranscationn[]
+        active_assignment?: IAssignment
+    };
+    client: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+        url?: string;
+        photo?: string;
+        shopify_plan?: string;
+        quotes_by_client_id?: IQuotee[]
+    };
+}
+
+export interface IAppNotification {
+    created_at: string
+    id: number
+    seen: boolean
+    event: {
+        title: string;
+    }
+    project: {
+        name: string;
+        request: {
+            id: number;
+        }
+    }
+}
+
+export interface TimeFormatterOptions {
+    showFullDateAfterDays?: number
+    shortFormat?: boolean
+    includeSeconds?: boolean
 }

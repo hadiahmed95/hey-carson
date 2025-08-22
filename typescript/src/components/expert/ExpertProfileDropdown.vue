@@ -1,14 +1,13 @@
 <template>
   <div class="relative" ref="dropdownRef">
     <button
-        @click="toggleDropdown"
-        class="flex items-center border rounded-sm py-1 pl-3 pr-2 hover:bg-muted"
+      @click="toggleDropdown"
     >
-      <span class="mr-2 hidden md:inline">My Profile</span>
       <img
-          :src="profileImage"
-          alt="Profile"
-          class="w-8 h-8 rounded-full object-cover"
+        :src="profileImage"
+        alt="Profile"
+        class="w-8 h-8 rounded-full object-cover"
+        @error="handleImgError"
       />
     </button>
 
@@ -130,6 +129,7 @@ import RightArrow from '@/assets/icons/right-arrow.svg'
 import SwitchOff from '@/assets/icons/switch-off.svg'
 import SwitchOn from '@/assets/icons/switch-on.svg'
 import Overview from "@/assets/icons/overview.svg";
+import {handleImgError} from "@/utils/helpers.ts";
 
 const router = useRouter()
 const authStore = useAuthStore()

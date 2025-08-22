@@ -14,7 +14,6 @@ import ReferralIcon from "../assets/icons/referral.svg";
 const navItems = [
   { label: 'Overview', icon: OverviewIcon, path: '/admin/dashboard' },
   { label: 'Listings', icon: ListingIcon, path: '/admin/listings' },
-  { label: 'Clients', icon: LeadsIcon, path: '/admin/clients' },
   { label: 'Leads', icon: LeadsIcon, path: '/admin/leads' },
   { label: 'Quotes Sent', icon: QuoteIcon, path: '/admin/quotes-sent' },
   { label: 'Transactions', icon: TransactionIcon, path: '/admin/transactions' },

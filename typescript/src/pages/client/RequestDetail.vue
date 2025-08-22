@@ -5,7 +5,8 @@
         <div class="flex flex-row mb-6 justify-between">
           <div class="flex items-center gap-2">
             <BackButton class="hover:cursor-pointer" @click="router.push('/client/dashboard')"/>
-            <h2 v-if="route.query.type !== 'Direct Message'">
+            <div v-if="isLoading" class="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
+            <h2 v-else-if="route.query.type !== 'Direct Message'">
               {{ clientStore.request.request?.project?.name }}
             </h2>
             <h2 v-else>
@@ -25,6 +26,7 @@
           :expert="clientStore.request.request?.expert"
           :request-type="clientStore.request.request?.type"
           :request-created-at="clientStore.request.request?.created_at"
+          :is-loading="isLoading"
       />
     </div>
   </main>
@@ -46,11 +48,14 @@ import {ref, computed, onMounted} from "vue";
 import { useClientStore } from "@/store/client.ts";
 import ExpertDetails from "../../components/common/cards/ExpertDetails.vue";
 import { useRoute, useRouter } from 'vue-router'
+import {useLoaderStore} from "@/store/loader.ts";
 
 const route = useRoute()
 const router = useRouter()
 
 const clientStore = useClientStore();
+const loader = useLoaderStore();
+const isLoading = computed(() => loader.isLoadingState);
 
 const selectedType = computed(() => {
   const typeParam = route.query.type
@@ -67,6 +72,7 @@ const tabs = computed(() => [
     component: QuoteRequest,
     props: {
       isClientSide: true,
+      isLoading: isLoading.value,
       request: clientStore.request.request
     }
   },
@@ -76,8 +82,7 @@ const tabs = computed(() => [
     label: 'Invoices',
     component: Invoices,
     props: {
-      isClientSide: true,
-      request: clientStore.request.request
+      invoices: clientStore.request.request?.project.invoices
     }
   },
   {
@@ -85,7 +90,7 @@ const tabs = computed(() => [
     label: 'StatusHistory',
     component: StatusHistory,
     props: {
-      request: clientStore.request.request
+      history: clientStore.request.request?.project.history
     }
   },
 ]);

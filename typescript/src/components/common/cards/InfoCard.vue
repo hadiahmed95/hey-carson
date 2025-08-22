@@ -1,24 +1,50 @@
 <script setup lang="ts">
+import {ref} from "vue";
 import ApiService from "@/services/api.service.ts";
-import {useAlertStore} from "@/store/alert.ts";
+import FormStatusMessage from "@/components/common/FormStatusMessage.vue";
 
-const alertStore = useAlertStore();
 const props = defineProps<{
   title: string
   tagline: string
   email?: string
   isChangePassword?: boolean
 }>()
+const status = ref<'success' | 'error' | ''>('')
+const message = ref('')
+const loading = ref(false)
+const triggerCounter = ref(0)
 
 const sendChangePasswordEmail = async () => {
-  const res = await ApiService.post('/forgot-password', { email: props?.email })
-  alertStore.show(res.data.status, 'success');
+  if (!props.email) {
+    status.value = 'error'
+    message.value = 'No email provided.'
+    return
+  }
+
+  loading.value = true
+  try {
+    const res = await ApiService.post('/forgot-password', { email: props.email })
+    status.value = 'success'
+    message.value = res.data.status || 'Password reset email sent.'
+  } catch (error: any) {
+    status.value = error?.response?.data?.message || 'Failed to send password reset email.'
+  } finally {
+    loading.value = false
+    triggerCounter.value++;
+  }
 }
 </script>
 
 <template>
-  <div class="p-6 bg-white rounded-md border border-gray-200 w-[45rem]">
+  <div class="p-6 bg-white rounded-md border border-gray-200 max-w-[45rem] w-full">
     <button @click="isChangePassword ? sendChangePasswordEmail() : ''" class="inline-block font-semibold text-h4 px-3 py-2 border-2 border-gray-200 rounded-md mb-4">{{ title }}</button>
+    <FormStatusMessage
+        class="mb-4"
+        :trigger="triggerCounter"
+        :status="status"
+        :message="message"
+        @updateStatus="() => { status = ''; message = '' }"
+    />
     <p class="text-h4 text-greyCool">{{ tagline }}</p>
   </div>
 </template>

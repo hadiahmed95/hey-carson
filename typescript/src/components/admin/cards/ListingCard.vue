@@ -27,7 +27,7 @@ const actionOptions = computed(() => {
   const status = props.listing.status_formatted?.toLowerCase();
   
   if (status === 'pending' || status === 'inactive') {
-    return [{ value: 'activate', label: 'Active' }];
+    return [{ value: 'activate', label: 'Activate' }];
   } else if (status === 'active') {
     return [{ value: 'deactivate', label: 'Deactivate' }];
   }
@@ -35,7 +35,6 @@ const actionOptions = computed(() => {
   return [];
 });
 
-// Handle status change - use store method directly
 const handleStatusChange = async () => {
   if (!action.value || !props.listing.id) return;
   
@@ -157,7 +156,7 @@ watch(action, (newValue) => {
       <h4 class="text-gray-500 font-normal pb-2">Services Offered</h4>
       <div class="flex flex-row">
         <h4
-            class="text-h4 font-normal py-1 px-2 border mr-2 rounded-full"
+            class="font-normal py-1 px-2 border mr-2 rounded-full"
             v-for="(service, index) in listing.services_offered_safe"
             :key="index"
         >

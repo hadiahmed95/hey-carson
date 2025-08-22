@@ -6,6 +6,7 @@ import Overview from "../assets/icons/overview.svg";
 import Leads from "../assets/icons/leads.svg";
 import MyListing from "../assets/icons/listing.svg";
 import Reviews from "../assets/icons/reviews.svg";
+import {useAuthStore} from "@/store/auth.ts";
 
 const navItems = [
   { label: 'Overview', icon: Overview, path: '/expert/dashboard' },
@@ -15,6 +16,7 @@ const navItems = [
 ]
 
 const route = useRoute()
+const authStore = useAuthStore()
 
 const onboardingRoutes = [
   '/expert/onboarding',
@@ -39,7 +41,7 @@ const notificationCount = isOnboarding ? 0 : 2
     <TopNavigation
         :message-count="messageCount"
         :notification-count="notificationCount"
-        :profile-image="isOnboarding ? null : 'https://randomuser.me/api/portraits/men/32.jpg'"
+        :profile-image="isOnboarding ? null : authStore.user.photo"
         :is-onboarding="isOnboarding"
     />
 

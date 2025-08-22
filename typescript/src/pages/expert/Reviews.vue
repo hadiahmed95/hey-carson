@@ -29,7 +29,17 @@
       @close="showRequestReviewModal = false"
       title="Request a Review"
       description="Send a personalized review request to your past client."
-      :form="RequestReviewForm" />
+      :form="RequestReviewForm"
+    />
+
+<!--    <BaseModal-->
+<!--      v-if="showRequestReviewModal"-->
+<!--      @close="showRequestReviewModal = false"-->
+<!--      title="Add to Scope"-->
+<!--      :buttonText="isProjectQuote ? 'Send quote to client' : undefined"-->
+<!--      :isShowQuestionSection="false"-->
+<!--      :isShowRecaptchaSection="false"-->
+<!--      :form="AddToScope" />-->
   </main>
 </template>
 
@@ -41,7 +51,7 @@ import YourReviews from "../../components/expert/YourReviews.vue";
 import Arrow from "../../assets/icons/arrow.svg";
 import {ref} from "vue";
 import BaseModal from "../../components/expert/BaseModal.vue";
-import RequestReviewForm from "../../components/expert/forms/RequestReviewForm.vue";
+import RequestReviewForm from "@/components/expert/forms/RequestReviewForm.vue";
 
 const showRequestReviewModal = ref(false)
 

@@ -16,6 +16,25 @@ class ReviewRequest extends Model
     protected $table = 'review_requests';
 
     /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'hired_on_shopexperts' => 'boolean',
+        'repeated_client' => 'boolean',
+        'is_client_reviewed' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     */
+    protected $hidden = [
+        'deleted_at',
+    ];
+
+    /**
      * @return BelongsTo
      */
     public function expert(): BelongsTo

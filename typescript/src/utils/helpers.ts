@@ -32,10 +32,14 @@ export function getS3URL(relativePath: string) {
 
 export function isValidUrl(url: string) {
     try {
-        new URL(url)
-        return true
-    } catch (_) {
-        return false
+        const withProtocol = url.match(/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//)
+            ? url
+            : `https://${url}`;
+
+        new URL(withProtocol);
+        return true;
+    } catch {
+        return false;
     }
 }
 
