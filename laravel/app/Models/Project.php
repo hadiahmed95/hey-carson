@@ -22,6 +22,7 @@ class Project extends Model
     const PENDING_MATCH = 'pending_match';
     const MATCHED = 'matched';
     const PENDING_PAYMENT = 'pending_payment';
+    const FOR_REVIEWS = 'for_reviews';
     const IN_PROGRESS = 'in_progress';
     const EXPERT_COMPLETED = 'expert_completed';
     const COMPLETED = 'completed';
@@ -61,6 +62,11 @@ class Project extends Model
     public function review(): HasOne
     {
         return $this->hasOne(Review::class);
+    }
+
+    public function request(): HasOne
+    {
+        return $this->hasOne(Request::class, 'project_id');
     }
 
     public function preferredExpert()

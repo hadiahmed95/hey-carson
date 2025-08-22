@@ -7,9 +7,8 @@ use App\Models\PackagedService;
 use App\Models\ShopifyProductUpdate;
 use App\Models\User;
 use App\Repositories\ProjectRepository;
-use App\Repositories\ReviewRequestRepository;
+use App\Repositories\RequestRepository;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
 
 class OverviewController extends Controller
 {
@@ -49,12 +48,12 @@ class OverviewController extends Controller
     }
 
     /**
-     * @param ProjectRepository $projectRepo
+     * @param RequestRepository $requestRepository
      * @return JsonResponse
      */
-    public function latestRequests(ProjectRepository $projectRepo): JsonResponse
+    public function latestRequests(RequestRepository $requestRepository): JsonResponse
     {
-        $requests = $projectRepo->getRequestsForClient(5);
+        $requests = $requestRepository->getRequestsForClient(5);
 
         return response()->json([
             'latest_requests' => $requests

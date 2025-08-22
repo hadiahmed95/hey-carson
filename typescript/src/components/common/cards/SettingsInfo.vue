@@ -6,8 +6,8 @@ defineProps<{
 </script>
 
 <template>
-  <div class="dynamic-title-description font-archivo">
-    <h4 class="text-paragraph font-semibold">{{ title }}</h4>
+  <div  class=" max-w-[400px] w-full dynamic-title-description font-archivo">
+    <p class="font-semibold">{{ title }}</p>
     <p
         v-if="description"
         class="text-h4 text-coolGray"
@@ -15,6 +15,3 @@ defineProps<{
     ></p>
   </div>
 </template>
-
-
-docum

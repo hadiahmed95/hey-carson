@@ -24,7 +24,7 @@ const accountInfo = {
 </script>
 
 <template>
-  <aside class="flex flex-col h-screen bg-white font-sans">
+  <aside class="xl:flex flex-col h-screen bg-white font-sans hidden">
     <div class="flex flex-col flex-1 p-7 space-y-96">
       <nav class="flex flex-col gap-4">
         <component

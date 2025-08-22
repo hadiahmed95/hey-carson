@@ -14,6 +14,8 @@ class Request extends Model
 
     protected $guarded = [];
     protected $table = 'requests';
+    public const QUOTE_REQUEST = 'Quote Request';
+    public const MATCHED = 'Matched';
 
     /**
      * @return BelongsTo

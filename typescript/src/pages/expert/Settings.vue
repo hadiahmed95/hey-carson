@@ -3,7 +3,7 @@ import EmailPreferences from "@/components/common/cards/EmailPreferences.vue"
 import InfoCard from "@/components/common/cards/InfoCard.vue";
 import Payment from "@/components/common/cards/Payment.vue";
 import SettingsInfo from "@/components/common/cards/SettingsInfo.vue";
-import { onMounted } from "vue";
+import { onMounted, computed } from "vue";
 import { formatDate } from "@/utils/date.ts";
 import { useExpertStore } from "@/store/expert.ts";
 import SubscriptionDetails from "@/components/expert/cards/SubscriptionDetails.vue";
@@ -11,15 +11,17 @@ import PayoutOptions from "@/components/expert/PayoutOptions.vue";
 
 const expertStore = useExpertStore();
 
-const subscription = {
+const subscription = computed(() => ({
   accountType: 'Freelancer',
   currentPlan: 'Premium',
   nextBillingDate: '17 Dec, 2024',
-  memberSince: '06 Jan, 2024'
-}
+  memberSince: expertStore.user?.created_at 
+    ? formatDate(expertStore.user.created_at) 
+    : '06 Jan, 2024'
+}))
 
 onMounted(async () => {
-  await expertStore.fetchClient();
+  await expertStore.fetchExpert();
 })
 </script>
 
@@ -41,7 +43,10 @@ onMounted(async () => {
           description="Customize notifications to fit your workflow. Get <br>
           instant updates or daily summaries for crucial<br> project information"
       />
-      <EmailPreferences v-if="expertStore.user" :user="expertStore.user"/>
+      <EmailPreferences v-if="expertStore.user"
+          :user="expertStore.user"
+          userType="expert"
+      />
     </div>
 
     <!-- Billing Details -->
@@ -54,6 +59,7 @@ onMounted(async () => {
       />
       <Payment
           :store="expertStore"
+          userType="expert"
       />
     </div>
 
@@ -65,7 +71,10 @@ onMounted(async () => {
           shopexpert account so you can quickly and<br>
           easily request withdrawals from them."
       />
-      <PayoutOptions />
+      <PayoutOptions 
+          v-if="expertStore.user"
+          :user="expertStore.user"
+      />
     </div>
 
     <!-- Change Your Password -->
@@ -95,7 +104,9 @@ onMounted(async () => {
       />
       <InfoCard
           title="Send Close Request"
-          tagline="We're sorry to see you go. Our team will receive your request and proceed to close your account."
+          :tagline="expertStore.user?.first_name 
+            ? `We're sorry to see you go, ${expertStore.user.first_name}. Our team will receive your request and proceed to close your account.`
+            : `We're sorry to see you go. Our team will receive your request and proceed to close your account.`"
       />
     </div>
   </div>

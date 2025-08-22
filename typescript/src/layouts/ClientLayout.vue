@@ -6,7 +6,9 @@ import Overview from "../assets/icons/overview.svg";
 import Quote from "../assets/icons/quote-dark.svg";
 import Reviews from "../assets/icons/reviews.svg";
 import MultiUsers from "../assets/icons/multi-users.svg";
+import {useAuthStore} from "@/store/auth.ts";
 
+const authStore = useAuthStore();
 const navItems = [
   { label: 'Overview', icon: Overview, path: '/client/dashboard' },
   { label: 'My Requests', icon: Quote, path: '/client/my-requests' },
@@ -16,11 +18,11 @@ const navItems = [
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen bg-muted">
+  <div class="flex flex-col h-screen w-screen bg-muted">
     <TopNavigation
-        :message-count="4"
-        :notification-count="2"
-        profile-image="https://randomuser.me/api/portraits/men/32.jpg"
+      :message-count="4"
+      :notification-count="2"
+      :profile-image="authStore.user.photo"
     />
 
     <div class="flex">

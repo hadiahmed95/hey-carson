@@ -47,6 +47,8 @@ class User extends Authenticatable
         'availability_status'
     ];
 
+    const PAID = 'paid';
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -110,6 +112,11 @@ class User extends Authenticatable
     public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class, 'expert_id');
+    }
+
+    public function quotesByClientId(): HasMany
+    {
+        return $this->hasMany(Quote::class, 'client_id');
     }
 
     public function clientReviews(): HasMany

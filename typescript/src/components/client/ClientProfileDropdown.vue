@@ -2,14 +2,13 @@
   <div class="relative" ref="dropdownRef">
     <!-- Trigger -->
     <button
-        @click="toggleDropdown"
-        class="flex items-center border rounded-sm py-1 pl-3 pr-2 hover:bg-muted"
+      @click="toggleDropdown"
     >
-      <span class="mr-2 hidden md:inline">My Profile</span>
       <img
-          :src="profileImage"
-          alt="Profile"
-          class="w-8 h-8 rounded-full object-cover"
+        :src="profileImage"
+        alt="Profile"
+        class="w-8 h-8 rounded-full object-cover"
+        @error="handleImgError"
       />
     </button>
 
@@ -43,10 +42,11 @@
           Transactions
         </button>
       </router-link>
-      <button class="w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 gap-2">
-        <TeamIcon class="w-5 h-5" />
-        My Team
-      </button>
+<!--      Todo: We do not need My Team page in v1 -->
+<!--      <button class="w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 gap-2">-->
+<!--        <TeamIcon class="w-5 h-5" />-->
+<!--        My Team-->
+<!--      </button>-->
       <button @click="logout()" class="w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 gap-2">
         <LogoutIcon class="w-5 h-5" />
         Logout
@@ -62,11 +62,11 @@ import { useAuthStore } from '@/store/auth.ts'
 import { onClickOutside } from '@vueuse/core'
 import SettingsIcon from '../../assets/icons/settings.svg'
 import TransactionsIcon from '../../assets/icons/transactions.svg'
-import TeamIcon from '../../assets/icons/team.svg'
 import LogoutIcon from '../../assets/icons/logout.svg'
 import Overview from "@/assets/icons/overview.svg";
 import SwitchOn from "@/assets/icons/switch-on.svg";
 import SwitchOff from "@/assets/icons/switch-off.svg";
+import {handleImgError} from "@/utils/helpers.ts";
 
 const router = useRouter()
 const authStore = useAuthStore()

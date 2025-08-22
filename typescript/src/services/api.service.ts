@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAlertStore } from '@/store/alert'
+import { useAlertStore } from '@/store/alert';
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api`; // update as needed
 
@@ -66,8 +66,12 @@ export default class ApiService {
         return api.post(endpoint, data, config);
     }
 
-    static async put(endpoint: string, data: any) {
+    static async put(endpoint: string, data: any = null) {
         return api.put(endpoint, data);
+    }
+
+    static async patch(endpoint: string, data: any = null) {
+        return api.patch(endpoint, data);
     }
 
     static async delete(endpoint: string) {

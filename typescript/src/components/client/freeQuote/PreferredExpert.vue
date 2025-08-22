@@ -2,9 +2,9 @@
   <StepPanel>
     <div class="flex flex-col gap-8">
       <div class="flex flex-col gap-4">
-        <p class="text-h4 font-normal font-archivo text-primary tracking-10p">
+        <h4 class="font-normal font-archivo text-primary tracking-10p">
           FREE PROJECT QUOTE
-        </p>
+        </h4>
         <h1 class="font-normal text-primary">
           Receive a <i>free project quote</i> for your Shopify project
         </h1>
@@ -15,7 +15,7 @@
 
       <div class="flex flex-col gap-8">
         <div class="flex flex-col gap-1">
-          <p class="text-h5 text-tertiary-dark font-normal">Preferred Expert</p>
+          <h5 class="text-tertiary-dark font-normal">Preferred Expert</h5>
           <div class="relative w-full">
             <!-- Input -->
             <input
@@ -44,7 +44,7 @@
                 />
                 <div>
                   <p class="font-archivo font-semibold">{{ expert.first_name }} {{ expert.last_name }}</p>
-                  <p class="text-h4 text-primary font-normal">{{ expert.profile.role }}</p>
+                  <h4 class="text-primary font-normal">{{ expert.profile.role }}</h4>
                 </div>
               </li>
             </ul>
@@ -60,7 +60,7 @@
               />
               <div>
                 <p class="font-archivo font-semibold">{{ formData.selectedExpert?.first_name }} {{ formData.selectedExpert?.last_name }}</p>
-                <p class="text-h4 text-primary font-normal">{{ formData.selectedExpert?.profile?.role }}</p>
+                <h4 class="text-primary font-normal">{{ formData.selectedExpert?.profile?.role }}</h4>
               </div>
             </div>
           </div>
@@ -83,12 +83,12 @@
               class="translate-y-[2px] rounded-[4px] border border-lightGray accent-primary hover:accent-primary cursor-pointer"
           />
           <div>
-            <p class="text-h4 text-primary font-semibold">
+            <h4 class="text-primary font-semibold">
               Send this quote request to 3 additional experts
-            </p>
-            <p class="text-h5 text-primary font-normal">
+            </h4>
+            <h5 class="text-primary font-normal">
               We'll automatically forward your quote request to three additional experts who match your criteria, so you can compare multiple quotes.
-            </p>
+            </h5>
           </div>
         </div>
 
@@ -99,10 +99,10 @@
               class="translate-y-[2px] rounded-[4px] border border-lightGray accent-primary hover:accent-primary cursor-pointer"
           />
           <div>
-            <p class="text-h4 text-primary font-semibold">This project is urgent</p>
-            <p class="text-h5 text-primary font-normal">
+            <h4 class="text-primary font-semibold">This project is urgent</h4>
+            <h5 class="text-primary font-normal">
               If you need a fast turnaround, let experts know your project is urgent.
-            </p>
+            </h5>
           </div>
         </div>
 
@@ -145,6 +145,10 @@ const formData = ref<{
 
 onMounted(async () => {
   try {
+    const storedErrors = JSON.parse(localStorage.getItem('quoteServerErrors') || '{}')
+    errors.value.expert = storedErrors.preferred_expert_id?.[0] || ''
+    localStorage.removeItem('quoteServerErrors')
+
     if (!route.query.expert)
       return
 

@@ -26,12 +26,10 @@ const isLoading = computed(() => loader.isLoadingState);
 
 const clientStore = useClientStore();
 
-// Fetch data on mount
 onMounted(async () => {
   await clientStore.fetchReviewRequests();
 });
 
-// Computed to safely access the array
 const reviewRequests = computed<IReview[]>(() =>
     clientStore.reviewRequests?.pending_review_requests || []
 );

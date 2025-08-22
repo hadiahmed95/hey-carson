@@ -25,7 +25,7 @@ class CreateOfferRequest extends FormRequest
         return [
             'type'        => 'required|in:scope,offer',
             'hours'       => 'required|integer|min:1',
-            'rate'        => 'required|numeric|in:125,95',
+            'rate'        => 'required|numeric|min:1',
             'deadline'    => 'required|date|after_or_equal:' . date('Y-m-d'),
         ];
     }
@@ -43,9 +43,9 @@ class CreateOfferRequest extends FormRequest
             'hours.required'             => 'The hours field is required.',
             'hours.integer'              => 'The hours field must be an integer.',
             'hours.min'                  => 'The hours field must be at least 1.',
-            'rate.required'              => 'The rate field is required.',
-            'rate.numeric'               => 'The rate field must be a number.',
-            'rate.in'                    => 'The type must be either 95 or 125.',
+            'rate.required'              => 'The hourly rate field is required.',
+            'rate.numeric'               => 'The hourly rate field must be a number.',
+            'rate.min'                   => 'The hourly rate field must be at least 1.',
             'deadline.required'          => 'The deadline field is required.',
             'deadline.date'              => 'The deadline must be a valid date.',
             'deadline.after_or_equal'    => 'The deadline must be the current date or the date after now.',

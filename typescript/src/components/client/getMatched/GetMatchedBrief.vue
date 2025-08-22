@@ -69,6 +69,13 @@ const attachFileIcon = new URL('../../../assets/icons/attachFile.svg', import.me
 onMounted(() => {
   const saved = localStorage.getItem('matchBrief')
   if (saved) formData.value = JSON.parse(saved)
+
+  const serverErrors = localStorage.getItem('matchServerErrors');
+  if (serverErrors) {
+    const parsed = JSON.parse(serverErrors);
+    errors.value.projectBrief = parsed.project_description?.[0] || '';
+    localStorage.removeItem('matchServerErrors');
+  }
 })
 
 const validate = () => {

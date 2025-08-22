@@ -1,13 +1,16 @@
-import { defineStore } from 'pinia';
+import {defineStore} from 'pinia';
 import {withLoader} from "@/utils/helpers.ts";
-import type {ExpertReviewsResponse, ILeadd, IExpertStat} from "@/types.ts";
+import type {ExpertReviewsResponse, ILeadd, IExpertStat, IProjectName, ILeadDetail} from "@/types.ts";
 import ExpertService from "@/services/expert.service.ts";
 
 export const useExpertStore = defineStore('expert', {
-    state: ()=> ({
+    state: () => ({
         reviews: null as ExpertReviewsResponse | null,
         leads: {} as {
             'leads': ILeadd[]
+        },
+        lead: {} as {
+            lead: ILeadDetail
         },
         stats: {} as {
             expert_stats: IExpertStat
@@ -21,72 +24,79 @@ export const useExpertStore = defineStore('expert', {
                 this.reviews = (await ExpertService.getReviews()).data as ExpertReviewsResponse;
             });
         },
+
         async fetchLeads(params: { type?: string } = {}) {
             await withLoader(async () => {
                 this.leads = (await ExpertService.getLeads(params)).data;
             });
         },
+
+        // ADDED: New method to fetch single lead details
+        async fetchLeadsDetails(leadId: string) {
+            return await withLoader(async () => {
+                this.lead = (await ExpertService.getLeadsDetails(leadId)).data;
+            });
+        },
+
         async fetchStats() {
             await withLoader(async () => {
                 this.stats = (await ExpertService.getStats()).data as any;
             });
         },
-        async fetchClient() {
+
+        async updateReview(id: number, data: any) {
+            await withLoader(async () => {
+                await ExpertService.updateReview(id, data);
+                await this.fetchReviews();
+            });
+        },
+
+        async createReviewRequest(payload: any) {
+            await withLoader(async () => {
+                await ExpertService.createReviewRequest(payload);
+
+            });
+        },
+
+        async createQuoteOrOffer(url: string, payload: any) {
+            return await withLoader(async () => {
+                return await ExpertService.createQuoteOrOffer(url, payload);
+            });
+        },
+
+        async fetchProjectNames(userId?: number) {
+            const response = await ExpertService.fetchProjectNames(userId);
+            return response.data.project_names as IProjectName[];
+        },
+
+        async fetchExpert() {
             try {
-                // const response = await
-                this.user = {
-                    id: 2,
-                    program_id: null,
-                    partner_id: null,
-                    click_id: null,
-                    role_id: 2,
-                    usertype: "paid",
-                    first_name: "Client",
-                    last_name: "User",
-                    email: "client.user@example.com",
-                    url: "client.example.com",
-                    is_featured_expert: null,
-                    company_type: null,
-                    shopify_plan: null,
-                    email_verified_at: null,
-                    timezone: null,
-                    new_messages: "instant",
-                    project_notifications: "instant",
-                    photo: "profile-photo/2/avatar.jpg",
-                    password_changed: null,
-                    created_at: "2024-06-23T18:04:33.000000Z",
-                    updated_at: "2024-11-04T07:53:49.000000Z",
-                    is_tester: 1,
-                    deleted_at: null,
-                    is_migrated: 0,
-                    source: "Website Direct",
-                    availability_status: "available",
-                    business_address: null,
-                    phone_number: null,
-                    languages: null,
-                    is_disable: 0,
-                    saved_cards: [
-                        {
-                            id: 1,
-                            card_type: "visa",
-                            last_digits: "4242",
-                            exp_date: "12/26",
-                            last_used: "2025-06-28T14:35:00Z",
-                            default: true,
-                        },
-                        {
-                            id: 2,
-                            card_type: "mastercard",
-                            last_digits: "5100",
-                            exp_date: "11/25",
-                            last_used: "2025-05-19T10:22:00Z",
-                            default: false,
-                        }
-                    ]
-            }
+                const response = await ExpertService.fetchExpert()
+                this.user = response.data.user
             } catch (error) {
                 console.log(error)
             }
+        },
+
+        async updateProfile(data: Partial<any>) {
+            return await withLoader(async () => {
+                const response = await ExpertService.updateProfile(data)
+                this.user = response.data.user
+                return {success: true, user: response.data.user};
+            })
+        },
+
+        async setDefaultCard(cardId: number) {
+            return this.updateProfile({default_card_id: cardId})
+        },
+
+        async deleteCard(cardId: number) {
+            return this.updateProfile({remove_card: cardId})
+        },
+
+        async searchUsers(searchTerm: string) {
+            const response = await ExpertService.searchUsers(searchTerm);
+            return response.data;
         },
     },
 });

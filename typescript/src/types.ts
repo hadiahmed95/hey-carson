@@ -40,11 +40,7 @@ export interface ILead {
 export interface IListing {
     id: number,
     display_name: string
-    displayUrl: string | null
-    avatarInfo?: {
-        initials: string
-        bgColor: string
-    }
+    photo: string
     expert_type_formatted: string
     email: string
     store_title: string
@@ -346,13 +342,12 @@ export interface IRequest {
     project: {
         name: string
         description?: string
-        status?: string | null
+        status: string
         is_additional_experts: boolean
         history: IStatusHistory[]
         invoices: ITranscationn[]
         active_assignment?: IAssignment
         additional_expert_profiles?: IExpertt[] | null
-        quotes?: IQuotee[];
     }
 }
 
@@ -412,6 +407,17 @@ export interface Card {
     default: boolean
 }
 
+export interface PayPalConnectionInterface {
+    title: string;
+    icon: any;
+    description: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    feeNote: string;
+    isPaypal: boolean;
+    email: string;
+}
+
 export interface ILeadd {
     id: number,
     type: string
@@ -434,4 +440,56 @@ export interface IExpertStat {
     cta_clicks: number
     listing_page_visits: number
     unique_visits: number
+}
+
+export interface IProjectName {
+    id: number
+    name: string
+}
+
+export interface ILeadDetail {
+    id: number;
+    type: string;
+    created_at: string;
+    project: {
+        id: number;
+        name: string;
+        description?: string;
+        status?: string;
+        messages?: any[];
+        history: IStatusHistory[]
+        invoices: ITranscationn[]
+        active_assignment?: IAssignment
+    };
+    client: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+        url?: string;
+        photo?: string;
+        shopify_plan?: string;
+        quotes_by_client_id?: IQuotee[]
+    };
+}
+
+export interface IAppNotification {
+    created_at: string
+    id: number
+    seen: boolean
+    event: {
+        title: string;
+    }
+    project: {
+        name: string;
+        request: {
+            id: number;
+        }
+    }
+}
+
+export interface TimeFormatterOptions {
+    showFullDateAfterDays?: number
+    shortFormat?: boolean
+    includeSeconds?: boolean
 }

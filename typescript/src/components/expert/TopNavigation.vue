@@ -1,11 +1,11 @@
 <template>
-  <header class="flex items-center justify-between p-4 border-b bg-white">
+  <header class="flex items-center justify-between py-4 px-8 border-b bg-white">
     <div class="text-xl font-bold flex items-center">
       <Logo />
     </div>
 
     <div class="flex items-center gap-4">
-      <NotificationsDropdown :notificationCount="notificationCount" />
+      <NotificationsDropdown :is-expert="true" :notificationCount="notificationCount" />
 
       <MessageDropDown :messageCount="messageCount" />
       <ExpertProfileDropdown :profileImage="profileImage ?? ''" />

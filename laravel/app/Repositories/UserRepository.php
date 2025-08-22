@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use Exception;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Constants\Constants;
 use App\Models\Role;
@@ -20,9 +21,31 @@ class UserRepository
      *
      * Initializes the default pagination limit using the constant defined in the Constants class.
      */
-    public function __construct()
+    public function __construct(private User $model)
     {
         $this->paginationLimit = Constants::DEFAULT_PAGINATION_LIMIT;
+    }
+
+    public function findById(int $id): ?User
+    {
+        return $this->model->find($id);
+    }
+
+    public function findByIdWithRelations(int $id, array $relations = []): ?User
+    {
+        /** @var User|null $user */
+        $user = $this->model->query()->with($relations)->find($id);
+        return $user;
+    }
+
+    public function update(User $user, array $data): bool
+    {
+        return $user->update($data);
+    }
+
+    public function refresh(User $user): User
+    {
+        return $user->refresh();
     }
 
     /**
@@ -351,5 +374,77 @@ class UserRepository
         } catch (Exception $e) {
             throw new Exception('Failed to update expert status: ' . $e->getMessage());
         }
+    }
+
+
+    /* Create a new user
+     *
+     * @param array $data
+     * @return User
+     */
+    public function createUserForReview(array $data): User
+    {
+        $nameParts = explode(' ', trim($data['full_name']), 2);
+        $firstName = $nameParts[0];
+        $lastName = $nameParts[1] ?? '';
+
+        $clientRoleId = Role::where('name', 'client')->first()->id;
+
+        return User::create([
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => $data['email'],
+            'password' => Hash::make('password123'), // Default password
+            'role_id' => $clientRoleId,
+            'url' => $data['website'] ?? null,
+            //'company_name' => $data['company_name'] ?? null, //Todo: Needs to add company_name in the users table
+            'is_hired_on_shopexperts' => $data['is_hired_on_shopexperts'] ?? false,
+        ]);
+    }
+
+    /**
+     * Format user data for response
+     *
+     * @param User $user
+     * @return array
+     */
+    public function formatUserData(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'full_name' => trim($user->first_name . ' ' . $user->last_name),
+            'email' => $user->email,
+            'website' => $user->url ?? '',
+            'company_name' => $user->company_name ?? '',
+            'is_hired_on_shopexperts' => $user->is_hired_on_shopexperts ?? false,
+        ];
+    }
+
+    /**
+     * Search users by full name
+     *
+     * @param string $search
+     * @param int $limit
+     * @return Collection
+     */
+    public function searchByName(string $search, int $limit = 20): Collection
+    {
+        if (empty($search)) {
+            return collect([]);
+        }
+
+        return User::whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+            ->where('role_id', Role::CLIENT)
+            ->select('id', 'first_name', 'last_name', 'email', 'url')
+            ->limit($limit)
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'full_name' => $user->first_name . ' ' . $user->last_name,
+                    'email' => $user->email,
+                    'website' => $user->url ?? '',
+                ];
+            });
     }
 }

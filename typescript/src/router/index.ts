@@ -43,7 +43,7 @@ import GetMatched from "@/pages/client/GetMatched.vue";
 import GetMatchedDetails from "@/components/client/getMatched/GetMatchedDetails.vue";
 import GetMatchedBrief from "@/components/client/getMatched/GetMatchedBrief.vue";
 import GetMatchedAccount from "@/components/client/getMatched/GetMatchedAccount.vue";
-import CollectionChanges from "@/pages/expert/lead/CollectionChanges.vue";
+import LeadDetailsPage from "@/pages/expert/lead/LeadDetailsPage.vue";
 import SignupStart from "@/components/expert/SignUp/SignupStart.vue";
 import ContactInfo from "@/components/expert/SignUp/ContactInfo.vue";
 import ProfessionalDetails from "@/components/expert/SignUp/ProfessionalDetails.vue";
@@ -59,17 +59,26 @@ const routes = [
         path: '/',
         name: 'home',
         component: ClientLogin,
+        meta: {
+            title: 'shopexperts',
+        }
     },
 
     {
         path: '/expert/login',
         name: 'expert-login',
         component: ExpertLogin,
+        meta: {
+            title: 'shopexperts - Expert Login',
+        }
     },
     {
         path: '/client/login',
         name: 'client-login',
         component: ClientLogin,
+        meta: {
+            title: 'shopexperts - Client Login',
+        }
     },
     {
         path: '/admin/login',
@@ -85,20 +94,32 @@ const routes = [
         path: '/forgot-password',
         name: 'forgot-password',
         component: ForgotPassword,
+        meta: {
+            title: 'shopexperts - Forgot Password',
+        }
     },
     {
         path: '/reset-password',
         name: 'reset-password',
         component: ResetPassword,
+        meta: {
+            title: 'shopexperts - Reset Password',
+        }
     },
     {
         path: "/client/signup",
         name: "client-signup",
         component: ClientSignup,
+        meta: {
+            title: 'shopexperts - Client Signup',
+        }
     },
     {
         path: "/expert/signup",
         component: ExpertSignup,
+        meta: {
+            title: 'shopexperts - Expert Signup',
+        },
         children: [
             {
                 path: "",
@@ -125,6 +146,9 @@ const routes = [
     {
         path: "/expert/claim-profile",
         component: ExpertClaimProfile,
+        meta: {
+            title: 'shopexperts - Expert Claim Profile',
+        },
         children: [
             {
                 path: "",
@@ -141,6 +165,9 @@ const routes = [
     {
         path: "/client/free-quote",
         component: ClientFreeQuote,
+        meta: {
+            title: 'shopexperts - Client Quote Request',
+        },
         children: [
             {
                 path: "",
@@ -167,6 +194,9 @@ const routes = [
     {
         path: "/client/get-matched",
         component: GetMatched,
+        meta: {
+            title: 'shopexperts - Client Get Matched',
+        },
         children: [
             {
                 path: "",
@@ -188,6 +218,9 @@ const routes = [
     {
         path: "/expert",
         component: ExpertLayout,
+        meta: {
+            title: 'shopexperts - Expert Dashboard',
+        },
         children: [
             {
                 path: 'onboarding',
@@ -239,88 +272,133 @@ const routes = [
                 path: "dashboard",
                 name: "expert-dashboard",
                 component: ExpertDashboard,
+                meta: {
+                    title: 'shopexperts - Expert Dashboard',
+                },
             },
             {
                 path: "leads",
                 name: "expert-leads",
                 component: ExpertLeads,
+                meta: {
+                    title: 'shopexperts - Expert Leads',
+                },
             },
             {
                 path: "lead/:leadId",
                 name: "expert-lead-collection-changes",
-                component: CollectionChanges,
+                component: LeadDetailsPage,
+                meta: {
+                    title: 'shopexperts - Lead Details',
+                },
             },
             {
                 path: "lead/:leadId/chatroom",
                 name: "expert-lead-chatroom",
                 component: ExpertChatroom,
+                meta: {
+                    title: 'shopexperts - Lead Details',
+                },
             },
+
             {
                 path: "my-listings",
                 name: "expert-my-listings",
                 component: ExpertListing,
+                meta: {
+                    title: 'shopexperts - Expert Listings',
+                },
             },
             {
                 path: "reviews",
                 name: "expert-reviews",
                 component: ExpertReviews,
-            },
-            {
-                path: "latest-leads",
-                name: "expert-latest-leads",
-                component: ExpertReviews,
+                meta: {
+                    title: 'shopexperts - Expert Reviews',
+                },
             },
             {
                 path: "latest-reviews",
                 name: "expert-latest-reviews",
                 component: ExpertReviews,
+                meta: {
+                    title: 'shopexperts - Expert Reviews',
+                },
             },
             {
                 path: "settings",
                 name: "expert-settings",
                 component: ExpertSettings,
+                meta: {
+                    title: 'shopexperts - Expert Settings',
+                },
             },
         ]
     },
     {
         path: "/admin",
         component: AdminLayout,
-        meta: { requiresAuth: true, requiredRole: 'admin' }, // ONLY admin routes protected
+        meta: {
+            title: 'shopexperts - Admin', 
+            requiresAuth: true, 
+            requiredRole: 'admin' 
+        }, // ONLY admin routes protected
         children: [
             {
                 path: "dashboard",
                 name: "admin-dashboard",
                 component: AdminDashboard,
+                meta: {
+                    title: 'shopexperts - Admin Dashboard',
+                },
             },
             {
                 path: "listings",
                 name: "admin-listings",
                 component: AdminListings,
+                meta: {
+                    title: 'shopexperts - Admin Listings',
+                },
             },
             {
                 path: "leads",
                 name: "admin-leads",
                 component: AdminLeads,
+                meta: {
+                    title: 'shopexperts - Admin Leads',
+                },
             },
             {
                 path: "quotes-sent",
                 name: "admin-quotes-sent",
                 component: AdminQuoteSent,
+                meta: {
+                    title: 'shopexperts - Admin Quotes',
+                },
             },
             {
                 path: "transactions",
                 name: "admin-transactions",
                 component: AdminTransactions,
+                meta: {
+                    title: 'shopexperts - Admin Transactions',
+                },
             },
             {
                 path: "reviews",
                 name: "admin-reviews",
                 component: AdminReviews,
+                meta: {
+                    title: 'shopexperts - Admin Reviews',
+                },
             },
             {
                 path: "referrals",
                 name: "admin-referrals",
                 component: AdminReferrals,
+                meta: {
+                    title: 'shopexperts - Admin Referrals',
+                },
             },
         ]
     },
@@ -332,15 +410,24 @@ const routes = [
                 path: "dashboard",
                 name: "client-dashboard",
                 component: ClientDashboard,
+                meta: {
+                    title: 'shopexperts - Client Dashboard',
+                },
             },
             {
                 path: "my-requests",
                 name: "my-requests",
                 component: ClientRequest,
+                meta: {
+                    title: 'shopexperts - Client Requests',
+                },
             },
             {
                 path: '/client/request/:requestId',
                 name: 'RequestDetails',
+                meta: {
+                    title: 'shopexperts - Request Details',
+                },
                 component: () => import('@/pages/client/RequestDetail.vue'),
                 props: true
             },
@@ -348,21 +435,33 @@ const routes = [
                 path: "packaged-services",
                 name: "packaged-services",
                 component: PackagedServices,
+                meta: {
+                    title: 'shopexperts - Client Packaged Services',
+                },
             },
             {
                 path: "reviews",
                 name: "reviews",
                 component: Reviews,
+                meta: {
+                    title: 'shopexperts - Client Reviews',
+                },
             },
             {
                 path: "transactions",
                 name: "client-transactions",
                 component: ClientTransactions,
+                meta: {
+                    title: 'shopexperts - Client Transactions',
+                },
             },
             {
                 path: "settings",
                 name: "client-settings",
                 component: ClientSettings,
+                meta: {
+                    title: 'shopexperts - Client Settings',
+                },
             },
         ]
     }
@@ -393,7 +492,8 @@ router.beforeEach((to, _from, next) => {
         }
     }
     
-    next()
+    document.title = (to.meta.title as string) || 'shopexperts';
+    next();
 })
 
 export default router

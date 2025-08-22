@@ -16,13 +16,14 @@ class OfferObserver
             $offer->status_updated_at = Carbon::now();
         }
     }
-        /**
-         * Handle the Offer "updating" event.
-         */
-        public function updating(Offer $offer): void
-        {
-            if ($offer->status !== $offer->getOriginal('status')) {
-                $offer->status_updated_at = Carbon::now();
-            }
+
+    /**
+     * Handle the Offer "updating" event.
+     */
+    public function updating(Offer $offer): void
+    {
+        if ($offer->status !== $offer->getOriginal('status')) {
+            $offer->status_updated_at = Carbon::now();
         }
+    }
 }

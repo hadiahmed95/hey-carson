@@ -3,10 +3,10 @@
     <div class="flex flex-col gap-8">
       <div class="flex flex-col gap-4">
         <div class="flex justify-between items-center">
-          <p class="text-h4 font-normal font-archivo text-primary tracking-10p">
+          <h4 class="font-normal font-archivo text-primary tracking-10p">
             FREE PROJECT QUOTE
-          </p>
-          <p class="text-h4 font-normal font-archivo text-primary tracking-10p">3/3</p>
+          </h4>
+          <h4 class="font-normal font-archivo text-primary tracking-10p">3/3</h4>
         </div>
         <h1 class="font-normal text-primary">You are almost done!</h1>
         <p class="text-primary">
@@ -167,7 +167,7 @@ const submitForm = async () => {
     const payload = {
       send_to_more_experts:      completeFormData.sendToMoreExperts,
       is_urgent:                 completeFormData.isUrgent,
-      preferred_expert_id:       completeFormData.selectedExpert.id,
+      preferred_expert_id:       completeFormData.selectedExpert?.id,
       project_description:       completeFormData.projectBrief,
       project_name:              completeFormData.projectTitle,
       store_url:                 completeFormData.storeUrl,
@@ -189,8 +189,35 @@ const submitForm = async () => {
 
       await router.push('/client/dashboard')
     }
-  } catch (error) {
-    console.error('Error submitting form:', error)
+  } catch (error: any) {
+    const response = error?.response
+
+    if (response?.status === 422 && response.data?.errors) {
+      const serverErrors = response.data.errors
+
+      const fieldsStepMap: Record<string, string> = {
+        preferred_expert_id: 'client-claim-expert',
+        store_name: 'store-details',
+        store_url: 'store-details',
+        project_name: 'store-details',
+        project_description: 'project-brief',
+      }
+
+      const stepRedirect = Object.keys(serverErrors).find(key => fieldsStepMap[key])
+      if (stepRedirect) {
+        localStorage.setItem('quoteServerErrors', JSON.stringify(serverErrors))
+        await router.push({ name: fieldsStepMap[stepRedirect] })
+        return
+      }
+
+      errors.value.email = serverErrors.email?.[0] || ''
+      errors.value.firstName = serverErrors.first_name?.[0] || ''
+      errors.value.lastName = serverErrors.last_name?.[0] || ''
+      errors.value.password = serverErrors.password?.[0] || ''
+      errors.value.shopifyPlan = serverErrors.shopify_plan?.[0] || ''
+    } else {
+      console.error('Unexpected error submitting free quote:', error)
+    }
   }
 }
 

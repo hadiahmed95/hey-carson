@@ -116,14 +116,14 @@ const leads = [
       </div>
     </div>
 
-    <div class="mt-1 text-paragraph space-x-3 mb-8">
+    <p class="mt-1 space-x-3 mb-8">
       <select v-model="shopifyPlan" class="border rounded-sm px-1 w-auto py-2 text-h4 hover:bg-gray-100">
         <option value="">Shopify Plan: All</option>
         <option value="In Progress">In Progress</option>
         <option value="Completed">Completed</option>
         <option value="Closed">Closed</option>
       </select>
-    </div>
+    </p>
 
     <div>
       <LeadCard
