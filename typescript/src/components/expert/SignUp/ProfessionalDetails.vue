@@ -114,7 +114,7 @@ const validate = () => {
       errors.partnerLink = 'Partner link is required.'
       isValid = false
     } else if (!isValidUrl(formData.partnerLink)) {
-      errors.partnerLink = 'Invalid URL. (e.g., https://partner-link.com)'
+      errors.partnerLink = 'Invalid URL.'
       isValid = false
     }
   }

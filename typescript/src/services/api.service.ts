@@ -1,34 +1,52 @@
 import axios from 'axios';
-import { useAlertStore } from '@/store/alert'
+import { useAlertStore } from '@/store/alert';
 
 const BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/api`; // update as needed
 
-const api = axios.create({
-    baseURL: BASE_URL,
-    withCredentials: true,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
+// Updated API factory function
+const createApi = (role?: string) => {
+    const baseURL = role ? `${BASE_URL}/v2/${role}` : BASE_URL;
+    
+    const apiInstance = axios.create({
+        baseURL,
+        withCredentials: true,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
 
-api.interceptors.response.use(
-    response => response,
-    error => {
-        if (error.response) {
-            const alert = useAlertStore()
-
-            const message =
-                error.response.data?.message ||
-                error.response.data?.error ||
-                'Something went wrong. Please try again.'
-
-            alert.show(message, 'error')
+    apiInstance.interceptors.request.use(config => {
+        if (api.defaults.headers.common['Authorization']) {
+            config.headers.Authorization = api.defaults.headers.common['Authorization'];
         }
-        return Promise.reject(error);
-    }
-);
+        return config;
+    });
 
-export { api };
+    // Apply interceptors to each instance
+    apiInstance.interceptors.response.use(
+        response => response,
+        error => {
+            if (error.response) {
+                const alert = useAlertStore()
+
+                const message =
+                    error.response.data?.message ||
+                    error.response.data?.error ||
+                    'Something went wrong. Please try again.'
+
+                alert.show(message, 'error')
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    return apiInstance;
+};
+
+// Main API instance (for backward compatibility)
+const api = createApi();
+
+export { api, createApi };
 
 export default class ApiService {
     static async get(endpoint: string, params?: any) {
@@ -48,8 +66,12 @@ export default class ApiService {
         return api.post(endpoint, data, config);
     }
 
-    static async put(endpoint: string, data: any) {
+    static async put(endpoint: string, data: any = null) {
         return api.put(endpoint, data);
+    }
+
+    static async patch(endpoint: string, data: any = null) {
+        return api.patch(endpoint, data);
     }
 
     static async delete(endpoint: string) {

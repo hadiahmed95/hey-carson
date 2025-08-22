@@ -6,7 +6,7 @@
       <a href="https://shopexperts.com/home-new" target="_blank" class="text-primary text-paragraph font-normal hover:underline">Check Experts Directory</a>
     </div>
 
-    <LoadingCard :is-horizontal-direction="true" v-if="isLoading" />
+    <LoadingCard :horizontal="true" v-if="isLoading" />
     <EmptyDataPlaceholder title="Looks like there are no featured experts yet" v-else-if="experts?.length === 0"/>
     <div v-else class="border rounded-md shadow-sm bg-white">
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -21,7 +21,7 @@
               <img :src="getS3URL(expert.photo)" alt="Avatar" class="w-16 h-16 rounded-full" />
               <div class="text-h4 text-right text-tertiary font-sm">
                 <p>Starting price:</p>
-                <p class="text-h2 text-primary font-semibold">${{ expert.profile.hourly_rate }}</p>
+                <h2 class="text-primary font-semibold">${{ expert.profile.hourly_rate }}</h2>
               </div>
             </div>
             <div class="flex flex-col gap-2">
@@ -37,13 +37,13 @@
             <div class="flex flex-col gap-2">
               <h6 class="text-primary font-semibold">Service categories:</h6>
               <div v-if="expert?.service_categories?.length" class="flex flex-wrap gap-2">
-              <span
+              <h4
                   v-for="category in expert.service_categories"
                   :key="category"
-                  class="px-3 py-1 text-h4 rounded-full text-primary border"
+                  class="px-3 py-1 rounded-full text-primary border"
               >
                 {{ category }}
-              </span>
+              </h4>
               </div>
             </div>
           </div>

@@ -2,12 +2,20 @@
 import { ref, onMounted } from 'vue'
 import { loadStripe } from '@stripe/stripe-js'
 import {useClientStore} from "@/store/client.ts";
+import {useCommonStore} from "@/store/common.ts";
+import {useExpertStore} from "@/store/expert.ts";
+
+const props = defineProps<{
+  userType?: string
+}>()
 
 const clientStore = useClientStore();
+const expertStore = useExpertStore();
+const commonStore = useCommonStore();
 const stripe = ref<any | null>(null);
 const elements = ref<any | null>(null);
 const cardElement = ref<any | null>(null);
-
+const user = props.userType === 'expert' ?  expertStore.user : clientStore.user;
 
 const loading = ref(false)
 const resultContainer = ref('')
@@ -28,7 +36,7 @@ const saveCard = async () => {
     type: 'card',
     card: cardElement.value,
     billing_details: {
-      name: `${clientStore.user.first_name} ${clientStore.user.last_name}`,
+      name: `${user.first_name} ${user.last_name}`,
     },
   })
 
@@ -40,7 +48,7 @@ const saveCard = async () => {
 
     try {
 
-      await clientStore.addCreditCard({
+      await commonStore.addCreditCard({
         payment_id: paymentMethod.id,
         card_type: paymentMethod.card.brand,
         exp_date: expDate,

@@ -119,6 +119,7 @@ class ReviewController extends Controller
             'timeToStart' => 'nullable|integer',
             'valueForMoney' => 'nullable|integer',
             'valueRange' => 'nullable|string|max:255',
+            'expert_response' => 'nullable|string'
         ]);
 
         $review->fill($validated);

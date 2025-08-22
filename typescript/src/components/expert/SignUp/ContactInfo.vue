@@ -162,7 +162,7 @@ const validate = () => {
     isValid = false
   }
   if (formData.linkedIn.trim() && !isValidUrl(formData.linkedIn)) {
-    errors.linkedIn = 'Invalid LinkedIn URL. (e.g., https://linkedin.com/your-profile)'
+    errors.linkedIn = 'Invalid LinkedIn URL.'
     isValid = false
   }
 

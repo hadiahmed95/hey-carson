@@ -9,6 +9,8 @@ class Quote extends Model
 {
     use HasFactory;
 
+    protected $guarded = [];
+
     public function expert()
     {
         return $this->belongsTo(User::class, 'expert_id');

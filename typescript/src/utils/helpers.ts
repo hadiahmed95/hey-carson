@@ -32,9 +32,35 @@ export function getS3URL(relativePath: string) {
 
 export function isValidUrl(url: string) {
     try {
-        new URL(url)
-        return true
-    } catch (_) {
-        return false
+        const withProtocol = url.match(/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//)
+            ? url
+            : `https://${url}`;
+
+        new URL(withProtocol);
+        return true;
+    } catch {
+        return false;
     }
+}
+
+export function generateInitialsAvatar(name: string): { initials: string; bgColor: string } {
+    if (!name) return { initials: 'NA', bgColor: 'bg-coolGray' };
+    
+    const words = name.trim().split(' ');
+    const initials = words.slice(0, 2).map(word => word.charAt(0).toUpperCase()).join('');
+    
+    const colors = [
+        'bg-primary', 'bg-success', 'bg-link', 'bg-pending', 
+        'bg-info', 'bg-darkGreen', 'bg-brandBlue', 'bg-lightBlue',
+        'bg-orangeBrown', 'bg-deepBlue', 'bg-deepViolet', 'bg-coolGray'
+    ];
+    
+    // Use character sum to determine consistent color for same name
+    const charSum = initials.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    const colorIndex = charSum % colors.length;
+    
+    return {
+        initials: initials || 'NA',
+        bgColor: colors[colorIndex] || 'bg-coolGray'
+    };
 }

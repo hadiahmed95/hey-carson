@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { computed, defineProps} from "vue";
 import InvoiceCard from "../expert/cards/InvoiceCard.vue";
-import type { IRequest } from "@/types.ts";
+import type {ITranscationn} from "@/types.ts";
 
 // Props
 const props = defineProps<{
-  isClientSide?: boolean;
-  request?: IRequest;
+  invoices?: ITranscationn[];
 }>();
 
 const invoices = computed(() => {
-  return props.request?.project?.invoices || []
+  return props.invoices || []
 });
 
 </script>

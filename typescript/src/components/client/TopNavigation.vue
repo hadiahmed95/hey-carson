@@ -1,5 +1,5 @@
 <template>
-  <header class="flex items-center justify-between p-4 border-b bg-white">
+  <header class="w-full flex items-center justify-between py-4 px-8 border-b bg-white">
     <div class="text-xl font-bold flex items-center">
       <Logo />
     </div>

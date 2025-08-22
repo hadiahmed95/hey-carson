@@ -10,7 +10,7 @@ import type {
     ClientReviewsResponse,
     ITranscationn
 } from "@/types";
-import {useAuthStore} from "@/store/auth.ts";
+import { useAuthStore } from "@/store/auth.ts";
 
 export const useClientStore = defineStore('client', {
     state: () => ({
@@ -39,7 +39,6 @@ export const useClientStore = defineStore('client', {
             transactions: ITranscationn[]
         },
         user: null as any,
-        error: null as string | null
     }),
 
     actions: {
@@ -82,13 +81,6 @@ export const useClientStore = defineStore('client', {
         async fetchReviews() {
             await withLoader(async () => {
                 this.reviews = (await ClientService.getReviews()).data as ClientReviewsResponse;
-            });
-        },
-
-        async createReview(data: any) {
-            await withLoader(async () => {
-                await ClientService.postReview(data);
-                await this.fetchReviews();
             });
         },
 
@@ -143,23 +135,7 @@ export const useClientStore = defineStore('client', {
                 this.user = response.data.user
             } catch (error) {
                 console.log(error)
-                this.error = 'Failed to fetch user data'
             }
-        },
-
-        async updateProfile(data: Partial<any>) {
-            try {
-                const response = await ClientService.updateProfile(data)
-                this.user = response.data.user
-            } catch (error) {
-                console.log(error)
-                this.error = 'Failed to update profile'
-                return false
-            }
-        },
-
-        async addCreditCard(cardData: any) {
-            return await ClientService.addCreditCard(cardData)
         },
 
         async setDefaultCard(cardId: number) {
@@ -168,6 +144,38 @@ export const useClientStore = defineStore('client', {
 
         async deleteCard(cardId: number) {
             return this.updateProfile({ remove_card: cardId })
-        }
+        },
+
+        async updateOffer(projectId: number, offerId: string) {
+            return await ClientService.updateOffer(projectId, offerId)
+        },
+
+        async declineOffer(projectId: number, offerId: number) {
+            return await ClientService.declineOffer(projectId, offerId)
+        },
+
+        async createReview(data: any) {
+            await withLoader(async () => {
+                const response = await ClientService.postReview(data);
+                if (response.data.review && this.reviews) {
+                    this.reviews.written_reviews.push(response.data.review);
+                }
+
+                if (!this.reviews) {
+                    await this.fetchReviews();
+                }
+            });
+        },
+
+        async updateProfile(data: Partial<any>) {
+            try {
+                const response = await ClientService.updateProfile(data);
+                this.user = response.data.user;
+                return { success: true, user: response.data.user };
+            } catch (error) {
+                console.log(error);
+                return { success: false, error };
+            }
+        },
     },
 });

@@ -56,15 +56,19 @@ class ClientService {
     }
 
     async fetchClient() {
-        return ApiService.get('/client/settings')
-    }
-
-    async addCreditCard(cardData: any) {
-        return ApiService.post('/payment/save-card', cardData)
+        return ApiService.get(`${this.base}/settings`)
     }
 
     async updateProfile(data: Partial<any>) {
-        return ApiService.post('/client/settings', data)
+        return ApiService.post(`${this.base}/settings`, data)
+    }
+
+    async updateOffer(projectId: number, offerId: string) {
+        return ApiService.patch(`${this.base}/projects/${projectId}/offer/${offerId}`)
+    }
+
+    async declineOffer(projectId: number, offerId: number) {
+        return ApiService.patch(`${this.base}/projects/${projectId}/offer/${offerId}/decline`)
     }
 }
 

@@ -18,5 +18,8 @@ export default {
     },
     async resetPassword(payload: { email: string; token: string; password: string; password_confirmation: string }) {
         return ApiService.post('/reset-password', payload)
-    }
+    },
+    async TempLogin(data: { email: string; password: string }) {
+        return ApiService.post('/v2/login', data)
+    },
 }

@@ -3,11 +3,33 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InboundEmailsController;
 use App\Models\Role;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Auth;
+
+// Resources for V2
+use App\Http\Controllers\NewDashboard\UserEventController;
+use App\Http\Controllers\NewDashboard\PaymentController;
+
+// Client Resources
+use App\Http\Controllers\NewDashboard\Client\OverviewController as ClientOverviewController;
+use App\Http\Controllers\NewDashboard\Client\PackagedServiceController as ClientPackagedServiceController;
+use App\Http\Controllers\NewDashboard\Client\ReviewController as ClientReviewController;
+use App\Http\Controllers\NewDashboard\Client\TransactionController as ClientTransactionController;
+use App\Http\Controllers\NewDashboard\Client\LeadRequestController;
+use App\Http\Controllers\NewDashboard\Client\SettingsController as ClientSettingsController;
+use App\Http\Controllers\NewDashboard\Client\OfferController as ClientOfferController;
+
+// Expert Resources
+use App\Http\Controllers\NewDashboard\Expert\SignupController as ExpertSignupController;
+use App\Http\Controllers\NewDashboard\Expert\ReviewController as ExpertReviewController;
+use App\Http\Controllers\NewDashboard\Expert\LeadController as ExpertLeadController;
+use App\Http\Controllers\NewDashboard\Expert\SettingsController as ExpertSettingsController;
+use App\Http\Controllers\NewDashboard\Expert\OfferController as ExpertOfferController;
+
+// Admin Resources
+use App\Http\Controllers\NewDashboard\AuthController as V2AuthController;
+use App\Http\Controllers\NewDashboard\Admin\ListingController as AdminListingController;
+use App\Http\Controllers\NewDashboard\Admin\LeadController as AdminLeadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -72,9 +94,8 @@ Route::get('/php-get-info', function () {
 Route::post('/inbound-processing', [InboundEmailsController::class, 'inboundData']);
 Route::get('/inbound-email-logs/{date}', [\App\Http\Controllers\Logs::class, 'inboundEmailLogs'])->middleware('verify.token');
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/v2/expert/register', [\App\Http\Controllers\NewDashboard\Expert\SignupController::class, 'register']);
-Route::post('/free-quote', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'freeQuote']);
-Route::post('/get-matched', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'getMatched']);
+Route::post('/free-quote', [LeadRequestController::class, 'freeQuote']);
+Route::post('/get-matched', [LeadRequestController::class, 'getMatched']);
 Route::post('/register/check', [AuthController::class, 'checkData']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
@@ -95,7 +116,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payment/save-card', [\App\Http\Controllers\PaymentController::class, 'saveCard']);
     Route::post('/payment/buy-hours', [\App\Http\Controllers\PaymentController::class, 'buyHours']);
     Route::post('/payment/prepaid', [\App\Http\Controllers\PaymentController::class, 'prepaid']);
-    Route::middleware('throttle:card-payment')->post('/payment/card-payment', [\App\Http\Controllers\PaymentController::class, 'cardPayment']);
+    Route::post('/payment/card-payment', [\App\Http\Controllers\PaymentController::class, 'cardPayment']);
 //    Route::post('/payment/subtract', [\App\Http\Controllers\PaymentController::class, 'subtract']);
 
     Route::get('/sso/switch-to-old', [AuthController::class, 'switchToOldDashboard']);
@@ -132,29 +153,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/projects/{project}/offer/{offer}/decline', [\App\Http\Controllers\Client\OfferController::class, 'decline']);
         Route::get('/questions', [\App\Http\Controllers\Client\QuestionController::class, 'all']);
         Route::post('/questions', [\App\Http\Controllers\Client\QuestionController::class, 'create']);
-    });
-
-    Route::middleware('auth.role:' . Role::CLIENT)->prefix('/v2/client')->group(function () {
-        Route::get('/latest-requests', [\App\Http\Controllers\NewDashboard\Client\OverviewController::class, 'latestRequests']);
-        Route::get('/featured-services-and-experts', [\App\Http\Controllers\NewDashboard\Client\OverviewController::class, 'featuredServicesAndExperts']);
-        Route::get('/requests', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'requests']);
-        Route::post('/create-request', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'create']);
-        Route::get('/packaged-services', [\App\Http\Controllers\NewDashboard\Client\PackagedServiceController::class, 'packagedServices']);
-        Route::get('/review-requests', [\App\Http\Controllers\NewDashboard\Client\ReviewController::class, 'reviewRequests']);
-        Route::post('/reviews', [\App\Http\Controllers\NewDashboard\Client\ReviewController::class, 'store']);
-        Route::get('/reviews', [\App\Http\Controllers\NewDashboard\Client\ReviewController::class, 'all']);
-        Route::put('/reviews/{id}', [\App\Http\Controllers\NewDashboard\Client\ReviewController::class, 'update']);
-        Route::get('/request/{request}', [\App\Http\Controllers\NewDashboard\Client\RequestController::class, 'request']);
-        Route::get('/transactions', [\App\Http\Controllers\NewDashboard\Client\TransactionController::class, 'transactions']);
-    });
-
-    Route::middleware('auth.role:' . Role::EXPERT)->prefix('/v2/expert')->group(function () {
-//        Route::get('/review-requests', [\App\Http\Controllers\Expert\ReviewController::class, 'reviewRequests']);
-//        Route::post('/reviews', [\App\Http\Controllers\Expert\ReviewController::class, 'store']);
-        Route::get('/reviews', [\App\Http\Controllers\Expert\ReviewController::class, 'all']);
-//        Route::put('/reviews/{id}', [\App\Http\Controllers\Expert\ReviewController::class, 'update']);
-        Route::get('/leads', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'leads']);
-        Route::get('/stats', [\App\Http\Controllers\NewDashboard\Expert\LeadController::class, 'stats']);
     });
 
     Route::middleware('auth.role:' . Role::EXPERT)->prefix('/expert')->group(function () {
@@ -225,5 +223,65 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/transactions', [\App\Http\Controllers\Admin\SettingsController::class, 'transactions']);
 
         Route::post('/login-as/{user}', [\App\Http\Controllers\AuthController::class, 'loginAsUser']);
+    });
+});
+
+// V2 Routes
+Route::prefix('v2')->group(function () {
+    Route::post('/expert/register', [ExpertSignupController::class, 'register']);
+    Route::post('/login', [V2AuthController::class, 'login']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::patch('/events', [UserEventController::class, 'updateBulk']);
+        Route::get('/events', [UserEventController::class, 'all']);
+        Route::patch('/events/{userEvent}', [UserEventController::class, 'update']);
+        Route::post('/payment/save-card', [PaymentController::class, 'saveCard']);
+        Route::post('/payment/card-payment', [PaymentController::class, 'cardPayment']);
+
+        // Client Routes
+        Route::middleware('auth.role:' . Role::CLIENT)->prefix('client')->group(function () {
+            Route::get('/latest-requests', [ClientOverviewController::class, 'latestRequests']);
+            Route::get('/featured-services-and-experts', [ClientOverviewController::class, 'featuredServicesAndExperts']);
+            Route::get('/requests', [LeadRequestController::class, 'requests']);
+            Route::post('/create-request', [LeadRequestController::class, 'create']);
+            Route::get('/packaged-services', [ClientPackagedServiceController::class, 'packagedServices']);
+            Route::get('/review-requests', [ClientReviewController::class, 'reviewRequests']);
+            Route::post('/reviews', [ClientReviewController::class, 'store']);
+            Route::get('/reviews', [ClientReviewController::class, 'all']);
+            Route::put('/reviews/{id}', [ClientReviewController::class, 'update']);
+            Route::get('/request/{request}', [LeadRequestController::class, 'request']);
+            Route::get('/transactions', [ClientTransactionController::class, 'transactions']);
+            Route::get('/settings', [ClientSettingsController::class, 'show']);
+            Route::post('/settings', [ClientSettingsController::class, 'update']);
+            Route::patch('/projects/{project}/offer/{offer}', [ClientOfferController::class, 'update']);
+            Route::patch('/projects/{project}/offer/{id}/decline', [ClientOfferController::class, 'decline']);
+        });
+
+        // Expert Routes
+        Route::middleware('auth.role:' . Role::EXPERT)->prefix('expert')->group(function () {
+            // Route::get('/review-requests', [ExpertReviewController::class, 'reviewRequests']);
+            // Route::post('/reviews', [ExpertReviewController::class, 'store']);
+            Route::get('/reviews', [\App\Http\Controllers\Expert\ReviewController::class, 'all']);
+            Route::put('/reviews/{id}', [ExpertReviewController::class, 'update']);
+            Route::get('/leads', [ExpertLeadController::class, 'leads']);
+            Route::get('/lead/{lead}', [ExpertLeadController::class, 'show']);
+            Route::get('/stats', [ExpertLeadController::class, 'stats']);
+            Route::post('/review-requests', [ExpertReviewController::class, 'store']);
+            Route::get('/project-names', [ExpertLeadController::class, 'projectNames']);
+            Route::get('/settings', [ExpertSettingsController::class, 'show']);
+            Route::post('/settings', [ExpertSettingsController::class, 'update']);
+            Route::post('/projects/{project}/offer', [ExpertOfferController::class, 'create']);
+            Route::get('/search-users', [ExpertLeadController::class, 'searchUsers']);
+        });
+
+        // Admin Routes
+        Route::middleware('auth.role:' . Role::ADMIN)->prefix('admin')->group(function () {
+            Route::post('/login-as/{user}', [V2AuthController::class, 'loginAsUser']);
+
+            // Listings Routes
+            Route::get('/filter-options', [AdminListingController::class, 'getFilterOptions']);
+            Route::get('/listings', [AdminListingController::class, 'all']);
+            Route::post('/listings/{user}/status', [AdminListingController::class, 'updateStatus']);
+        });
     });
 });

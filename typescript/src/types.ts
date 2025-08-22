@@ -39,19 +39,22 @@ export interface ILead {
 
 export interface IListing {
     id: number,
-    name: string
-    displayUrl: string
-    type: string
+    display_name: string
+    photo: string
+    expert_type_formatted: string
     email: string
-    storeTitle: string
-    storeUrl: string
-    country: string
-    jobTitle: string
-    language: string
-    minimumProjectBudget: string
-    status: string
-    statusUpdatedAt: string
-    servicesOffered: string[]
+    store_title: string
+    url: string
+    country_formatted: string
+    job_title_formatted: string
+    language_formatted: string
+    hourly_rate_formatted: string
+    status_formatted: string
+    status_updated_at_formatted: string
+    services_offered_safe: string[]
+    total_reviews_safe?: number
+    average_rating_safe?: number
+    expertData?: any
 }
 
 export interface IReview {
@@ -339,13 +342,12 @@ export interface IRequest {
     project: {
         name: string
         description?: string
-        status?: string | null
+        status: string
         is_additional_experts: boolean
         history: IStatusHistory[]
         invoices: ITranscationn[]
         active_assignment?: IAssignment
         additional_expert_profiles?: IExpertt[] | null
-        quotes?: IQuotee[];
     }
 }
 
@@ -405,6 +407,17 @@ export interface Card {
     default: boolean
 }
 
+export interface PayPalConnectionInterface {
+    title: string;
+    icon: any;
+    description: string;
+    emailLabel: string;
+    emailPlaceholder: string;
+    feeNote: string;
+    isPaypal: boolean;
+    email: string;
+}
+
 export interface ILeadd {
     id: number,
     type: string
@@ -427,4 +440,56 @@ export interface IExpertStat {
     cta_clicks: number
     listing_page_visits: number
     unique_visits: number
+}
+
+export interface IProjectName {
+    id: number
+    name: string
+}
+
+export interface ILeadDetail {
+    id: number;
+    type: string;
+    created_at: string;
+    project: {
+        id: number;
+        name: string;
+        description?: string;
+        status?: string;
+        messages?: any[];
+        history: IStatusHistory[]
+        invoices: ITranscationn[]
+        active_assignment?: IAssignment
+    };
+    client: {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+        url?: string;
+        photo?: string;
+        shopify_plan?: string;
+        quotes_by_client_id?: IQuotee[]
+    };
+}
+
+export interface IAppNotification {
+    created_at: string
+    id: number
+    seen: boolean
+    event: {
+        title: string;
+    }
+    project: {
+        name: string;
+        request: {
+            id: number;
+        }
+    }
+}
+
+export interface TimeFormatterOptions {
+    showFullDateAfterDays?: number
+    shortFormat?: boolean
+    includeSeconds?: boolean
 }

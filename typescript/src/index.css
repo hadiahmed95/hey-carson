@@ -34,6 +34,8 @@
     --color-info: #1a72cf;
     --color-darkGreen: #50653f;
     --color-lightGray: #d6d6d6;
+    --color-light-green: #00C7004D;
+    --color-extra-dark-green: #0C5132;
     --color-gainsboro: #D8D8D8;
     --color-darkGray: #66676a;
     --color-brandBlue: #0f5bd3;
@@ -49,5 +51,6 @@
     --color-earthy-orange-brown: #8c5402;
     --color-deep-violet: #633f8b;
     --color-light-blue: #0072CF;
+    --color-light-grey: #1F2125A6;
   }
 }

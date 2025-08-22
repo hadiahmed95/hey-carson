@@ -25,14 +25,16 @@
     <div>
       <ExpertCard
         :expert="request.expert"
+        :project-status="request.project.status"
+        :offers="request.project?.active_assignment?.offers || request?.expert?.quotes || []"
         :request_type="request.type"
         class="flex flex-col gap-3"
       />
     </div>
     <div v-if="request.project.additional_expert_profiles">
-      <p class="text-h6 tracking-widest text- font-normal">
+      <h6 class="tracking-widest text- font-normal">
         {{ request.project.additional_expert_profiles?.length || 0 }} ADDITIONAL EXPERTS
-      </p>
+      </h6>
       <div class="border-t w-full mb-1"></div>
 
       <div v-if="request.project.additional_expert_profiles?.length">
@@ -40,6 +42,8 @@
           v-for="expert in request.project.additional_expert_profiles"
           :key="expert.id"
           :expert="expert"
+          :project-status="request.project.status"
+          :offers="request.project?.active_assignment?.offers || request?.expert?.quotes || []"
           :request_type="request.type"
           class="flex flex-col gap-3"
         />

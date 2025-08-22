@@ -5,7 +5,7 @@
       <MessageIcon />
       <span
           v-if="messageCount > 0"
-          class="absolute -top-1 -right-1 w-4 h-4 text-[11px] bg-red-500 text-white rounded-full flex items-center justify-center"
+          class="absolute top-0 -right-1 w-5 h-5 text-[11px] bg-red-500 text-white rounded-full flex items-center justify-center"
       >
         {{ messageCount }}
       </span>
@@ -18,7 +18,7 @@
     >
       <!-- Header -->
       <div class="flex justify-between items-center">
-        <p class="text-paragraph font-semibold">Latest Messages</p>
+        <p class="font-semibold">Latest Messages</p>
         <button v-if="messages.length" class="text-h4 font-normal text-blue-600 hover:underline">
           Mark all as Read
         </button>
