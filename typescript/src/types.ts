@@ -304,6 +304,16 @@ export interface IQuotee {
     rate: number
     status: string
     created_at: string
+    project_name: string
+    project_url: string
+    payment_status: string
+    client_name: string
+    client_url: string
+    client_photo: string
+    client_shopify_plan: string
+    expert_name: string
+    expert_url: string
+    expert_type: string
 }
 
 export interface IExpertt {

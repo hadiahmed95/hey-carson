@@ -32,6 +32,15 @@ class AdminService {
             ...currentFilters 
         });
     }
+
+    async fetchQuotes(params: Record<string, any>) {
+        const queryString = new URLSearchParams(params).toString();
+        return this.api.get(`/quotes?${queryString}`);
+    }
+
+    async fetchQuoteFilterOptions() {
+        return this.api.get('/quotes/filter-options');
+    }
 }
 
 export default new AdminService();

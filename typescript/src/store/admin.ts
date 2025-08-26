@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import AdminService from '@/services/admin.service';
 import { withLoader } from '@/utils/helpers.ts';
-import type { IListing } from '@/types.ts';
+import type { IListing, IQuotee } from '@/types.ts';
 
 interface Admin {
     id: number;
@@ -17,6 +17,8 @@ interface AdminState {
     totalExperts: number;
     currentPage: number;
     lastPage: number;
+    quotes: IQuotee[];
+    totalQuotes: number;
 }
 
 export const useAdminStore = defineStore('admin', {
@@ -28,6 +30,8 @@ export const useAdminStore = defineStore('admin', {
         totalExperts: 0,
         currentPage: 1,
         lastPage: 1,
+        quotes: [],
+        totalQuotes: 0,
     }),
 
     actions: {
@@ -104,6 +108,31 @@ export const useAdminStore = defineStore('admin', {
                     }
                 }
                 
+                return response.data;
+            });
+        },
+
+        async fetchQuotes(params: Record<string, any>, appendData = false) {
+            return await withLoader(async () => {
+                const response = await AdminService.fetchQuotes(params);
+                
+                if (appendData && params.page > 1) {
+                    this.quotes.push(...(response.data.quotes.data || []));
+                } else {
+                    this.quotes = response.data.quotes.data || [];
+                }
+                
+                this.totalQuotes = response.data.quotes_count || 0;
+                this.currentPage = response.data.quotes.current_page || 1;
+                this.lastPage = response.data.quotes.last_page || 1;
+                
+                return response.data;
+            });
+        },
+
+        async fetchQuoteFilterOptions() {
+            return await withLoader(async () => {
+                const response = await AdminService.fetchQuoteFilterOptions();
                 return response.data;
             });
         },
