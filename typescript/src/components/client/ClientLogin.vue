@@ -45,14 +45,29 @@ const password = ref('')
 const background = new URL('@/assets/icons/background.svg', import.meta.url).href
 
 onMounted(async () => {
+  // Check if user is already logged in
   if (authStore.token && authStore.user) {
-    await router.push('/client/dashboard')
+    if (authStore.user.role_id === 1) {
+      await router.push('/admin/dashboard')
+    } else if (authStore.user.role_id === 2) {
+      await router.push('/client/dashboard')
+    } else if (authStore.user.role_id === 3) {
+      await router.push('/expert/dashboard')
+    }
   }
 })
 
 const login = async () => {
   await authStore.login(email.value, password.value, 'client')
-  await router.push('/client/dashboard')
+  
+  // Redirect based on role_id after login
+  if (authStore.user.role_id === 1) {
+    await router.push('/admin/dashboard')
+  } else if (authStore.user.role_id === 2) {
+    await router.push('/client/dashboard')
+  } else if (authStore.user.role_id === 3) {
+    await router.push('/expert/dashboard')
+  }
 }
 
 const signUp = () => { router.push('/client/signup') }

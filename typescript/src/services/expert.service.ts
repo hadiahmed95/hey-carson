@@ -54,6 +54,12 @@ class ExpertService {
             `${this.base}/search-users?search=${encodeURIComponent(searchTerm)}`
         );
     }
+
+    fetchCountries() {
+        return ApiService.get(
+            `https://restcountries.com/v3.1/all?fields=name,cca2`
+        );
+    }
 }
 
 export default new ExpertService();

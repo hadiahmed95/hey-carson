@@ -45,15 +45,31 @@ const authStore = useAuthStore()
 const background = new URL('../../assets/icons/background.svg', import.meta.url).href
 
 onMounted(async () => {
+  // Check if user is already logged in
   if (authStore.token && authStore.user) {
-    await router.push('/expert/dashboard')
+    if (authStore.user.role_id === 1) {
+      await router.push('/admin/dashboard')
+    } else if (authStore.user.role_id === 2) {
+      await router.push('/client/dashboard')
+    } else if (authStore.user.role_id === 3) {
+      await router.push('/expert/dashboard')
+    }
   }
 })
 
 const login = async () => {
   await authStore.login(email.value, password.value, 'expert')
-  await router.push('/expert/dashboard')
+  
+  // Redirect based on role_id after login
+  if (authStore.user.role_id === 1) {
+    await router.push('/admin/dashboard')
+  } else if (authStore.user.role_id === 2) {
+    await router.push('/client/dashboard')
+  } else if (authStore.user.role_id === 3) {
+    await router.push('/expert/dashboard')
+  }
 }
+
 const signUp = () => { router.push('/expert/signup') }
 const claimAgency = () => { /* agency claim logic */ }
 const forgot = () => { router.push('/forgot-password?role=expert') }
