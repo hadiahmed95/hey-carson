@@ -42,7 +42,7 @@
           <BaseInput
               v-model="description"
               textarea
-              placeholder="Please try to be as detailed as possible, as this helps us provide you with best possible solutions ..."
+              placeholder="Please try to be as detailed as possible, as this helps us provide you with best possible solutions..."
               noStyle
               hideLabel
           />
@@ -65,7 +65,8 @@
           <input
               type="text"
               v-model="search"
-              @focus="open = true"
+              @focus="handleInputFocus"
+              @blur="handleInputBlur"
               @input="fetchExperts"
               placeholder="Enter the name of an expert"
               class="w-full border border-lightGray rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary"
@@ -74,21 +75,22 @@
           <!-- Dropdown -->
           <ul
               v-if="open && experts.length"
+              @mousedown="handleDropdownMouseDown"
               class="absolute z-10 mt-1 w-full bg-white border border-lightGray rounded-md shadow-lg max-h-60 overflow-auto"
           >
             <li
-                v-for="expert in experts"
-                :key="expert.id"
-                @click="selectExpert(expert)"
+                v-for="expertOption in experts"
+                :key="expertOption.id"
+                @click="selectExpert(expertOption)"
                 class="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-gray-100"
             >
               <img
-                  :src="getS3URL(expert.photo)"
+                  :src="getS3URL(expertOption.photo)"
                   class="w-12 h-12 rounded-full object-cover"
               />
               <div>
-                <p class="font-archivo font-semibold">{{ expert.first_name }} {{ expert.last_name }}</p>
-                <p class="text-h4 text-primary font-normal">{{ expert.profile.role }}</p>
+                <p class="font-archivo font-semibold">{{ expertOption.first_name }} {{ expertOption.last_name }}</p>
+                <p class="text-h4 text-primary font-normal">{{ expertOption.profile.role }}</p>
               </div>
             </li>
           </ul>
@@ -106,6 +108,14 @@
               <p class="font-archivo font-semibold">{{ expert.first_name }} {{ expert.last_name }}</p>
               <p class="text-h4 text-primary font-normal">{{ expert.profile?.role }}</p>
             </div>
+            <button
+                @click="clearExpertSelection"
+                type="button"
+                class="ml-auto text-light-grey hover:text-tertiary-dark transition-colors"
+                title="Clear selection"
+            >
+              &times;
+            </button>
           </div>
         </div>
         <h5 v-if="errors.expert" class="text-red-600 mt-2">
@@ -192,6 +202,7 @@ const description = ref('')
 const expert = ref<any>(null)
 const isUrgent = ref(false)
 const sendToMore = ref(false)
+const dropdownTimeout = ref<NodeJS.Timeout | null>(null)
 
 const errors = ref({
   website: '',
@@ -230,8 +241,38 @@ const fetchExperts = async () => {
 
 const selectExpert = (selectedExpert: any) => {
   expert.value = selectedExpert
+  search.value = ''
   open.value = false
   console.log(expert.value)
+}
+
+// New function to handle input focus
+const handleInputFocus = () => {
+  // Clear any existing timeout when input is focused
+  if (dropdownTimeout.value) {
+    clearTimeout(dropdownTimeout.value)
+    dropdownTimeout.value = null
+  }
+  open.value = true
+}
+
+// New function to handle input blur with delay
+const handleInputBlur = () => {
+  // Use setTimeout to allow click events on dropdown items to fire first
+  dropdownTimeout.value = setTimeout(() => {
+    open.value = false
+  }, 150) // 150ms delay allows click events to register
+}
+
+// New function to handle dropdown mousedown (prevents blur)
+const handleDropdownMouseDown = (event: Event) => {
+  event.preventDefault() // Prevents input from losing focus
+}
+
+// New function to clear expert selection
+const clearExpertSelection = () => {
+  expert.value = null
+  search.value = ''
 }
 
 const validate = () => {

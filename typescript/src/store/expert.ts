@@ -98,5 +98,10 @@ export const useExpertStore = defineStore('expert', {
             const response = await ExpertService.searchUsers(searchTerm);
             return response.data;
         },
+
+        async fetchCountries() {
+            const response = await ExpertService.fetchCountries();
+            return response.data;
+        }
     },
 });
