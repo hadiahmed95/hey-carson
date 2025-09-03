@@ -21,9 +21,4 @@ class Offer extends Model
     {
         return $this->belongsTo(Assignment::class);
     }
-
-    public function expertProfile()
-    {
-        return $this->belongsTo(Profile::class, 'expert_id', 'user_id');
-    }
 }

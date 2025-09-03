@@ -6,7 +6,7 @@ import ReviewRequests from "../../components/client/ReviewRequests.vue";
 
 const tabs = [
   { value: 'review-requests', label: 'Review Requests', component: ReviewRequests },
-  { value: 'written-reviews', label: 'Published Reviews', component: WrittenReviews },
+  { value: 'written-reviews', label: 'Written Reviews', component: WrittenReviews },
 ]
 
 

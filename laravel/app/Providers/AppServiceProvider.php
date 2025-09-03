@@ -18,8 +18,6 @@ use App\Observers\ProjectObserver;
 use App\Observers\UserObserver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Http;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -49,16 +47,6 @@ class AppServiceProvider extends ServiceProvider
 
             return 'http://app.shopexperts.com/reset-password?token=' . $token .
                 '&email=' .$user->email . '&type=' . $type;
-        });
-
-        Validator::extend('recaptcha', function ($attribute, $value, $parameters, $validator) {
-            $response = Http::asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                'secret' => config('services.recaptcha.secret'),
-                'response' => $value,
-                'remoteip' => request()->ip()
-            ]);
-
-            return $response->json()['success'];
         });
     }
 }

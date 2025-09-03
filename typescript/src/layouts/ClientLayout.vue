@@ -21,7 +21,6 @@ const navItems = [
   <div class="flex flex-col h-screen w-screen bg-muted">
     <TopNavigation
       :message-count="4"
-      :notification-count="2"
       :profile-image="authStore.user.photo"
     />
 

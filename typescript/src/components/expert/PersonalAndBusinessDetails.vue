@@ -4,8 +4,8 @@
   isOnboarding ? 'grid grid-cols-1 md:grid-cols-3' : 'w-full',
       !isOnboarding && 'md:col-span-3'
     ]">
+    <h3 class="font-semibold mb-2">Personal & Business Details</h3>
     <div v-if="isOnboarding">
-      <h3 class="font-semibold mb-2">Personal & Business Details</h3>
       <h4 class="mb-3">Give potential clients a peek at your personal and business
         <br>story. Some fields are locked on the free plan - upgrade to
         <br>unlock them all!
@@ -22,7 +22,6 @@
         'space-y-4 bg-white rounded-md border border-gray p-5'
       ]">
       <div class="space-y-14">
-        <h3 class="font-semibold border-b border-grey pb-2">Personal & Business Details</h3>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <img src="https://randomuser.me/api/portraits/men/10.jpg" alt="Avatar" class="w-18 h-18 rounded-full object-cover" />

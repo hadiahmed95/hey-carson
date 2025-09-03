@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from '@/store/auth.ts'
 
 import ExpertLayout from "@/layouts/ExpertLayout.vue";
 import ExpertDashboard from "@/pages/expert/Dashboard.vue";
@@ -33,7 +32,6 @@ import AccountInfo from "@/components/client/freeQuote/AccountInfo.vue";
 
 import ExpertLogin from "@/components/expert/ExpertLogin.vue"
 import ClientLogin from "@/components/client/ClientLogin.vue"
-import AdminLogin from "@/components/admin/AdminLogin.vue"
 import Reviews from "@/pages/client/Reviews.vue"
 import ForgotPassword from "@/pages/ForgotPassword.vue";
 import ResetPassword from "@/pages/ResetPassword.vue";
@@ -51,7 +49,7 @@ import Experience from "@/components/expert/SignUp/Experience.vue";
 import ClaimStart from "@/components/expert/claimProfile/ClaimStart.vue";
 import ClaimVerification from "@/components/expert/claimProfile/ClaimVerification.vue";
 import OnBoardingIntro from "@/pages/expert/onboarding/OnBoardingIntro.vue";
-import OnboardingLayout from "@/pages/expert/onboarding/Layout.vue";
+import ListingLayout from "@/layouts/ListingLayout.vue";
 import SSOLogin from "@/pages/client/SSOLogin.vue";
 
 const routes = [
@@ -79,11 +77,6 @@ const routes = [
         meta: {
             title: 'shopexperts - Client Login',
         }
-    },
-    {
-        path: '/admin/login',
-        name: 'admin-login',
-        component: AdminLogin,
     },
     {
         path: '/sso-login',
@@ -220,55 +213,50 @@ const routes = [
         component: ExpertLayout,
         meta: {
             title: 'shopexperts - Expert Dashboard',
-            requiresAuth: true,
-            requiredRole: 'expert'
         },
         children: [
             {
                 path: 'onboarding',
                 name: 'expert-onboarding-intro',
                 component: OnBoardingIntro,
-                meta: {
-                    title: 'shopexperts - Expert Onboarding',
-                },
             },
             {
-                path: 'onboarding-steps',
-                component: OnboardingLayout,
+                path: 'listing-settings',
+                component: ListingLayout,
                 children: [
                     {
                         path: '',
-                        redirect: '/expert/onboarding-steps/personalDetails',
+                        redirect: '/expert/listing-settings/personal-details',
                     },
                     {
-                        path: 'personalDetails',
-                        name: 'expert-onboarding-personalDetails',
-                        alias: '/expert/onboarding/personalDetails',
-                        component: () => import('@/pages/expert/onboarding/PersonalDetails.vue'),
+                        path: 'personal-details',
+                        name: 'listing-settings-personal-details',
+                        alias: '/expert/listing-settings/personal-details',
+                        component: () => import('@/pages/expert/listing-settings/PersonalDetails.vue'),
                     },
                     {
-                        path: 'serviceCategories',
-                        name: 'expert-onboarding-serviceCategories',
-                        alias: '/expert/onboarding/serviceCategories',
-                        component: () => import('@/pages/expert/onboarding/ServiceCategories.vue'),
+                        path: 'service-categories',
+                        name: 'listing-settings-service-categories',
+                        alias: '/expert/listing-settings/service-categories',
+                        component: () => import('@/pages/expert/listing-settings/OfferedServices.vue'),
                     },
                     {
-                        path: 'packagedServices',
-                        name: 'expert-onboarding-packagedServices',
-                        alias: '/expert/onboarding/packagedServices',
-                        component: () => import('@/pages/expert/onboarding/PackagedServices.vue'),
+                        path: 'packaged-services',
+                        name: 'listing-settings-packaged-services',
+                        alias: '/expert/listing-settings/packaged-services',
+                        component: () => import('@/pages/expert/listing-settings/PackagedServices.vue'),
                     },
                     {
-                        path: 'customerStories',
-                        name: 'expert-onboarding-customerStories',
-                        alias: '/expert/onboarding/customerStories',
-                        component: () => import('@/pages/expert/onboarding/CustomerStories.vue'),
+                        path: 'customer-stories',
+                        name: 'listing-settings-customer-stories',
+                        alias: '/expert/listing-settings/customer-stories',
+                        component: () => import('@/pages/expert/listing-settings/CustomerStories.vue'),
                     },
                     {
                         path: 'faq',
-                        name: 'expert-onboarding-faq',
-                        alias: '/expert/onboarding/faq',
-                        component: () => import('@/pages/expert/onboarding/Faq.vue'),
+                        name: 'listing-settings-faq',
+                        alias: '/expert/listing-settings/faq',
+                        component: () => import('@/pages/expert/listing-settings/Faq.vue'),
                     }
                 ]
             },
@@ -304,6 +292,7 @@ const routes = [
                     title: 'shopexperts - Lead Details',
                 },
             },
+
             {
                 path: "my-listings",
                 name: "expert-my-listings",
@@ -342,9 +331,7 @@ const routes = [
         path: "/admin",
         component: AdminLayout,
         meta: {
-            title: 'shopexperts - Admin', 
-            requiresAuth: true, 
-            requiredRole: 'admin' 
+            title: 'shopexperts - Admin',
         },
         children: [
             {
@@ -405,14 +392,10 @@ const routes = [
             },
         ]
     },
+
     {
         path: "/client",
         component: ClientLayout,
-        meta: {
-            title: 'shopexperts - Client Dashboard',
-            requiresAuth: true,
-            requiredRole: 'client'
-        },
         children: [
             {
                 path: "dashboard",
@@ -474,128 +457,15 @@ const routes = [
         ]
     }
 ];
-
 const router = createRouter({
     history: createWebHistory(),
     routes,
 });
 
-// Enhanced Navigation Guards for All User Types
 router.beforeEach((to, _from, next) => {
-    const authStore = useAuthStore()
-    
-    const exactPublicRoutes = [
-        '/',
-        '/expert/login', 
-        '/client/login', 
-        '/admin/login',
-        '/forgot-password', 
-        '/reset-password', 
-        '/sso-login'
-    ]
-    
-    const publicPathPrefixes = [
-        '/expert/signup',
-        '/client/signup', 
-        '/client/free-quote', 
-        '/client/get-matched', 
-        '/expert/claim-profile'
-    ]
-    
-    const isExactPublicRoute = exactPublicRoutes.includes(to.path)
-    const isPublicPathPrefix = publicPathPrefixes.some(prefix => to.path.startsWith(prefix))
-    const isPublicRoute = isExactPublicRoute || isPublicPathPrefix
-    
-    if (isPublicRoute) {
-        // For login pages, redirect already authenticated users to their dashboard
-        if (authStore.token && authStore.user && (to.path.includes('/login') || to.path === '/')) {
-            if (authStore.user.role_id === 1) {
-                next('/admin/dashboard')
-                return
-            } else if (authStore.user.role_id === 2) {
-                next('/client/dashboard')
-                return
-            } else if (authStore.user.role_id === 3) {
-                next('/expert/dashboard')
-                return
-            }
-        }
-        
-        document.title = (to.meta.title as string) || 'shopexperts';
-        next();
-        return
-    }
-    
-    // Check if this is a protected route
-    const isAdminRoute = to.path.startsWith('/admin')
-    const isExpertRoute = to.path.startsWith('/expert')
-    const isClientRoute = to.path.startsWith('/client')
-    const isProtectedRoute = isAdminRoute || isExpertRoute || isClientRoute
-    
-    if (isProtectedRoute) {
-        // Check authentication first
-        if (!authStore.token || !authStore.user) {
-            if (isAdminRoute) {
-                next('/admin/login')
-            } else if (isExpertRoute) {
-                next('/expert/login')
-            } else if (isClientRoute) {
-                next('/client/login')
-            }
-            return
-        }
-        
-        // Check role-based access
-        const userRoleId = authStore.user.role_id
-        
-        // Admin route access check
-        if (isAdminRoute && userRoleId !== 1) {
-            if (userRoleId === 2) {
-                next('/client/dashboard')
-                return
-            } else if (userRoleId === 3) {
-                next('/expert/dashboard')
-                return
-            }
-            next('/')
-            return
-        } 
-        
-        // Expert route access check
-        if (isExpertRoute && userRoleId !== 3) {
-            if (userRoleId === 1) {
-                next('/admin/dashboard')
-                return
-            } else if (userRoleId === 2) {
-                next('/client/dashboard')
-                return
-            }
-            next('/')
-            return
-        } 
-        
-        // Client route access check
-        if (isClientRoute && userRoleId !== 2) {
-            if (userRoleId === 1) {
-                next('/admin/dashboard')
-                return
-            } else if (userRoleId === 3) {
-                next('/expert/dashboard')
-                return
-            }
-            next('/')
-            return
-        }
-    } else {
-        // Handle invalid routes (routes that don't match any known pattern)
-        // If it's not a public route and not a protected route, redirect to client/login
-        next('/client/login')
-        return
-    }
-    
-    // Set document title and continue
     document.title = (to.meta.title as string) || 'shopexperts';
     next();
-})
+});
 
-export default router
+
+export default router;

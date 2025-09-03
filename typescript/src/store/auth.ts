@@ -1,7 +1,6 @@
 // stores/Auth.ts
 import { defineStore } from 'pinia'
 import AuthService from '@/services/auth.service'
-import AdminService from '@/services/admin.service'
 import { api } from '@/services/api.service';
 import {withLoader} from "@/utils/helpers.ts";
 
@@ -22,20 +21,6 @@ export const useAuthStore = defineStore('auth', {
                 localStorage.setItem('CURRENT_TOKEN', this.token)
             })
         },
-        
-        async loginAs(userId: number) {
-            await withLoader(async () => {
-                const response = await AdminService.loginAsUser(userId);
-                if (response.data.token && response.data.user) {
-                    api.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
-                    this.token = response.data.token;
-                    this.user = response.data.user;
-                    localStorage.setItem('CURRENT_USER', JSON.stringify(this.user));
-                    localStorage.setItem('CURRENT_TOKEN', this.token);
-                }
-            });
-        },
-        
         setCurrentUser(user: {}, token: string) {
             api.defaults.headers.common['Authorization'] = 'Bearer ' + token;
             this.token = token
@@ -62,20 +47,6 @@ export const useAuthStore = defineStore('auth', {
             return await withLoader( async () => {
                 return await AuthService.resetPassword(payload);
             })
-        },
-        async TempLogin(email: string, password: string) {
-            return await withLoader(async () => {
-                const response = await AuthService.TempLogin({ email, password })
-                if (response.data.status && response.data.user && response.data.token) {
-                    api.defaults.headers.common['Authorization'] = 'Bearer ' + response.data.token;
-                    this.token = response.data.token
-                    this.user = response.data.user
-                    localStorage.setItem('CURRENT_USER', JSON.stringify(this.user))
-                    localStorage.setItem('CURRENT_TOKEN', this.token)
-                    return response.data
-                }
-                throw new Error('Login failed')
-            })
-        },
+        }
     }
 })

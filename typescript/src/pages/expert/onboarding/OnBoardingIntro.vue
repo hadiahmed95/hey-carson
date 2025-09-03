@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen w-screen flex items-start justify-center bg-white px-4 pt-5">
-    <div class="flex flex-col gap-8 border border-gray bg-white rounded-xl shadow p-8 w-[34.375rem]">
+  <div class="min-h-screen w-screen flex items-start justify-center px-4 pt-5">
+    <div class="flex flex-col gap-8 border border-gray rounded-xl shadow p-8 w-[30%]">
 
       <!-- Heading -->
       <div class="flex flex-col gap-3">

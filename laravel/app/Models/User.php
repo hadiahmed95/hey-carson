@@ -5,12 +5,10 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -42,7 +40,6 @@ class User extends Authenticatable
         'timezone',
         'company_type',
         'shopify_plan',
-        'usertype',
         'source',
         'availability_status'
     ];
@@ -159,14 +156,6 @@ class User extends Authenticatable
         return $this->hasMany(Offer::class, 'expert_id');
     }
 
-    /**
-     * @return HasMany
-     */
-    public function requests(): HasMany
-    {
-        return $this->hasMany(Lead::class, 'client_id');
-    }
-
     public function isAdmin()
     {
         return $this->role->name === 'admin';
@@ -177,26 +166,14 @@ class User extends Authenticatable
         return $this->role->name === 'client';
     }
 
-    public function serviceCategories()
-    {
-        return $this->belongsToMany(ServiceCategory::class, 'expert_service_categories', 'user_id', 'category_id');
-    }
-
-    public function generateUserSlug()
-    {
-        return Str::slug($this->first_name . ' ' . $this->last_name);
-    }
-
     public function isExpert()
     {
         return $this->role->name === 'expert';
     }
 
-    /**
-     * @return BelongsToMany
-     */
-    public function leads(): BelongsToMany
+    public function serviceCategories()
     {
-        return $this->belongsToMany(Lead::class, 'expert_lead', 'expert_id', 'lead_id');
+        return $this->belongsToMany(ServiceCategory::class, 'expert_service_categories', 'user_id', 'category_id');
     }
+
 }

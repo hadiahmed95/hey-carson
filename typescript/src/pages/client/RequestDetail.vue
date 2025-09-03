@@ -59,7 +59,7 @@ const isLoading = computed(() => loader.isLoadingState);
 
 const selectedType = computed(() => {
   const typeParam = route.query.type
-  if (typeParam === 'Quote Request' || typeParam === 'Matched' || typeParam === 'Direct Message') {
+  if (typeParam === 'Quote Request' || typeParam === 'Matched' || typeParam === 'Direct') {
     return typeParam
   }
   return 'Quote Request'

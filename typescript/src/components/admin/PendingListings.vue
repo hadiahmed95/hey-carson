@@ -5,19 +5,19 @@ import type { IListing } from "../../types.ts";
 const pendingListings: IListing[] = [
   {
     id: 1,
-    display_name: 'Michael Oswald',
-    photo: 'https://randomuser.me/api/portraits/men/32.jpg',
-    expert_type_formatted: 'Freelancer',
+    name: 'Michael Oswald',
+    displayUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
+    type: 'Freelancer',
     email: 'michael@shopifyhero.com',
-    store_title: 'Check Website',
-    url: 'https://www.trustpilot.com/',
-    country_formatted: 'United States',
-    job_title_formatted: 'Senior Shopify Developer',
-    language_formatted: 'English, Spanish',
-    hourly_rate_formatted: '$1500.00',
-    status_updated_at_formatted: '17 Dec, 2025',
-    status_formatted: 'Pending',
-    services_offered_safe: [
+    storeTitle: 'Check Website',
+    storeUrl: 'https://www.trustpilot.com/',
+    country: 'Michael Oswald',
+    jobTitle: 'Senior Shopify Developer',
+    language: 'English, Spanish',
+    minimumProjectBudget: '$1500.00',
+    statusUpdatedAt: '17 Dec, 2025',
+    status: 'Pending',
+    servicesOffered: [
         'Store Setup & Management',
         'Development and Troubleshooting',
         'Training & Consultation',
@@ -25,19 +25,19 @@ const pendingListings: IListing[] = [
   },
   {
     id: 2,
-    display_name: 'Axome',
-    photo: 'https://randomuser.me/api/portraits/men/44.jpg',
-    expert_type_formatted: 'Agency',
+    name: 'Axome',
+    displayUrl: 'https://randomuser.me/api/portraits/men/44.jpg',
+    type: 'Agency',
     email: 'marketing@axome.com',
-    store_title: 'Check Website',
-    url: 'https://www.trustpilot.com/',
-    country_formatted: 'Saint-Etienne/France',
-    job_title_formatted: 'Senior Shopify Developer',
-    language_formatted: 'French',
-    hourly_rate_formatted: '$5000.00',
-    status_updated_at_formatted: '17 Dec, 2025',
-    status_formatted: 'Pending',
-    services_offered_safe: [
+    storeTitle: 'Check Website',
+    storeUrl: 'https://www.trustpilot.com/',
+    country: 'Saint-Etienne/France',
+    jobTitle: 'Senior Shopify Developer',
+    language: 'Saint-Etienne/France',
+    minimumProjectBudget: '$5000.00',
+    statusUpdatedAt: '17 Dec, 2025',
+    status: 'Pending',
+    servicesOffered: [
         'Store Setup & Management',
         'Development and Troubleshooting',
         'Training & Consultation',
@@ -45,19 +45,19 @@ const pendingListings: IListing[] = [
   },
   {
     id: 3,
-    display_name: 'Mihail Kuznetsov',
-    photo: 'https://randomuser.me/api/portraits/men/55.jpg',
-    expert_type_formatted: 'Freelancer',
+    name: 'Mihail Kuznetsov',
+    displayUrl: 'https://randomuser.me/api/portraits/men/55.jpg',
+    type: 'Freelancer',
     email: 'mihailkuznetsovdev@gmail.com',
-    store_title: 'Check Website',
-    url: 'https://www.trustpilot.com/',
-    country_formatted: 'United States/New York',
-    job_title_formatted: 'Senior Shopify Developer',
-    language_formatted: 'English, Spanish',
-    hourly_rate_formatted: '$1500.00',
-    status_updated_at_formatted: '17 Dec, 2025',
-    status_formatted: 'Pending',
-    services_offered_safe: [
+    storeTitle: 'Check Website',
+    storeUrl: 'https://www.trustpilot.com/',
+    country: 'United States/New York',
+    jobTitle: 'Senior Shopify Developer',
+    language: 'English, Spanish',
+    minimumProjectBudget: '$1500.00',
+    statusUpdatedAt: '17 Dec, 2025',
+    status: 'Pending',
+    servicesOffered: [
         'Store Setup & Management',
         'Development and Troubleshooting',
         'Training & Consultation',
@@ -72,7 +72,7 @@ const pendingListings: IListing[] = [
         v-for="listingItem in pendingListings"
         :key="listingItem.id"
         :listing="listingItem"
-        :currentFilters="{}"
     />
   </div>
 </template>
+

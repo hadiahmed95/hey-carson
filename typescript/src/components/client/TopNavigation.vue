@@ -5,7 +5,7 @@
     </div>
 
     <div class="flex items-center gap-4">
-      <NotificationsDropdown :notificationCount="notificationCount" />
+      <NotificationsDropdown />
 
       <MessageDropDown :messageCount="messageCount" />
       <ClientProfileDropdown :profileImage="profileImage" />
@@ -21,7 +21,6 @@ import NotificationsDropdown from "./NotificationsDropdown.vue";
 
 defineProps<{
   messageCount: number
-  notificationCount: number
   profileImage: string
 }>()
 </script>

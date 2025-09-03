@@ -9,7 +9,7 @@
           type="text"
           placeholder="Enter Client full name"
           class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
-          @input="handleClientNameInput(); delete errors.client_full_name"
+          @input="handleClientNameInput"
           @focus="handleClientNameFocus"
           @blur="handleUserInputBlur"
       />
@@ -80,7 +80,6 @@
           type="email"
           placeholder="example@gmail.com"
           class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
-          @input="delete errors.client_email"
           :readonly="isUserFieldReadonly"
           :class="{ 'bg-gray-50': isUserFieldReadonly }"
       />
@@ -97,7 +96,6 @@
           type="text"
           placeholder="Company Name"
           class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
-          @input="delete errors.client_company_name"
           :readonly="isUserFieldReadonly"
           :class="{ 'bg-gray-50': isUserFieldReadonly }"
       />
@@ -114,7 +112,6 @@
           type="url"
           placeholder="https://companywebsite.com"
           class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
-          @input="delete errors.client_company_website"
           :readonly="isUserFieldReadonly"
           :class="{ 'bg-gray-50': isUserFieldReadonly }"
       />
@@ -129,7 +126,6 @@
           id="hiredOnShopexperts"
           v-model="form.hiredOnShopexperts"
           class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
-          @change="delete errors.hired_on_shopexperts"
       >
         <option>Yes</option>
         <option>No</option>
@@ -147,7 +143,7 @@
           type="text"
           placeholder="Enter project name"
           class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
-          @input="handleProjectNameInput(); delete errors.project_name"
+          @input="handleProjectNameInput"
           @focus="handleProjectNameFocus"
           @blur="handleProjectInputBlur"
       />
@@ -213,7 +209,6 @@
           id="repeatedClient"
           v-model="form.repeatedClient"
           class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
-          @change="delete errors.repeated_client"
       >
         <option>Yes</option>
         <option>No</option>
@@ -229,7 +224,6 @@
           id="projectValue"
           v-model="form.projectValue"
           class="w-full border border-grey rounded-md px-4 py-2 text-paragraph"
-          @change="delete errors.project_value_range"
       >
         <option disabled value="" class="text-gray-100">Select project value range</option>
         <option>less than 100</option>
@@ -250,7 +244,6 @@
           v-model="form.message"
           rows="8"
           class="w-full border border-grey rounded-md px-4 py-2 text-paragraph text-gray-500"
-          @input="delete errors.message"
       />
       <h5 v-if="errors.message" class="text-red-600 mt-2">
         {{ errors.message }}
@@ -628,8 +621,7 @@ const sendRequest = async () => {
         generalErrorMessage.value = serverMessage || "An unexpected error occurred.";
       }
     } else if (error.request) {
-      error.request.message;
-      generalErrorMessage.value = "An unknown error has occurred.";
+      generalErrorMessage.value = "No response from server. Please check your internet connection.";
     } else {
       generalErrorMessage.value = "Unexpected error occurred.";
     }

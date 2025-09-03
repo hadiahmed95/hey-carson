@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Expert;
 use App\Http\Controllers\Controller;
 use App\Models\ExpertFund;
 use App\Models\Payout;
-use App\Models\ServiceCategory;
 use App\Services\CacheService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -80,7 +79,7 @@ class SettingsController extends Controller
     }
     public function show(Request $request)
     {
-        $user = Auth::user()->load('profile', 'serviceCategories' );
+        $user = Auth::user()->load('profile');
 
         return response()->json(['user' => $user]);
     }
@@ -130,26 +129,9 @@ class SettingsController extends Controller
             $user->update($data);
         }
 
-        if (isset($data['categories'])) {
-            $categories = is_array($data['categories'])
-                ? $data['categories']
-                : [$data['categories']];
-
-            $validCategories = ServiceCategory::whereIn('id', $categories)->pluck('id');
-
-            if ($user->usertype === 'paid' && $validCategories->count() > 3) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Paid experts can select up to 3 categories'
-                ], 422);
-            }
-
-            $user->serviceCategories()->sync($validCategories);
-        }
-
         $user->refresh();
 
-        return response()->json(['user' => $user->load(['profile', 'serviceCategories'])]);
+        return response()->json(['user' => $user->load('profile')]);
     }
 
     public function profile()

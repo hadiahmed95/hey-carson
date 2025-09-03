@@ -87,6 +87,7 @@
 </template>
 
 <script setup lang="ts">
+// import { ref } from 'vue'
 import Chat from '@/assets/icons/chat.svg';
 import ChatBlack from '@/assets/icons/chatBlack.svg';
 import Star from '@/assets/icons/star.svg'

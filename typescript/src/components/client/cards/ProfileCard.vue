@@ -2,7 +2,7 @@
 import {ref} from 'vue'
 import UploadIcon from '@/assets/icons/upload.svg'
 import DeleteIcon from '@/assets/icons/delete.svg'
-import {getS3URL, generateInitialsAvatar} from "@/utils/helpers.ts"
+import {getS3URL} from "@/utils/helpers.ts"
 import ApiService from "@/services/api.service"
 import { useAlertStore } from "@/store/alert.ts"
 import FormStatusMessage from "@/components/common/FormStatusMessage.vue";
@@ -20,7 +20,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update-email', value: string): void;
-  (e: 'photo-updated', photoPath: string): void;
 }>();
 
 const form = ref({
@@ -60,6 +59,7 @@ const triggerCounters = ref({
   shopify_plan: 0,
 });
 
+const photoPreview = ref<string>(getS3URL(props.user?.photo))
 const isUploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const alertStore = useAlertStore()
@@ -129,22 +129,13 @@ async function handleFileChange(event: Event) {
 
   isUploading.value = true
   try {
-    console.log('Uploading photo...') // Debug log
     const res = await ApiService.post(`/picture`, formData, true)
-    console.log('Upload response:', res.data) // Debug log
     errors.value.photo = 'success'
-    // Update the local user photo immediately to reflect the change
-    if (res.data.user && res.data.user.photo) {
-      // Emit event to parent to update the user data
-      emit('photo-updated', res.data.user.photo)
-    }
-    triggerCounters.value.photo++;
+    photoPreview.value = getS3URL(res.data.user.photo)
   } catch (error: any) {
-    console.error('Upload error:', error) // Debug log
     let message = 'Failed to upload photo.'
 
     if (error.response) {
-      console.error('Error response:', error.response) // Debug log
       const status = error.response.status
       const serverMessage = error.response.data?.message || ''
 
@@ -152,10 +143,6 @@ async function handleFileChange(event: Event) {
         message = 'Photo is too large. Please upload a smaller image.'
       } else if (status === 422) {
         message = 'Invalid photo format. Please try a different file.'
-      } else if (status === 401) {
-        message = 'Authentication required. Please login again.'
-      } else if (status === 403) {
-        message = 'You do not have permission to upload photos.'
       } else if (serverMessage) {
         message = serverMessage
       }
@@ -178,25 +165,7 @@ async function handleFileChange(event: Event) {
     <div class="mb-6">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between  gap-4 ">
         <div class="flex items-center gap-2">
-          <div class="w-20 h-20 rounded-full overflow-hidden">
-            <!-- Show actual image if photo exists -->
-            <img
-                v-if="user.photo && user.photo !== null && user.photo !== ''"
-                :src="getS3URL(user.photo)"
-                alt="Profile Picture"
-                class="w-full h-full rounded-full object-cover"
-            />
-            <!-- Show initials avatar if no photo -->
-            <div
-                v-else
-                :class="[
-                  'w-full h-full rounded-full flex items-center justify-center text-white font-semibold text-h3',
-                  generateInitialsAvatar(user.first_name + ' ' + user.last_name).bgColor
-                ]"
-            >
-              {{ generateInitialsAvatar(user.first_name + ' ' + user.last_name).initials }}
-            </div>
-          </div>
+          <img v-if="photoPreview" src="https://framerusercontent.com/images/cc8Flm8m8pPmMC8SxphKC5r2zo.jpg" alt="Profile Picture" class="w-20 rounded-full object-cover" />
           <div class="flex flex-col gap-1">
             <h4 class="font-semibold">Profile Picture</h4>
             <p class="text-h4 text-greyDark">PNG, JPG, GIF under 15MB.</p>

@@ -48,7 +48,7 @@ export default {
         lightPurple: 'var(--color-light-purple)',
         earthyOrangeBrown: 'var(--color-earthy-orange-brown)',
         deepViolet: 'var(--color-deep-violet)',
-        'light-grey': 'var(--color-light-grey)',
+        'grey-black-combo': 'var(--color-grey-black)',
       },
       screens: {
         xl: '1200px',
