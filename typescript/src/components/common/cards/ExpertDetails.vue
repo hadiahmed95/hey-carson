@@ -63,23 +63,23 @@ defineProps<{
           </span>
         </div>
         <div class="flex justify-between">
-          <h5 class="text-tertiary">Budget</h5>
+          <h5 class="text-light-grey">Budget</h5>
           <h5 class="font-normal text-primary">-</h5>
         </div>
         <div class="flex justify-between">
-          <h5 class="text-tertiary">Request Submitted</h5>
+          <h5 class="text-light-grey">Request Submitted</h5>
           <h5 class="font-normal text-primary">{{ formatDate(requestCreatedAt) }}</h5>
         </div>
         <div class="flex justify-between">
-          <h5 class="text-tertiary">Experts Location</h5>
+          <h5 class="text-light-grey">Experts Location</h5>
           <h5 class="font-normal text-primary">{{ expert?.profile.country }}</h5>
         </div>
         <div class="flex justify-between">
-          <h5 class="text-tertiary">Local Time</h5>
+          <h5 class="text-light-grey">Local Time</h5>
           <h5 class="font-normal text-primary">-</h5>
         </div>
         <div class="flex justify-between">
-          <h5 class="text-tertiary">Avg. response time:</h5>
+          <h5 class="text-light-grey">Avg. response time:</h5>
           <!-- //Todo: Need to add the Avg. response time -->
           <h5 class="font-normal text-primary">-</h5>
         </div>

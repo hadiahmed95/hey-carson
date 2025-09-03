@@ -6,6 +6,7 @@ use App\Exceptions\ApiErrorException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateExpertProfileRequest;
 use App\Models\ExpertFund;
+use App\Models\ExpertPlan;
 use App\Models\Payout;
 use App\Models\SavedCard;
 use App\Services\CacheService;
@@ -143,6 +144,13 @@ class SettingsController extends Controller
             'activeAssignments.project.client',
             'activeAssignments.project.activeAssignment.expert',
             'activeAssignments.project.activeAssignment.expert.profile']);
+        $expertFunds = ExpertFund::query()->where('user_id', $user->id);
+        $totalBalance = $expertFunds->sum('amount');
+        $withdrawAmount = Payout::query()->where('user_id', $user->id)->whereNot('status', 'declined')->sum('amount');
+        $user->available_balance = $totalBalance - $withdrawAmount;
+
+        $expertPlan = ExpertPlan::where("expert_id", Auth::id())->with(['plan', 'expert'])->latest()->first();
+        $user->expert_plan = $expertPlan;
         return response()->json(['expert' => $user]);
     }
 }

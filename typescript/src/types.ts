@@ -435,6 +435,31 @@ export interface ILeadd {
     }
 }
 
+export interface IClient {
+    id: number,
+    name: string,
+    url: string,
+    email: string,
+    shopify_plan: string,
+    photo: string | null;
+    direct_messages_count: number,
+    quote_requests_count: number,
+    lifetime_spend: string,
+    type: string
+    created_at: string
+    project: {
+        name: string
+    }
+    client: {
+        first_name: string
+        last_name: string
+        email: string
+        url?: string
+        photo?: string
+        shopify_plan?: string
+    }
+}
+
 export interface IExpertStat {
     leads: number
     cta_clicks: number

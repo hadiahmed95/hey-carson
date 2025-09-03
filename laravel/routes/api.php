@@ -21,15 +21,18 @@ use App\Http\Controllers\NewDashboard\Client\OfferController as ClientOfferContr
 
 // Expert Resources
 use App\Http\Controllers\NewDashboard\Expert\SignupController as ExpertSignupController;
-use App\Http\Controllers\NewDashboard\Expert\ReviewController as ExpertReviewController;
+
+use App\Http\Controllers\Expert\ReviewController as ExpertReviewController;
 use App\Http\Controllers\NewDashboard\Expert\LeadController as ExpertLeadController;
 use App\Http\Controllers\NewDashboard\Expert\SettingsController as ExpertSettingsController;
 use App\Http\Controllers\NewDashboard\Expert\OfferController as ExpertOfferController;
+use App\Http\Controllers\NewDashboard\Expert\PayoutsController as ExpertPayoutsController;
+
 
 // Admin Resources
 use App\Http\Controllers\NewDashboard\AuthController as V2AuthController;
 use App\Http\Controllers\NewDashboard\Admin\ListingController as AdminListingController;
-use App\Http\Controllers\NewDashboard\Admin\LeadController as AdminLeadController;
+use App\Http\Controllers\NewDashboard\Admin\ClientController as AdminClientController;
 
 /*
 |--------------------------------------------------------------------------
@@ -272,6 +275,8 @@ Route::prefix('v2')->group(function () {
             Route::post('/settings', [ExpertSettingsController::class, 'update']);
             Route::post('/projects/{project}/offer', [ExpertOfferController::class, 'create']);
             Route::get('/search-users', [ExpertLeadController::class, 'searchUsers']);
+            Route::get('/expert-profile', [ExpertSettingsController::class, 'profile']);
+            Route::post('/payouts', [ExpertPayoutsController::class, 'create']);
         });
 
         // Admin Routes
@@ -282,6 +287,10 @@ Route::prefix('v2')->group(function () {
             Route::get('/filter-options', [AdminListingController::class, 'getFilterOptions']);
             Route::get('/listings', [AdminListingController::class, 'all']);
             Route::post('/listings/{user}/status', [AdminListingController::class, 'updateStatus']);
+
+            // Clients Routes
+            Route::get('/clients/filter-options', [AdminClientController::class, 'getFilterOptions']);
+            Route::get('/clients', [AdminClientController::class, 'all']);
         });
     });
 });

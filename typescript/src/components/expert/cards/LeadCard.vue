@@ -1,7 +1,6 @@
 <template>
-  <router-link 
-    :to="`/expert/lead/${leadId}`"
-    class="block border rounded-md shadow-sm bg-white mb-4 p-card-padding hover:shadow-md transition-shadow duration-200 cursor-pointer"
+  <div
+    class="block border rounded-md shadow-sm bg-white mb-4 p-card-padding hover:shadow-md transition-shadow duration-200"
     style="text-decoration: none; color: inherit;"
   >
     <!-- Top row -->
@@ -18,9 +17,10 @@
         </p>
         <h5 class="text-primary font-normal">Submitted on {{ submittedDate }}</h5>
       </div>
-
       <h3 class="font-semibold">
-        {{ projectName }}
+        <router-link :to="`/expert/lead/${leadId}`">
+            {{ projectName }}
+        </router-link>
       </h3>
     </div>
 
@@ -97,7 +97,7 @@
         </button>
       </div>
     </div>
-  </router-link>
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -159,14 +159,6 @@ class User extends Authenticatable
         return $this->hasMany(Offer::class, 'expert_id');
     }
 
-    /**
-     * @return HasMany
-     */
-    public function requests(): HasMany
-    {
-        return $this->hasMany(Lead::class, 'client_id');
-    }
-
     public function isAdmin()
     {
         return $this->role->name === 'admin';
@@ -195,8 +187,28 @@ class User extends Authenticatable
     /**
      * @return BelongsToMany
      */
-    public function leads(): BelongsToMany
+    public function clients(): BelongsToMany
     {
         return $this->belongsToMany(Lead::class, 'expert_lead', 'expert_id', 'lead_id');
+    }
+
+    /**
+     * Get the direct message requests for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function requests(): HasMany
+    {
+        return $this->hasMany(Request::class, 'client_id');
+    }
+
+    /**
+     * Get the paid payments for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function paidPayments()
+    {
+        return $this->hasMany(Payment::class, 'user_id')->where('status', 'paid');
     }
 }

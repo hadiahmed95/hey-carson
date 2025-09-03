@@ -85,7 +85,7 @@ class UserRepository
         try {
             $query = $this->buildExpertsQuery($filters);
             $perPage = $filters['per_page'] ?? $this->paginationLimit;
-            
+
             return $query->with(['profile', 'reviews', 'serviceCategories', 'activeAssignments'])
                         ->latest()
                         ->paginate($perPage);
@@ -313,7 +313,7 @@ class UserRepository
             }
 
             return $query;
-            
+
         } catch (Exception $e) {
             throw new Exception('Failed to build experts query: ' . $e->getMessage());
         }
@@ -322,7 +322,7 @@ class UserRepository
     /**
      * Apply search filter to the experts query.
      *
-     * Searches by first name, last name, or email. If the search string contains a space,
+     * Searches by first name, last name. If the search string contains a space,
      * it attempts to split it into first and last names to match against both fields
      * in multiple combinations (first-last, last-first).
      *
@@ -337,6 +337,33 @@ class UserRepository
     {
         try {
             return $query->whereRaw('CONCAT(first_name, " ", last_name) LIKE ?', ["%{$search}%"]);
+        } catch (Exception $e) {
+            throw new Exception('Failed to apply search filter: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Apply search filter to the clients query.
+     *
+     * Searches by first name, last name, email, or email. If the search string contains a space,
+     * it attempts to split it into first and last names to match against both fields
+     * in multiple combinations (first-last, last-first).
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query  The query builder instance to modify.
+     * @param string $search The search keyword or phrase.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder Modified query builder with applied search filters.
+     *
+     * @throws \Exception If applying the search filter fails.
+     */
+    private function applyClientSearchFilter($query, string $search)
+    {
+        try {
+            return $query->where(function ($query) use ($search) {
+                $query->whereRaw('CONCAT(first_name, " ", last_name) LIKE ?', ["%{$search}%"])
+                    ->orWhere('email', '=', $search)
+                    ->orWhere('url', '=', $search);
+            });
         } catch (Exception $e) {
             throw new Exception('Failed to apply search filter: ' . $e->getMessage());
         }
@@ -362,7 +389,7 @@ class UserRepository
                 ->firstOrFail();
 
             $newStatus = $action === 'activate' ? 'active' : 'inactive';
-            
+
             if ($expert->profile) {
                 $expert->profile->update(['status' => $newStatus]);
                 $expert->load('profile');
@@ -370,12 +397,97 @@ class UserRepository
                 throw new Exception('Expert profile not found');
             }
 
-            return $expert;       
+            return $expert;
         } catch (Exception $e) {
             throw new Exception('Failed to update expert status: ' . $e->getMessage());
         }
     }
 
+    /**
+     * Retrieve a paginated list of clients based on the provided filters.
+     *
+     * Applies filtering, eager loads related data, and paginates the result.
+     * Includes counts from requests table for direct messages and quote requests.
+     *
+     * @param array $filters Filters to apply (e.g., per_page, search, shopify_plan).
+     * @return \Illuminate\Pagination\LengthAwarePaginator Paginated list of clients with related data.
+     *
+     * @throws \Exception If fetching clients fails.
+     */
+    public function getClients(array $filters): LengthAwarePaginator
+    {
+        try {
+            $query = $this->buildClientsQuery($filters);
+            $perPage = $filters['per_page'] ?? $this->paginationLimit;
+
+            return $query->latest()
+                        ->paginate($perPage);
+        } catch (Exception $e) {
+            throw new Exception('Failed to fetch clients: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Build the base query for clients with filters and related data.
+     *
+     * @param array $filters Filters to apply (search, shopify_plan, etc.)
+     * @return \Illuminate\Database\Eloquent\Builder Query builder instance with counts and sums
+     */
+    private function buildClientsQuery(array $filters): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = User::where('role_id', Role::CLIENT)
+            ->withCount([
+                'requests as direct_messages_count' => function ($query) {
+                    $query->where('type', 'Direct Message');
+                },
+                'requests as quote_requests_count' => function ($query) {
+                    $query->where('type', 'Quote Request');
+                }
+            ])
+            ->withSum('paidPayments as lifetime_spend', 'total');
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $query = $this->applyClientSearchFilter($query, $filters['search']);
+        }
+
+        // Apply shopify_plan filter
+        if (!empty($filters['shopify_plan'])) {
+            $query->where('shopify_plan', $filters['shopify_plan']);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Retrieve available filter options for clients listing.
+     *
+     * Gathers distinct Shopify plans from client users.
+     *
+     * @return array An associative array containing filter options:
+     *               - shopifyPlans
+     *
+     * @throws \Exception If retrieving filter options fails.
+     */
+    public function getClientsFilterOptions(): array
+    {
+        try {
+            $shopifyPlans = User::where('role_id', Role::CLIENT)
+                ->whereNotNull('shopify_plan')
+                ->where('shopify_plan', '!=', '')
+                ->distinct()
+                ->pluck('shopify_plan')
+                ->sort()
+                ->values()
+                ->toArray();
+
+            return [
+                'shopifyPlans' => $shopifyPlans,
+            ];
+        } catch (Exception $e) {
+            throw new Exception('Failed to retrieve clients filter options: ' . $e->getMessage());
+        }
+    }
 
     /* Create a new user
      *

@@ -47,19 +47,24 @@ const background = new URL('@/assets/icons/background.svg', import.meta.url).hre
 onMounted(async () => {
     // Check if user is already logged in
     if (authStore.token && authStore.user) {
-        const userRole = authStore.user.role?.name?.toLowerCase()
-    
-        // If unknown role, stay on admin login
-        if(userRole && userRole !== 'unknown') {
-            await router.push(`/${userRole}/dashboard`)
+        if (authStore.user.role_id === 1) {
+            await router.push('/admin/dashboard')
+        } else if (authStore.user.role_id === 2) {
+            await router.push('/client/dashboard')
+        } else if (authStore.user.role_id === 3) {
+            await router.push('/expert/dashboard')
         }
     }
 })
 
 const redirectBasedOnRole = (user: any) => {
-    const roleName = user.role?.name?.toLowerCase()
-    if (roleName) {
-        router.push(`/${roleName}/dashboard`)
+    // Using role_id
+    if (user.role_id === 1) {
+        router.push('/admin/dashboard')
+    } else if (user.role_id === 2) {
+        router.push('/client/dashboard')
+    } else if (user.role_id === 3) {
+        router.push('/expert/dashboard')
     }
 }
 
@@ -67,7 +72,7 @@ const login = async () => {
     try {
         const result = await authStore.TempLogin(email.value, password.value)
         
-        // Redirect based on user role name
+        // Redirect based on user role_id
         redirectBasedOnRole(result.user)
     } catch (error: any) {
         console.error('Login failed:', error)

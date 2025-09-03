@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import AdminService from '@/services/admin.service';
 import { withLoader } from '@/utils/helpers.ts';
-import type { IListing } from '@/types.ts';
+import type { IListing, IClient } from '@/types.ts';
 
 interface Admin {
     id: number;
@@ -17,6 +17,8 @@ interface AdminState {
     totalExperts: number;
     currentPage: number;
     lastPage: number;
+    clients: IClient[];
+    totalClients: number;
 }
 
 export const useAdminStore = defineStore('admin', {
@@ -28,6 +30,8 @@ export const useAdminStore = defineStore('admin', {
         totalExperts: 0,
         currentPage: 1,
         lastPage: 1,
+        clients: [],
+        totalClients: 0,
     }),
 
     actions: {
@@ -104,6 +108,31 @@ export const useAdminStore = defineStore('admin', {
                     }
                 }
                 
+                return response.data;
+            });
+        },
+
+        async fetchClients(params: Record<string, any>, appendData = false) {
+            return await withLoader(async () => {
+                const response = await AdminService.fetchClients(params);
+                
+                if (appendData && params.page > 1) {
+                    this.clients.push(...(response.data.clients.data || []));
+                } else {
+                    this.clients = response.data.clients.data || [];
+                }
+                
+                this.totalClients = response.data.clients_count || 0;
+                this.currentPage = response.data.clients.current_page || 1;
+                this.lastPage = response.data.clients.last_page || 1;
+                
+                return response.data;
+            });
+        },
+
+        async fetchClientFilterOptions() {
+            return await withLoader(async () => {
+                const response = await AdminService.fetchClientFilterOptions();
                 return response.data;
             });
         },

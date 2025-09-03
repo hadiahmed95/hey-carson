@@ -7,6 +7,7 @@ import Leads from "../assets/icons/leads.svg";
 import MyListing from "../assets/icons/listing.svg";
 import Reviews from "../assets/icons/reviews.svg";
 import {useAuthStore} from "@/store/auth.ts";
+import ListingSideNav from "@/components/expert/listing-settings/ListingSideNav.vue";
 
 const navItems = [
   { label: 'Overview', icon: Overview, path: '/expert/dashboard' },
@@ -18,41 +19,38 @@ const navItems = [
 const route = useRoute()
 const authStore = useAuthStore()
 
-const onboardingRoutes = [
-  '/expert/onboarding',
-  '/expert/onboarding-steps/personalDetails',
-  '/expert/onboarding-steps/serviceCategories',
-  '/expert/onboarding-steps/packagedServices',
-  '/expert/onboarding-steps/customerStories',
-  '/expert/onboarding-steps/faq'
+const listingRoutes = [
+  '/expert/listing-settings',
+  '/expert/listing-settings/personal-details',
+  '/expert/listing-settings/service-categories',
+  '/expert/listing-settings/packaged-services',
+  '/expert/listing-settings/customer-stories',
+  '/expert/listing-settings/faq'
 ]
 
-const isOnboarding = onboardingRoutes.includes(route.path)
-const hideSidebar = isOnboarding
-
-// Control counts for TopNavigation
-const messageCount = isOnboarding ? 0 : 4
-const notificationCount = isOnboarding ? 0 : 2
+const isListingSettings = listingRoutes.includes(route.path)
 </script>
 
 
 <template>
   <div class="flex flex-col min-h-screen bg-muted">
     <TopNavigation
-        :message-count="messageCount"
-        :notification-count="notificationCount"
-        :profile-image="isOnboarding ? null : authStore.user.photo"
-        :is-onboarding="isOnboarding"
+      :message-count="4"
+      :profile-image="authStore.user.photo"
+      :is-listing-settings="isListingSettings"
     />
 
     <div class="flex flex-1">
+      <ListingSideNav
+        v-if="isListingSettings"
+        class="w-[20%]"
+      />
       <SideNavigation
-        v-if="!hideSidebar"
+        v-else
         class="w-[15%]"
         :menu-items="navItems"
         :is-expert-side-nav="true"
       />
-
       <RouterView />
     </div>
   </div>

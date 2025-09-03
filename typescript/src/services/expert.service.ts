@@ -54,6 +54,22 @@ class ExpertService {
             `${this.base}/search-users?search=${encodeURIComponent(searchTerm)}`
         );
     }
+
+    fetchExpertProfile(searchTerm: string) {
+        return ApiService.get(
+            `${this.base}/expert-profile?search=${encodeURIComponent(searchTerm)}`
+        );
+    }
+
+    setExpertPayout(data: Partial<any>) {
+        return ApiService.post(`${this.base}/payouts`, data);
+    }
+
+    fetchCountries() {
+        return ApiService.get(
+            `https://restcountries.com/v3.1/all?fields=name,cca2`
+        );
+    }
 }
 
 export default new ExpertService();
