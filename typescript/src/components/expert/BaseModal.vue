@@ -17,7 +17,7 @@ interface Props {
   hasQuoteWithSendStatus?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   isShowQuestionSection: true,
   isShowRecaptchaSection: true
 })
@@ -55,12 +55,12 @@ const handleQuotesUpdated = () => {
         :is="form"
       />
 
-      <h4 v-if="isShowQuestionSection" class="text-center mt-8">
+      <h4 v-if="props.isShowQuestionSection" class="text-center mt-8">
         Have a questions?
         <a href="mailto:support@example.com" class="text-link underline">Send us an email.</a>
       </h4>
 
-      <h5 v-if="isShowRecaptchaSection" class="text-left mt-8 text-gray-500">
+      <h5 v-if="props.isShowRecaptchaSection" class="text-left mt-8 text-gray-500">
         This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.
       </h5>
     </div>

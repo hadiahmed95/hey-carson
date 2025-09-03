@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-8 w-[53.6875rem]">
+  <div class="flex flex-col gap-8 w-full">
     <PersonalAndBusinessDetails :isOnboarding="false" />
   </div>
 </template>

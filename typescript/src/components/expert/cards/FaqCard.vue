@@ -11,9 +11,9 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex border rounded-md shadow-sm bg-white mb-4 p-4">
+  <div class="flex border rounded-md shadow-sm bg-white mb-4 p-card-padding border-grey">
       <div class="flex flex-1 justify-between h-full">
-          <h5 class="text-sm mb-2">{{ question.title }}</h5>
+          <h5 class="text-paragraph text-primary">{{ question.title }}</h5>
           <TiltArrow/>
       </div>
   </div>

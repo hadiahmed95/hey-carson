@@ -2,9 +2,14 @@
   <main class="w-full">
     <div class="flex justify-between items-center mb-3">
       <h3 class="font-semibold">
-        Packaged Services
+        Offered Services
       </h3>
-      <LeftIconButton :icon="GreenPlus">Add Service</LeftIconButton>
+      <LeftIconButton 
+        :icon="GreenPlus"
+        @click="showAddServiceModal = true"
+      >
+        Add Service
+      </LeftIconButton>
     </div>
 
     <EmptyState v-if="!serviceCategories.length" class="w-full" :icon="Box" content="Create your first packaged service like “Shopify Store Setup – $499”<br/> and show leads exactly what they’ll get."/>
@@ -15,6 +20,16 @@
         :category="category"
     />
 
+    <!-- Add Service Modal -->
+    <BaseModal
+      v-if="showAddServiceModal"
+      @close="showAddServiceModal = false"
+      title="Add Offered Service"
+      description="Choose a service category that best reflects your expertise. Add up to 3 subservices to show your strengths."
+      :form="AddServiceForm"
+      :isShowQuestionSection="false"
+      :isShowRecaptchaSection="false"
+    />
   </main>
 </template>
 
@@ -25,7 +40,10 @@ import GreenPlus from "@/assets/icons/green-plus.svg";
 import LeftIconButton from "@/components/common/buttons/LeftIconButton.vue";
 import {ref} from "vue";
 import ServiceCategoryCard from "@/components/expert/cards/ServiceCategoryCard.vue";
+import BaseModal from "@/components/expert/BaseModal.vue";
+import AddServiceForm from "@/components/expert/forms/AddServiceForm.vue";
 
+const showAddServiceModal = ref(false);
 const serviceCategories = ref([
   {
     id: 1,
@@ -37,7 +55,7 @@ const serviceCategories = ref([
     ],
   },
   {
-    id: 1,
+    id: 2,
     title: "Shopify Marketing and Sales",
     subcategories: [
       'Shopify SEO Services',
@@ -46,7 +64,7 @@ const serviceCategories = ref([
     ],
   },
   {
-    id: 1,
+    id: 3,
     title: "Technical Support and Maintenance",
     subcategories: [
       'Shopify Security Audits',

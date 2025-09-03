@@ -88,6 +88,13 @@ export default {
       },
       spacing: {
         'card-padding': '16px',
+        'card-padding-md': '24px',
+        'card-padding-lg': '32px',
+      },
+      width: {
+        'one-third': '33.333333%',
+        '320': '320px',
+        '390': '390px',
       },
     },
     letterSpacing: {

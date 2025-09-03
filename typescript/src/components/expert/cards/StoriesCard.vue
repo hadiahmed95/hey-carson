@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Trash from '@/assets/icons/trash.svg'
 import Pencil from '@/assets/icons/pencil.svg'
-import star from '@/assets/icons/star.svg'
+import Badge from '@/assets/icons/hired_on_shopify.svg'
 
 defineProps<{
   project: {
@@ -18,29 +18,26 @@ defineProps<{
 </script>
 
 <template>
-  <div class="border rounded-md shadow-sm bg-white p-6 mb-4">
-    <div class="flex justify-between items-start mb-4">
+  <div class="border rounded-md shadow-sm bg-white p-card-padding-lg mb-4 border-grey">
+    <div class="flex justify-between items-start">
       <div class="flex items-center gap-2">
-        <div class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-sm flex items-center gap-1">
-          <star />
-          {{ project.status }}
-        </div>
+        <Badge />
       </div>
-      <div class="flex gap-2">
-        <button class="border border-gray-300 p-2 rounded-sm">
+      <div class="flex gap-card-padding">
+        <button class="border border-lightGray p-2 rounded-sm">
           <Pencil />
         </button>
-        <button class="border border-gray-300 p-2 rounded-sm">
+        <button class="border border-lightGray p-2 rounded-sm">
           <Trash />
         </button>
       </div>
     </div>
 
-    <h3 class="font-semibold text-lg mb-2">{{ project.title }}</h3>
+    <h3 class="font-semibold text-lg my-card-padding w-390">{{ project.title }}</h3>
 
-    <p class="text-gray-500 text-sm mb-4">{{ project.duration }}</p>
+    <p class="text-tertiary text-sm mb-card-padding">{{ project.duration }}</p>
 
-    <div class="flex gap-4">
+    <div class="flex gap-card-padding">
       <div
           v-for="(image, index) in project.images"
           :key="index"

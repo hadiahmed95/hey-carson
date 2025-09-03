@@ -1,6 +1,6 @@
 <template>
-  <div class="flex border rounded-md shadow-sm bg-white mb-4 p-8">
-    <div class="w-1/3">
+  <div class="flex border rounded-md shadow-sm bg-white mb-card-padding p-card-padding-md">
+    <div class="w-one-third">
       <img
           :src="service.image"
           :alt="service.title"
@@ -8,23 +8,23 @@
       />
     </div>
 
-    <div class="flex-1 px-6">
+    <div class="flex-1 ml-card-padding-lg">
       <div class="flex flex-col justify-between h-full">
         <div>
-          <h5 class="text-gray-500 text-sm mb-2">Packaged Service Name #{{ service.id }}</h5>
-          <h3 class="font-semibold text-lg mb-4">{{ service.title }}</h3>
+          <h5 class="text-grey-black-combo text-sm mb-2">Packaged Service Name #{{ service.id }}</h5>
+          <h3 class="font-semibold text-lg mb-4 w-320">{{ service.title }}</h3>
         </div>
 
         <div>
-          <h5 class="text-gray-500 text-sm">Starting Price</h5>
-          <h2 class="font-bold text-xl">${{ service.price.toFixed(2) }}</h2>
+          <h5 class="text-grey-black-combo text-sm">Starting Price</h5>
+          <h2 class="font-bold text-xl text-primary">${{ service.price.toFixed(2) }}</h2>
         </div>
 
-        <div class="flex gap-2 mt-4">
-          <button class="border border-gray-300 p-2 rounded-sm">
+        <div class="flex gap-card-padding mt-4">
+          <button class="border border-lightGray p-2 rounded-sm">
             <Pencil/>
           </button>
-          <button class="border border-gray-300 p-2 rounded-sm">
+          <button class="border border-lightGray p-2 rounded-sm">
             <Trash/>
           </button>
         </div>
