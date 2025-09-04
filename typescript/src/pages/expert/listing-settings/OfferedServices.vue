@@ -18,15 +18,18 @@
         v-for="category in serviceCategories"
         :key="category.id"
         :category="category"
+        @edit="handleEditService"
+        @delete="handleDeleteService"
     />
 
     <!-- Add Service Modal -->
     <BaseModal
       v-if="showAddServiceModal"
-      @close="showAddServiceModal = false"
-      title="Add Offered Service"
-      description="Choose a service category that best reflects your expertise. Add up to 3 subservices to show your strengths."
+      @close="closeModal"
+      :title="currentServiceData ? 'Edit Offered Service' : 'Add Offered Service'"
+      :description="currentServiceData ? 'Update a service category that best reflects your expertise. Add up to 3 subservices to show your strengths.' : 'Choose a service category that best reflects your expertise. Add up to 3 subservices to show your strengths.'"
       :form="AddServiceForm"
+      :custom-props="{ serviceData: currentServiceData }"
       :isShowQuestionSection="false"
       :isShowRecaptchaSection="false"
     />
@@ -44,6 +47,7 @@ import BaseModal from "@/components/expert/BaseModal.vue";
 import AddServiceForm from "@/components/expert/forms/AddServiceForm.vue";
 
 const showAddServiceModal = ref(false);
+const currentServiceData = ref(null);
 const serviceCategories = ref([
   {
     id: 1,
@@ -53,6 +57,7 @@ const serviceCategories = ref([
       'Shopify Troubleshooting',
       'Shopify UX Enhancement',
     ],
+    serviceCategory: "shopify-development-troubleshooting"
   },
   {
     id: 2,
@@ -62,6 +67,7 @@ const serviceCategories = ref([
       'Shopify Email Marketing',
       'Shopify Banner Ads',
     ],
+    serviceCategory: "shopify-marketing-sales"
   },
   {
     id: 3,
@@ -71,7 +77,25 @@ const serviceCategories = ref([
       'Shopify Performance Monitoring',
       'Shopify Disaster Recovery Planning',
     ],
+    serviceCategory: "technical-support-maintenance"
   },
 ]);
 
+// Handle edit service
+const handleEditService = (service: any) => {
+  currentServiceData.value = service;
+  showAddServiceModal.value = true;
+};
+
+// Handle delete service
+const handleDeleteService = (serviceId: number) => {
+  serviceCategories.value = serviceCategories.value.filter(service => service.id !== serviceId);
+  console.log('Service category deleted:', serviceId);
+};
+
+// Close modal and reset data
+const closeModal = () => {
+  showAddServiceModal.value = false;
+  currentServiceData.value = null;
+};
 </script>

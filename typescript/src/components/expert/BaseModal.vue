@@ -10,6 +10,7 @@ interface Props {
   title: string
   description?: string
   form: Component
+  customProps?: Record<string, any>
   isShowQuestionSection?: boolean
   isShowRecaptchaSection?: boolean
   buttonText?: string
@@ -50,6 +51,7 @@ const handleQuotesUpdated = () => {
       <component
         :buttonText="buttonText ? buttonText : undefined"
         :project-id="projectId"
+        v-bind="customProps"
         @close="emit('close')"
         @quotesUpdated="handleQuotesUpdated"
         :is="form"

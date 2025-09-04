@@ -3,7 +3,7 @@ import EmptyState from "@/components/expert/listing-settings/EmptyState.vue";
 import Box from "@/assets/icons/box.svg";
 import GreenPlus from "@/assets/icons/green-plus.svg";
 import LeftIconButton from "@/components/common/buttons/LeftIconButton.vue";
-import { ref, computed, defineComponent, h } from "vue";
+import { ref } from "vue";
 import PackageCard from "@/components/expert/cards/PackageCard.vue";
 import BaseModal from "@/components/expert/BaseModal.vue";
 import AddPackagedServiceForm from "@/components/expert/forms/AddPackagedServiceForm.vue";
@@ -31,23 +31,16 @@ const packagedServices = ref([
   },
 ]);
 
-// Create a wrapper component for the form with props
-const FormWithProps = computed(() => {
-  return {
-    name: 'FormWrapper',
-    render() {
-      return h(AddPackagedServiceForm, {
-        serviceData: currentServiceData.value,
-        onClose: closeModal
-      });
-    }
-  };
-});
-
 // Handle edit service
 const handleEditService = (service: any) => {
   currentServiceData.value = service;
   showAddServiceModal.value = true;
+};
+
+// Handle delete service
+const handleDeleteService = (serviceId: number) => {
+  packagedServices.value = packagedServices.value.filter(service => service.id !== serviceId);
+  console.log('Service deleted:', serviceId);
 };
 
 // Close modal and reset data
@@ -78,6 +71,7 @@ const closeModal = () => {
         :key="service.id"
         :service="service"
         @edit="handleEditService"
+        @delete="handleDeleteService"
     />
 
     <!-- Add / Edit Packaged Service Modal -->
@@ -87,7 +81,7 @@ const closeModal = () => {
       :title="currentServiceData ? 'Edit Packaged Service' : 'Add Packaged Service'"
       :description="currentServiceData ? 'Update your skills with a clear service package clients can purchase directly.' : 'Highlight your skills with a clear service package clients can purchase directly.'"
       :form="AddPackagedServiceForm"
-      :formProps="{ serviceData: currentServiceData }"
+      :custom-props="{ serviceData: currentServiceData }"
       :isShowQuestionSection="false"
       :isShowRecaptchaSection="false"
     />

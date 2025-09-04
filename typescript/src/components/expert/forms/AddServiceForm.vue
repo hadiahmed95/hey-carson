@@ -82,17 +82,30 @@
       :disabled="isSubmitting"
       class="w-full bg-gray-800 text-white text-paragraph font-medium rounded-md py-3 flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <span v-if="isSubmitting">Adding Service...</span>
-      <span v-else>Add Offered Service</span>
+      <span>{{ submitButtonText }}</span>
     </button>
   </form>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { reactive, ref, onMounted, computed } from "vue";
 import { useAuthStore } from "@/store/auth.ts";
 
 const authStore = useAuthStore();
+
+// Props for edit mode
+interface Props {
+  serviceData?: {
+    id?: number;
+    title?: string;
+    subcategories?: string[];
+    serviceCategory?: string;
+  };
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  serviceData: undefined
+});
 
 const emit = defineEmits<{
   (e: "close"): void;
@@ -107,9 +120,27 @@ const form = reactive({
 // Status management
 const isSubmitting = ref(false);
 
+// Computed for edit mode and button text
+const isEditMode = computed(() => !!props.serviceData?.id);
+const submitButtonText = computed(() => 
+  isSubmitting.value 
+    ? (isEditMode.value ? "Updating Service..." : "Adding Service...")
+    : (isEditMode.value ? "Update Offered Service" : "Add Offered Service")
+);
+
+// Initialize form with data if in edit mode
+onMounted(() => {
+  if (props.serviceData) {
+    form.serviceCategory = props.serviceData.serviceCategory || "";
+    form.subservices = props.serviceData.subcategories || ["", "", ""];
+  }
+});
+
 // Handle service category change
 const onServiceCategoryChange = () => {
-  form.subservices = ["", "", ""];
+    if (!isEditMode.value) {
+        form.subservices = ["", "", ""];
+    }
 };
 
 // Submit function
@@ -118,12 +149,6 @@ const submitForm = async () => {
 
   try {
     const selectedSubservices = form.subservices.filter(sub => sub);
-    const payload = {
-      expert_id: authStore.user.id,
-      service_category: form.serviceCategory,
-      subservices: selectedSubservices
-    };
-
     emit("close");
   } catch (error: any) {
     console.error('Error adding service:', error);

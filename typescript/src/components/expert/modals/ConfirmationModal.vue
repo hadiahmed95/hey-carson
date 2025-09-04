@@ -28,9 +28,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { ConfirmationModal } from '@/types.ts';
+import type { ConfirmationModal } from '@/types.ts';
 
-const props = withDefaults(defineProps<ConfirmationModal>(), {
+withDefaults(defineProps<ConfirmationModal>(), {
   confirmText: 'Confirm',
   loadingText: 'Processing'
 });

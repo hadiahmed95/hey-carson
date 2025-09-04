@@ -92,9 +92,6 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from "vue";
-import { useAuthStore } from "@/store/auth.ts";
-
-const authStore = useAuthStore();
 
 // Props for edit mode
 interface Props {
@@ -184,14 +181,6 @@ const submitForm = async () => {
   isSubmitting.value = true;
 
   try {
-    const payload = {
-      expert_id: authStore.user.id,
-      service_name: form.serviceName,
-      price: form.price,
-      thumbnail: form.thumbnail,
-      ...(isEditMode.value && { id: props.serviceData!.id })
-    };
-
     // Here we would typically make an API call
     
     // For now, just close the modal

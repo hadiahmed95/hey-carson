@@ -17,21 +17,34 @@
       </div>
     </div>
     <div class="flex gap-card-padding items-start">
-      <button class="border border-gray-300 p-2 rounded-sm">
+      <button @click="handleEdit" class="border border-gray-300 p-2 rounded-sm">
         <Pencil />
       </button>
-      <button class="border border-gray-300 p-2 rounded-sm">
+      <button @click="handleDelete" class="border border-gray-300 p-2 rounded-sm">
         <Trash />
       </button>
     </div>
   </div>
+
+  <ConfirmationModal
+    v-if="showDeleteModal"
+    title="Delete Service Category"
+    :message="`Are you sure you want to delete '${category.title}'? This action cannot be undone.`"
+    confirm-text="Delete"
+    loading-text="Deleting"
+    @confirm="confirmDelete"
+    @cancel="showDeleteModal = false"
+  />
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 import Trash from '../../../assets/icons/trash.svg'
 import Pencil from '../../../assets/icons/pencil.svg'
+import ConfirmationModal from '../modals/ConfirmationModal.vue'
 
-defineProps<{
+const showDeleteModal = ref(false)
+const props = defineProps<{
   category: {
     id: number
     title: string
@@ -39,6 +52,28 @@ defineProps<{
   }
 }>()
 
+const emit = defineEmits<{
+
+  (e: 'edit', category: typeof props.category): void
+
+  (e: 'delete', categoryId: number): void
+
+}>()
+
+// Handle edit button click
+const handleEdit = () => {
+  emit('edit', props.category)
+}
+
+// Handle delete button click
+const handleDelete = () => {
+  showDeleteModal.value = true
+}
+
+const confirmDelete = () => {
+  emit('delete', props.category.id)
+  showDeleteModal.value = false
+}
 </script>
 
 <style scoped>
