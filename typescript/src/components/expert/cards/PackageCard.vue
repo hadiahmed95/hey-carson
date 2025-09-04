@@ -21,7 +21,7 @@
         </div>
 
         <div class="flex gap-card-padding mt-4">
-          <button class="border border-lightGray p-2 rounded-sm">
+          <button @click="handleEdit" class="border border-lightGray p-2 rounded-sm">
             <Pencil/>
           </button>
           <button class="border border-lightGray p-2 rounded-sm">
@@ -34,12 +34,11 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
 import Trash from '../../../assets/icons/trash.svg'
 import Pencil from '../../../assets/icons/pencil.svg'
 
-defineProps<{
+const props = defineProps<{
   service: {
     id: number
     title: string
@@ -47,4 +46,13 @@ defineProps<{
     image: string
   }
 }>()
+
+const emit = defineEmits<{
+  (e: 'edit', service: typeof props.service): void
+}>()
+
+// Handle edit button click
+const handleEdit = () => {
+  emit('edit', props.service)
+}
 </script>
