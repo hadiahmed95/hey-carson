@@ -490,3 +490,10 @@ export interface TimeFormatterOptions {
     shortFormat?: boolean
     includeSeconds?: boolean
 }
+
+export interface ConfirmationModal {
+  title: string;
+  message: string;
+  confirmText?: string;
+  loadingText?: string;
+}

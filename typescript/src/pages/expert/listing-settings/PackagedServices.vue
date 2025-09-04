@@ -3,7 +3,7 @@ import EmptyState from "@/components/expert/listing-settings/EmptyState.vue";
 import Box from "@/assets/icons/box.svg";
 import GreenPlus from "@/assets/icons/green-plus.svg";
 import LeftIconButton from "@/components/common/buttons/LeftIconButton.vue";
-import {ref} from "vue";
+import { ref, computed, defineComponent, h } from "vue";
 import PackageCard from "@/components/expert/cards/PackageCard.vue";
 import BaseModal from "@/components/expert/BaseModal.vue";
 import AddPackagedServiceForm from "@/components/expert/forms/AddPackagedServiceForm.vue";
@@ -30,6 +30,19 @@ const packagedServices = ref([
     image: "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=300&h=200&fit=crop&auto=format"
   },
 ]);
+
+// Create a wrapper component for the form with props
+const FormWithProps = computed(() => {
+  return {
+    name: 'FormWrapper',
+    render() {
+      return h(AddPackagedServiceForm, {
+        serviceData: currentServiceData.value,
+        onClose: closeModal
+      });
+    }
+  };
+});
 
 // Handle edit service
 const handleEditService = (service: any) => {

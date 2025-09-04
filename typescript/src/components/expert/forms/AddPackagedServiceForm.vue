@@ -91,10 +91,24 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { reactive, ref, onMounted, computed } from "vue";
 import { useAuthStore } from "@/store/auth.ts";
 
 const authStore = useAuthStore();
+
+// Props for edit mode
+interface Props {
+  serviceData?: {
+    id?: number;
+    title?: string;
+    price?: number;
+    image?: string;
+  };
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  serviceData: undefined
+});
 
 const emit = defineEmits<{
   (e: "close"): void;
@@ -109,7 +123,6 @@ const form = reactive({
 
 // Status management
 const isSubmitting = ref(false);
-const isUploading = ref(false);
 const thumbnailPreview = ref<string | null>(null);
 const fileInput = ref<HTMLInputElement>();
 
@@ -117,6 +130,25 @@ const fileInput = ref<HTMLInputElement>();
 const triggerFileSelect = () => {
   fileInput.value?.click();
 };
+
+// Computed for edit mode and button text
+const isEditMode = computed(() => !!props.serviceData?.id);
+const submitButtonText = computed(() => 
+  isSubmitting.value 
+    ? (isEditMode.value ? "Updating Packaged Service..." : "Adding Packaged Service...")
+    : (isEditMode.value ? "Update Packaged Service" : "Add Packaged Service")
+);
+
+// Initialize form with data if in edit mode
+onMounted(() => {
+  if (props.serviceData) {
+    form.serviceName = props.serviceData.title || "";
+    form.price = props.serviceData.price ? `$${props.serviceData.price.toFixed(2)}` : "";
+    if (props.serviceData.image) {
+      thumbnailPreview.value = props.serviceData.image;
+    }
+  }
+});
 
 // Handle file change
 const handleFileChange = (event: Event) => {
@@ -156,11 +188,11 @@ const submitForm = async () => {
       expert_id: authStore.user.id,
       service_name: form.serviceName,
       price: form.price,
-      thumbnail: form.thumbnail
+      thumbnail: form.thumbnail,
+      ...(isEditMode.value && { id: props.serviceData!.id })
     };
 
-    // Here you would typically make an API call
-    console.log('Adding packaged service:', payload);
+    // Here we would typically make an API call
     
     // For now, just close the modal
     emit("close");
