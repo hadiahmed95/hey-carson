@@ -49,15 +49,11 @@ import Trash from '../../../assets/icons/trash.svg'
 import Pencil from '../../../assets/icons/pencil.svg'
 import ConfirmationModal from '../modals/ConfirmationModal.vue'
 import { ref } from 'vue'
+import type { ExpertPackage } from '@/types.ts';
 
 const showDeleteModal = ref(false)
 const props = defineProps<{
-  service: {
-    id: number
-    title: string
-    price: number
-    image: string
-  }
+  service: ExpertPackage
 }>()
 
 const emit = defineEmits<{

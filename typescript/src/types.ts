@@ -491,9 +491,79 @@ export interface TimeFormatterOptions {
     includeSeconds?: boolean
 }
 
+export interface BaseModal {
+    title: string
+    description?: string
+    form: Component
+    customProps?: Record<string, any>
+    isShowQuestionSection?: boolean
+    isShowRecaptchaSection?: boolean
+    buttonText?: string
+    projectId?: number
+    hasQuoteWithSendStatus?: boolean
+}
+
 export interface ConfirmationModal {
   title: string;
   message: string;
   confirmText?: string;
   loadingText?: string;
+}
+
+export interface ExpertFaq {
+    id: number
+    title: string
+    answer: string
+}
+
+export interface ExpertPackage {
+    id: number
+    title: string
+    price: number
+    image: string
+}
+
+export interface ExpertServiceCategory {
+    id: number
+    title: string
+    subcategories: string[]
+}
+
+export interface ExpertStories {
+    id: number
+    title: string
+    duration: string
+    status: string
+    images: Array<{
+        url: string
+        alt?: string
+    }>
+}
+
+export interface ExpertCustomerStoryForm {
+    storyData?: {
+        id?: number;
+        title?: string;
+        duration?: string;
+        status?: string;
+        images?: Array<{ url: string; alt: string }>;
+    }
+}
+
+export interface ExpertPackagedService {
+    serviceData?: {
+        id?: number;
+        title?: string;
+        price?: number;
+        image?: string;
+    }
+}
+
+export interface ExpertServiceForm {
+    serviceData?: {
+    id?: number;
+    title?: string;
+    subcategories?: string[];
+    serviceCategory?: string;
+  }
 }

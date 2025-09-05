@@ -95,6 +95,7 @@ export default {
         'one-third': '33.333333%',
         '320': '320px',
         '390': '390px',
+        '48px': '48px'
       },
     },
     letterSpacing: {

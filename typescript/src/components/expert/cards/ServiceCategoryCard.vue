@@ -42,22 +42,16 @@ import { ref } from 'vue'
 import Trash from '../../../assets/icons/trash.svg'
 import Pencil from '../../../assets/icons/pencil.svg'
 import ConfirmationModal from '../modals/ConfirmationModal.vue'
+import type { ExpertServiceCategory } from '@/types.ts';
 
 const showDeleteModal = ref(false)
 const props = defineProps<{
-  category: {
-    id: number
-    title: string
-    subcategories: string[]
-  }
+  category: ExpertServiceCategory
 }>()
 
 const emit = defineEmits<{
-
   (e: 'edit', category: typeof props.category): void
-
   (e: 'delete', categoryId: number): void
-
 }>()
 
 // Handle edit button click

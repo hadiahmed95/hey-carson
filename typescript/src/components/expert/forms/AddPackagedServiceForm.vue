@@ -83,7 +83,7 @@
     <button
       type="submit"
       :disabled="isSubmitting"
-      class="w-full bg-primary text-white text-paragraph font-medium rounded-md py-3 flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      class="w-full bg-primary text-white text-paragraph font-medium rounded-md py-3 flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       <span>{{ submitButtonText }}</span>
     </button>
@@ -92,18 +92,10 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from "vue";
+import type { ExpertPackagedService } from "@/types.ts";
 
 // Props for edit mode
-interface Props {
-  serviceData?: {
-    id?: number;
-    title?: string;
-    price?: number;
-    image?: string;
-  };
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<ExpertPackagedService>(), {
   serviceData: undefined
 });
 

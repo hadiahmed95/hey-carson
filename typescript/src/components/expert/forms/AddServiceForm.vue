@@ -89,21 +89,10 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from "vue";
-import { useAuthStore } from "@/store/auth.ts";
-
-const authStore = useAuthStore();
+import type { ExpertServiceForm } from "@/types.ts";
 
 // Props for edit mode
-interface Props {
-  serviceData?: {
-    id?: number;
-    title?: string;
-    subcategories?: string[];
-    serviceCategory?: string;
-  };
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<ExpertServiceForm>(), {
   serviceData: undefined
 });
 
@@ -148,7 +137,6 @@ const submitForm = async () => {
   isSubmitting.value = true;
 
   try {
-    const selectedSubservices = form.subservices.filter(sub => sub);
     emit("close");
   } catch (error: any) {
     console.error('Error adding service:', error);

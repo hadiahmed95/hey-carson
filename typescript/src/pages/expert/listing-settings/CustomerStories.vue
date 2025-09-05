@@ -3,9 +3,13 @@ import EmptyState from "@/components/expert/listing-settings/EmptyState.vue";
 import GreenPlus from "@/assets/icons/green-plus.svg";
 import LeftIconButton from "@/components/common/buttons/LeftIconButton.vue";
 import StoriesCard from "@/components/expert/cards/StoriesCard.vue";
+import BaseModal from "@/components/expert/BaseModal.vue";
+import AddCustomerStoryForm from "@/components/expert/forms/AddCustomerStoryForm.vue";
 import {ref} from "vue";
 import Box from "@/assets/icons/box.svg";
 
+const showAddStoryModal = ref(false);
+const currentStoryData = ref(null);
 const customerStories = ref([
   {
     id: 1,
@@ -52,6 +56,23 @@ const customerStories = ref([
     ]
   }
 ]);
+
+// Handle edit story
+const handleEditStory = (story: any) => {
+  currentStoryData.value = story;
+  showAddStoryModal.value = true;
+};
+
+// Handle delete story
+const handleDeleteStory = (storyId: number) => {
+  customerStories.value = customerStories.value.filter(story => story.id !== storyId);
+};
+
+// Close modal and reset data
+const closeModal = () => {
+  showAddStoryModal.value = false;
+  currentStoryData.value = null;
+};
 </script>
 
 <template>
@@ -60,7 +81,7 @@ const customerStories = ref([
       <h3 class="font-semibold">
         Customer Stories
       </h3>
-      <LeftIconButton :icon="GreenPlus">Add Customer Story</LeftIconButton>
+      <LeftIconButton :icon="GreenPlus" @click="showAddStoryModal = true">Add Customer Story</LeftIconButton>
     </div>
 
     <EmptyState v-if="!customerStories.length" class="w-full" :icon="Box" content="Create your first packaged service like “Shopify Store Setup – $499”<br/> and show leads exactly what they’ll get."/>
@@ -69,6 +90,20 @@ const customerStories = ref([
         v-for="story in customerStories"
         :key="story.id"
         :project="story"
+        @edit="handleEditStory"
+        @delete="handleDeleteStory"
+    />
+
+    <!-- Add / Edit Customer Story Modal -->
+    <BaseModal
+      v-if="showAddStoryModal"
+      @close="closeModal"
+      :title="currentStoryData ? 'Edit Customer Story' : 'Add Customer Stories'"
+      :description="currentStoryData ? `Update your customer success story to showcase your expertise and build trust.` : `Highlight your impact by sharing a client's challenge, your solution, and the results.`"
+      :form="AddCustomerStoryForm"
+      :custom-props="{ storyData: currentStoryData }"
+      :isShowQuestionSection="false"
+      :isShowRecaptchaSection="false"
     />
   </main>
 </template>

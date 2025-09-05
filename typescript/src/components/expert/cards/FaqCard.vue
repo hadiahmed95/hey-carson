@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import TiltArrow from '@/assets/icons/arrow-up-right.svg';
+import type { ExpertFaq } from '@/types.ts';
 
 defineProps<{
-  question: {
-    id: number
-    title: string
-  }
+  question: ExpertFaq
 }>()
-
 </script>
 
 <template>

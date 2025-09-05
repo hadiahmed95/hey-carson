@@ -2,19 +2,34 @@
 import Trash from '@/assets/icons/trash.svg'
 import Pencil from '@/assets/icons/pencil.svg'
 import Badge from '@/assets/icons/hired_on_shopify.svg'
+import ConfirmationModal from '../modals/ConfirmationModal.vue'
+import { ref } from 'vue'
+import type { ExpertStories } from '@/types.ts'
 
-defineProps<{
-  project: {
-    id: number
-    title: string
-    duration: string
-    status: string
-    images: Array<{
-      url: string
-      alt?: string
-    }>
-  }
+const showDeleteModal = ref(false)
+const props = defineProps<{
+  project: ExpertStories
 }>()
+
+const emit = defineEmits<{
+  (e: 'edit', project: typeof props.project): void
+  (e: 'delete', projectId: number): void
+}>()
+
+// Handle edit button click
+const handleEdit = () => {
+  emit('edit', props.project)
+}
+
+// Handle delete button click
+const handleDelete = () => {
+  showDeleteModal.value = true
+}
+
+const confirmDelete = () => {
+  emit('delete', props.project.id)
+  showDeleteModal.value = false
+}
 </script>
 
 <template>
@@ -24,10 +39,10 @@ defineProps<{
         <Badge />
       </div>
       <div class="flex gap-card-padding">
-        <button class="border border-lightGray p-2 rounded-sm">
+        <button @click="handleEdit" class="border border-lightGray p-2 rounded-sm">
           <Pencil />
         </button>
-        <button class="border border-lightGray p-2 rounded-sm">
+        <button @click="handleDelete" class="border border-lightGray p-2 rounded-sm">
           <Trash />
         </button>
       </div>
@@ -51,4 +66,14 @@ defineProps<{
       </div>
     </div>
   </div>
+
+  <ConfirmationModal
+    v-if="showDeleteModal"
+    title="Delete Customer Story"
+    :message="`Are you sure you want to delete '${project.title}'? This action cannot be undone.`"
+    confirm-text="Delete"
+    loading-text="Deleting"
+    @confirm="confirmDelete"
+    @cancel="showDeleteModal = false"
+  />
 </template>

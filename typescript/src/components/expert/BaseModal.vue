@@ -1,24 +1,12 @@
 <script setup lang="ts">
-import type {Component} from "vue";
+import type { BaseModal } from '@/types.ts';
 
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'quotesUpdated'): void
 }>()
 
-interface Props {
-  title: string
-  description?: string
-  form: Component
-  customProps?: Record<string, any>
-  isShowQuestionSection?: boolean
-  isShowRecaptchaSection?: boolean
-  buttonText?: string
-  projectId?: number
-  hasQuoteWithSendStatus?: boolean
-}
-
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<BaseModal>(), {
   isShowQuestionSection: true,
   isShowRecaptchaSection: true
 })
