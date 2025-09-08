@@ -23,7 +23,6 @@
             textarea
             :rows="6"
             :error="errors.bio"
-
         />
 
         <!-- Navigation Buttons -->
@@ -126,8 +125,6 @@ const submitForm = async () => {
 
   if (!validate()) return
 
-  Object.keys(errors).forEach(key => (errors[key as keyof typeof errors] = ''))
-
   try {
     const storedType = { company_type: localStorage.getItem('listingType') }
     const contactInfo = JSON.parse(localStorage.getItem('contactInfo') || '{}')
@@ -172,15 +169,17 @@ const submitForm = async () => {
       }, 8000)
     }
     else {
+      console.log('ERROR BLOCK')  
       // Handle validation errors when response.data.status is false
       const apiErrors = response.data.errors || {}
+      console.log('🔥 API Errors:', apiErrors)
       
       // Map API error fields to local error fields
       const fieldMapping = {
         'first_name': 'firstName',
         'last_name': 'lastName',
         'email': 'email',
-        'country': 'country', 
+        'country': 'country',
         'url': 'website',
         'agency_name': 'agencyName',
         'linkedIn_url': 'linkedIn',
@@ -201,14 +200,19 @@ const submitForm = async () => {
         }
       })
 
+      console.log('🔥 Final errors object:', errors)
+      console.log('🔥 Email error exists:', !!apiErrors.email)
+
       // Handle email errors specifically - redirect to ContactInfo if it's an email error
       if (apiErrors.email) {
-        const emailErrorMessage = encodeURIComponent(
-          Array.isArray(apiErrors.email) ? apiErrors.email[0] : apiErrors.email
-        )
-        await router.push(`/expert/signup/contact-info?email-error=${emailErrorMessage}`)
+        console.log('🔥 Redirecting to contact-info with email error')
+        const emailErrorMessage = Array.isArray(apiErrors.email) ? apiErrors.email[0] : apiErrors.email
+        localStorage.setItem('apiEmailError', emailErrorMessage)
+        await router.push('/expert/signup/contact-info')
         return
       }
+
+      console.log('🔥 No email error, checking other fields...')
 
       // For other errors, check which step they belong to and redirect accordingly
       const contactInfoFields = ['firstName', 'lastName', 'email', 'country', 'website', 'agencyName', 'linkedIn']

@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseInput from '../../common/InputFields/BaseInput.vue'
 import BaseButton from '../../common/InputFields/BaseButton.vue'
@@ -148,29 +148,12 @@ const goToPrevious = () => {
   router.push('/expert/signup/contact-info')
 }
 
-onMounted(() => {
-  const type = localStorage.getItem('listingType')
-  if (type === 'freelancer' || type === 'agency') {
-    listingType.value = type
-  } else {
-    router.push('/expert/signup')
-  }
-
-  const saved = localStorage.getItem('professionalDetails')
-  if (saved) Object.assign(formData, JSON.parse(saved))
-
-  const storedErrors = localStorage.getItem('signupErrors')
-  if (storedErrors) {
-    const parsedErrors = JSON.parse(storedErrors)
-    
-    // Apply relevant errors to this form
-    if (parsedErrors.role) errors.role = parsedErrors.role
-    if (parsedErrors.services) errors.services = parsedErrors.services
-    if (parsedErrors.budget) errors.budget = parsedErrors.budget  
-    if (parsedErrors.partnerLink) errors.partnerLink = parsedErrors.partnerLink
-    
-    // Clear stored errors after using them
-    localStorage.removeItem('signupErrors')
+watch(() => formData.role, (newRole, oldRole) => {
+  // Only reset services if role actually changed and there was a previous role
+  if (oldRole && newRole !== oldRole) {
+    formData.services = []
+    // Clear any existing services error when resetting
+    errors.services = ''
   }
 })
 </script>
