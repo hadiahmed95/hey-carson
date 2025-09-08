@@ -22,6 +22,8 @@
             v-model="formData.bio"
             textarea
             :rows="6"
+            :error="errors.bio"
+
         />
 
         <!-- Navigation Buttons -->
@@ -104,10 +106,27 @@ const validate = () => {
   return true
 }
 
+const errors = reactive({
+  firstName: '',
+  lastName: '', 
+  email: '',
+  country: '',
+  website: '',
+  agencyName: '',
+  linkedIn: '',
+  role: '',
+  services: '',
+  budget: '',
+  partnerLink: '',
+  bio: ''
+})
+
 const submitForm = async () => {
   localStorage.setItem('experience', JSON.stringify(formData))
 
   if (!validate()) return
+
+  Object.keys(errors).forEach(key => (errors[key as keyof typeof errors] = ''))
 
   try {
     const storedType = { company_type: localStorage.getItem('listingType') }
@@ -151,6 +170,63 @@ const submitForm = async () => {
         router.push('/expert/login')
         isSuccess.value = false
       }, 8000)
+    }
+    else {
+      // Handle validation errors when response.data.status is false
+      const apiErrors = response.data.errors || {}
+      
+      // Map API error fields to local error fields
+      const fieldMapping = {
+        'first_name': 'firstName',
+        'last_name': 'lastName',
+        'email': 'email',
+        'country': 'country', 
+        'url': 'website',
+        'agency_name': 'agencyName',
+        'linkedIn_url': 'linkedIn',
+        'role': 'role',
+        'services': 'services',
+        'min_project_budget': 'budget',
+        'partner_link_directory': 'partnerLink',
+        'about': 'bio'
+      }
+
+      // Set errors for each field
+      Object.entries(apiErrors).forEach(([apiField, messages]) => {
+        const localField = fieldMapping[apiField as keyof typeof fieldMapping]
+        if (localField && errors.hasOwnProperty(localField)) {
+          errors[localField as keyof typeof errors] = Array.isArray(messages) 
+            ? messages[0] 
+            : messages
+        }
+      })
+
+      // Handle email errors specifically - redirect to ContactInfo if it's an email error
+      if (apiErrors.email) {
+        const emailErrorMessage = encodeURIComponent(
+          Array.isArray(apiErrors.email) ? apiErrors.email[0] : apiErrors.email
+        )
+        await router.push(`/expert/signup/contact-info?email-error=${emailErrorMessage}`)
+        return
+      }
+
+      // For other errors, check which step they belong to and redirect accordingly
+      const contactInfoFields = ['firstName', 'lastName', 'email', 'country', 'website', 'agencyName', 'linkedIn']
+      const professionalDetailsFields = ['role', 'services', 'budget', 'partnerLink']
+      
+      const hasContactInfoErrors = contactInfoFields.some(field => errors[field as keyof typeof errors])
+      const hasProfessionalErrors = professionalDetailsFields.some(field => errors[field as keyof typeof errors])
+
+      if (hasContactInfoErrors) {
+        // Store errors in localStorage to show them on ContactInfo page
+        localStorage.setItem('signupErrors', JSON.stringify(errors))
+        await router.push('/expert/signup/contact-info')
+      } else if (hasProfessionalErrors) {
+        // Store errors in localStorage to show them on ProfessionalDetails page  
+        localStorage.setItem('signupErrors', JSON.stringify(errors))
+        await router.push('/expert/signup/professional-details')
+      }
+      // If only bio errors, they'll show on current page (Experience.vue)
     }
   } catch (error: any) {
     const emailErrors = error?.response?.data?.errors?.email

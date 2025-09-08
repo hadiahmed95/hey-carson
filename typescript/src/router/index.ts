@@ -54,6 +54,17 @@ import OnBoardingIntro from "@/pages/expert/onboarding/OnBoardingIntro.vue";
 import OnboardingLayout from "@/pages/expert/onboarding/Layout.vue";
 import SSOLogin from "@/pages/client/SSOLogin.vue";
 
+// Centralized redirection function based on user role
+export const redirectToDashboard = (user: any, router: any) => {
+    if (user.role_id === 1) {
+        router.push('/admin/dashboard')
+    } else if (user.role_id === 2) {
+        router.push('/client/dashboard')
+    } else if (user.role_id === 3) {
+        router.push('/expert/dashboard')
+    }
+}
+
 const routes = [
     {
         path: '/',

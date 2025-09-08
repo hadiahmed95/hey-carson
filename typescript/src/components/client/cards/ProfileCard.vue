@@ -128,23 +128,28 @@ async function handleFileChange(event: Event) {
   formData.append('file', file)
 
   isUploading.value = true
+  errors.value.photo = ''
+  
   try {
-    console.log('Uploading photo...') // Debug log
     const res = await ApiService.post(`/picture`, formData, true)
-    console.log('Upload response:', res.data) // Debug log
     errors.value.photo = 'success'
+    
     // Update the local user photo immediately to reflect the change
     if (res.data.user && res.data.user.photo) {
       // Emit event to parent to update the user data
       emit('photo-updated', res.data.user.photo)
     }
-    triggerCounters.value.photo++;
+    
+    triggerCounters.value.photo++
+    
+    if (fileInput.value) {
+      fileInput.value.value = ''
+    }
+    
   } catch (error: any) {
-    console.error('Upload error:', error) // Debug log
     let message = 'Failed to upload photo.'
 
     if (error.response) {
-      console.error('Error response:', error.response) // Debug log
       const status = error.response.status
       const serverMessage = error.response.data?.message || ''
 
@@ -152,10 +157,6 @@ async function handleFileChange(event: Event) {
         message = 'Photo is too large. Please upload a smaller image.'
       } else if (status === 422) {
         message = 'Invalid photo format. Please try a different file.'
-      } else if (status === 401) {
-        message = 'Authentication required. Please login again.'
-      } else if (status === 403) {
-        message = 'You do not have permission to upload photos.'
       } else if (serverMessage) {
         message = serverMessage
       }
@@ -165,7 +166,9 @@ async function handleFileChange(event: Event) {
       message = 'Unexpected error occurred.'
     }
 
-    errors.value.photo =  message
+    errors.value.photo = message
+    alertStore.show(message, 'error')
+    
   } finally {
     isUploading.value = false
     triggerCounters.value.photo++;

@@ -6,37 +6,17 @@ import Payment from "@/components/common/cards/Payment.vue";
 import SettingsInfo from "@/components/common/cards/SettingsInfo.vue";
 import {onMounted} from "vue";
 import {useClientStore} from "@/store/client.ts";
-import {useAuthStore} from "@/store/auth.ts";
 import {formatDate} from "@/utils/date.ts";
 
 const clientStore = useClientStore();
-const authStore = useAuthStore();
 
 onMounted(async () => {
   await clientStore.fetchClient();
 })
-
-
-// Handle photo update from ProfileCard
-
-const handlePhotoUpdated = async (photoPath: string) => {
-  // Update the client store
-  if (clientStore.user) {
-    clientStore.user.photo = photoPath;
-  }
-
-  // Update the auth store (for navigation header)
-  if (authStore.user) {
-    authStore.user.photo = photoPath;
-  }
-  
-  // Refresh client data to ensure consistency
-  await clientStore.fetchClient();
-}
 </script>
 
 <template>
-  <div class="p-6 bg-secondary w-full">
+  <div class="p-6 bg-secondary flex-1">
     <div>
       <h1 class="font-bold mb-8">Settings</h1>
 
@@ -50,7 +30,6 @@ const handlePhotoUpdated = async (photoPath: string) => {
             v-if="clientStore.user"
             :user="clientStore.user"
             @update-email="clientStore.user.email = $event"
-            @photo-updated="handlePhotoUpdated"
         />
       </div>
 

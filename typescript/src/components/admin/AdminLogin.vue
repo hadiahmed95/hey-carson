@@ -28,9 +28,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth.ts'
+import { redirectToDashboard } from '@/router/index.ts'
 import LoginPage from "@/pages/LoginPage.vue"
 import BaseInput from '@/components/common/InputFields/BaseInput.vue'
 import BaseButton from '@/components/common/InputFields/BaseButton.vue'
@@ -44,36 +45,12 @@ const password = ref('')
 
 const background = new URL('@/assets/icons/background.svg', import.meta.url).href
 
-onMounted(async () => {
-    // Check if user is already logged in
-    if (authStore.token && authStore.user) {
-        if (authStore.user.role_id === 1) {
-            await router.push('/admin/dashboard')
-        } else if (authStore.user.role_id === 2) {
-            await router.push('/client/dashboard')
-        } else if (authStore.user.role_id === 3) {
-            await router.push('/expert/dashboard')
-        }
-    }
-})
-
-const redirectBasedOnRole = (user: any) => {
-    // Using role_id
-    if (user.role_id === 1) {
-        router.push('/admin/dashboard')
-    } else if (user.role_id === 2) {
-        router.push('/client/dashboard')
-    } else if (user.role_id === 3) {
-        router.push('/expert/dashboard')
-    }
-}
-
 const login = async () => {
     try {
         const result = await authStore.TempLogin(email.value, password.value)
         
-        // Redirect based on user role_id
-        redirectBasedOnRole(result.user)
+        // Use centralized redirection logic
+        redirectToDashboard(result.user, router)
     } catch (error: any) {
         console.error('Login failed:', error)
     }
