@@ -28,9 +28,10 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth.ts'
+import { redirectToDashboard } from '@/router/index.ts'
 import LoginPage from "@/pages/LoginPage.vue"
 import BaseInput from '@/components/common/InputFields/BaseInput.vue'
 import BaseButton from '@/components/common/InputFields/BaseButton.vue'
@@ -44,15 +45,11 @@ const password = ref('')
 
 const background = new URL('@/assets/icons/background.svg', import.meta.url).href
 
-onMounted(async () => {
-  if (authStore.token && authStore.user) {
-    await router.push('/client/dashboard')
-  }
-})
-
 const login = async () => {
   await authStore.login(email.value, password.value, 'client')
-  await router.push('/client/dashboard')
+  
+  // Use centralized redirection logic
+  redirectToDashboard(authStore.user, router)
 }
 
 const signUp = () => { router.push('/client/signup') }

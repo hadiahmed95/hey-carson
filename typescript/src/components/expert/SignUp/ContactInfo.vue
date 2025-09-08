@@ -59,6 +59,7 @@
         <BaseInput
           label="LinkedIn URL"
           v-model="formData.linkedIn"
+          placeholder="https://linkedin.com"
           :error="errors.linkedIn"
         />
 
@@ -178,4 +179,41 @@ const nextStep = () => {
 const back = () => {
   router.push('/expert/signup')
 }
+
+onMounted(() => {
+  const storedType = localStorage.getItem('listingType')
+  if (storedType === 'freelancer' || storedType === 'agency') {
+    listingType.value = storedType
+  } else {
+    router.push('/expert/signup')
+  }
+
+  const saved = localStorage.getItem('contactInfo')
+  if (saved) Object.assign(formData, JSON.parse(saved))
+
+  // Handle email error from URL params (existing code)
+  const emailError = route.query['email-error']
+  if (typeof emailError === 'string') {
+    errors.email = decodeURIComponent(emailError)
+    router.replace({ query: { ...route.query, 'email-error': undefined } })
+  }
+
+  // NEW: Handle validation errors from Experience.vue
+  const storedErrors = localStorage.getItem('signupErrors')
+  if (storedErrors) {
+    const parsedErrors = JSON.parse(storedErrors)
+    
+    // Apply relevant errors to this form
+    if (parsedErrors.firstName) errors.firstName = parsedErrors.firstName
+    if (parsedErrors.lastName) errors.lastName = parsedErrors.lastName  
+    if (parsedErrors.email) errors.email = parsedErrors.email
+    if (parsedErrors.country) errors.country = parsedErrors.country
+    if (parsedErrors.website) errors.website = parsedErrors.website
+    if (parsedErrors.agencyName) errors.agencyName = parsedErrors.agencyName
+    if (parsedErrors.linkedIn) errors.linkedIn = parsedErrors.linkedIn
+    
+    // Clear stored errors after using them
+    localStorage.removeItem('signupErrors')
+  }
+})
 </script>

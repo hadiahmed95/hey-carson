@@ -20,7 +20,7 @@ const tabs = [
           Reviews
         </h1>
         <p class="text-primary font-sm">
-          Share your experience with experts both on and off the platform.<br/>Find the right experts for your needs and leave great reviews when they do a great job
+          Share your experience with experts both on and off the platform.<br/>Find the right experts for your needs and leave great reviews when they do a great job.
         </p>
       </div>
     </div>

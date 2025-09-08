@@ -81,7 +81,7 @@
         </select>
         
         <button
-          class="bg-primary text-white px-4 py-2 rounded text-h4 flex items-center gap-2 hover:bg-gray-800"
+          class="bg-primary text-white px-4 py-2 rounded text-h4 flex items-center gap-2 hover:bg-gray-800 w-32"
           @click.stop="navigateToChat"
         >
           <Chat />
@@ -89,7 +89,7 @@
         </button>
         
         <button 
-          class="border px-4 py-2 rounded text-h4 hover:bg-gray-100 flex items-center gap-2"
+          class="border px-4 py-2 rounded text-h4 hover:bg-gray-100 flex items-center gap-2 w-36"
           @click.stop="handleQuote"
         >
           <Quote />

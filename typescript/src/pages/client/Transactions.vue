@@ -29,7 +29,7 @@ const searchQuery = ref('')
         <Search />
         <input
             type="text"
-            placeholder="Search Transactions ..."
+            placeholder="Search Transactions..."
             class="w-full ml-3 text-h4 outline-none placeholder-tertiary"
             v-model="searchQuery"
         />

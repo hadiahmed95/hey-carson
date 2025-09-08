@@ -44,7 +44,7 @@ class SignupController
                     'status' => false,
                     'message' => 'Please ensure all form fields are filled correctly before proceeding.',
                     'errors' => $validateUser->errors()
-                ], 401);
+                ], 200);
             }
 
             $user = User::create([

@@ -16,7 +16,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-6 bg-secondary w-full">
+  <div class="p-6 bg-secondary flex-1">
     <div>
       <h1 class="font-bold mb-8">Settings</h1>
 

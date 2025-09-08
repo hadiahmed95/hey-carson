@@ -21,7 +21,8 @@
             <input
                 type="text"
                 v-model="search"
-                @focus="open = true"
+                @focus="handleInputFocus"
+                @blur="handleInputBlur"
                 @input="fetchExperts"
                 placeholder="Search expert by name..."
                 class="w-full border border-lightGray rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-primary"
@@ -30,6 +31,7 @@
             <!-- Dropdown -->
             <ul
                 v-if="open && experts.length"
+                @mousedown="handleDropdownMouseDown"
                 class="absolute z-10 mt-1 w-full bg-white border border-lightGray rounded-md shadow-lg max-h-60 overflow-auto"
             >
               <li
@@ -143,6 +145,8 @@ const formData = ref<{
   selectedExpert: null
 })
 
+const dropdownTimeout = ref<NodeJS.Timeout | null>(null)
+
 onMounted(async () => {
   try {
     const storedErrors = JSON.parse(localStorage.getItem('quoteServerErrors') || '{}')
@@ -203,5 +207,28 @@ const selectExpert = (expert: any) => {
   formData.value.selectedExpert = expert
   open.value = false
   console.log(formData.value)
+}
+
+// New function to handle input focus
+const handleInputFocus = () => {
+  // Clear any existing timeout when input is focused
+  if (dropdownTimeout.value) {
+    clearTimeout(dropdownTimeout.value)
+    dropdownTimeout.value = null
+  }
+  open.value = true
+}
+
+// New function to handle input blur with delay
+const handleInputBlur = () => {
+  // Use setTimeout to allow click events on dropdown items to fire first
+  dropdownTimeout.value = setTimeout(() => {
+    open.value = false
+  }, 150) // 150ms delay allows click events to register
+}
+
+// New function to handle dropdown mousedown (prevents blur)
+const handleDropdownMouseDown = (event: Event) => {
+  event.preventDefault() // Prevents input from losing focus
 }
 </script>

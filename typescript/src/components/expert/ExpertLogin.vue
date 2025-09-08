@@ -29,13 +29,14 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/store/auth.ts'
+import { redirectToDashboard } from '@/router/index.ts'
 import LoginPage from "../../pages/LoginPage.vue"
 import BaseInput from '../common/InputFields/BaseInput.vue'
 import BaseButton from '../common/InputFields/BaseButton.vue'
 import PasswordInput from '../common/InputFields/PasswordInput.vue'
-import { useAuthStore } from '@/store/auth.ts'
 
 const email = ref('')
 const password = ref('')
@@ -44,16 +45,13 @@ const authStore = useAuthStore()
 
 const background = new URL('../../assets/icons/background.svg', import.meta.url).href
 
-onMounted(async () => {
-  if (authStore.token && authStore.user) {
-    await router.push('/expert/dashboard')
-  }
-})
-
 const login = async () => {
   await authStore.login(email.value, password.value, 'expert')
-  await router.push('/expert/dashboard')
+  
+  // Use centralized redirection logic
+  redirectToDashboard(authStore.user, router)
 }
+
 const signUp = () => { router.push('/expert/signup') }
 const claimAgency = () => { /* agency claim logic */ }
 const forgot = () => { router.push('/forgot-password?role=expert') }
