@@ -49,6 +49,7 @@ export default {
         earthyOrangeBrown: 'var(--color-earthy-orange-brown)',
         deepViolet: 'var(--color-deep-violet)',
         'grey-black-combo': 'var(--color-grey-black)',
+        'light-grey': 'var(--color-light-grey)',
       },
       screens: {
         xl: '1200px',

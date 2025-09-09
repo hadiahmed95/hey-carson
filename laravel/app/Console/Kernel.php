@@ -10,6 +10,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         \App\Console\Commands\MigrateMerchantsAsClients::class,
         \App\Console\Commands\GetClientSourceCommand::class,
+        \App\Console\Commands\ImportShopifyExpertsFromSheet::class,
         \App\Console\Commands\ChangeProjectStatusToInProgress::class,
         \App\Console\Commands\ArchiveProject::class,
         \App\Console\Commands\RestoreProject::class,
@@ -25,11 +26,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('project:release')->everyMinute();
+        $schedule->command('project:release')->everySecond();
         $schedule->command('project:complete')->everyMinute();
         $schedule->command('project:complete:reminder')->daily();
         $schedule->command('project:expire:quote')->everyMinute();
         $schedule->command('project:offer:reminder')->daily();
+        $schedule->command('calculate:response-times')->daily();
     }
 
     /**

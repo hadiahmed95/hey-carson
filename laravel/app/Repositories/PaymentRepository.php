@@ -119,6 +119,7 @@ class PaymentRepository
      * @param User $user
      * @param array $cardData
      * @return array
+     * @throws ApiErrorException
      */
     private function createNewCustomerWithCard(User $user, array $cardData): array
     {
@@ -318,5 +319,21 @@ class PaymentRepository
             'decline_code' => $declineCode,
             'status_code' => 400
         ];
+    }
+
+    /**
+     * Get all transactions for the given user.
+     *
+     * @param User $user
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getTransactions(User $user)
+    {
+        return Payment::query()
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['succeeded', 'prepaid'])
+            ->with(['project', 'offer', 'user'])
+            ->latest('created_at')
+            ->get();
     }
 }

@@ -22,7 +22,6 @@
     </h3>
     <div>
       <div class="flex justify-between gap-4">
-        <!-- Left Side -->
         <div class="flex items-start gap-4">
           <img
               :src="getS3URL(request.expert.photo)"

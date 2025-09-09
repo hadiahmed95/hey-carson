@@ -149,10 +149,9 @@ const goToPrevious = () => {
 }
 
 watch(() => formData.role, (newRole, oldRole) => {
-  // Only reset services if role actually changed and there was a previous role
   if (oldRole && newRole !== oldRole) {
     formData.services = []
-    // Clear any existing services error when resetting
+
     errors.services = ''
   }
 })

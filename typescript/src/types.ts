@@ -39,19 +39,22 @@ export interface ILead {
 
 export interface IListing {
     id: number,
-    name: string
-    displayUrl: string
-    type: string
+    display_name: string
+    photo: string
+    expert_type_formatted: string
     email: string
-    storeTitle: string
-    storeUrl: string
-    country: string
-    jobTitle: string
-    language: string
-    minimumProjectBudget: string
-    status: string
-    statusUpdatedAt: string
-    servicesOffered: string[]
+    store_title: string
+    url: string
+    country_formatted: string
+    job_title_formatted: string
+    language_formatted: string
+    hourly_rate_formatted: string
+    status_formatted: string
+    status_updated_at_formatted: string
+    services_offered_safe: string[]
+    total_reviews_safe?: number
+    average_rating_safe?: number
+    expertData?: any
 }
 
 export interface IReview {
@@ -129,6 +132,7 @@ export interface ITranscationn {
     type: string;
     price?: number;
     total: number;
+    amount?: number;
     project?: {
         id: number;
         name: string;
@@ -417,6 +421,31 @@ export interface PayPalConnectionInterface {
 
 export interface ILeadd {
     id: number,
+    type: string
+    created_at: string
+    project: {
+        name: string
+    }
+    client: {
+        first_name: string
+        last_name: string
+        email: string
+        url?: string
+        photo?: string
+        shopify_plan?: string
+    }
+}
+
+export interface IClient {
+    id: number,
+    name: string,
+    url: string,
+    email: string,
+    shopify_plan: string,
+    photo: string | null;
+    direct_messages_count: number,
+    quote_requests_count: number,
+    lifetime_spend: string,
     type: string
     created_at: string
     project: {

@@ -25,6 +25,10 @@ defineProps<{
         <span class="font-medium text-h3">{{ formatDate(invoice.created_at) }}</span>
       </h4>
       <h4 class="flex flex-col">
+        <span>Hours</span>
+        <span class="font-medium text-h3">{{ invoice.amount }}</span>
+      </h4>
+      <h4 class="flex flex-col">
         <span>Transaction Amount</span>
         <span class="font-medium text-h3">${{ invoice.total.toFixed(2) }}</span>
       </h4>

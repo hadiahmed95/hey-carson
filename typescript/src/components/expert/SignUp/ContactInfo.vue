@@ -81,8 +81,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import BaseInput from '../../common/InputFields/BaseInput.vue'
 import BaseButton from '../../common/InputFields/BaseButton.vue'
 import CountryDropdown from "../../common/InputFields/CountryDropdown.vue";
@@ -90,26 +90,39 @@ import StepPanel from "./StepPanel.vue";
 import {isValidUrl, validateEmail} from "@/utils/helpers.ts";
 
 const router = useRouter()
-const route = useRoute()
 const listingType = ref<'freelancer' | 'agency' | null>(null)
 
-// onMounted(() => {
-//   const storedType = localStorage.getItem('listingType')
-//   if (storedType === 'freelancer' || storedType === 'agency') {
-//     listingType.value = storedType
-//   } else {
-//     router.push('/expert/signup')
-//   }
+onMounted(() => {
+  const storedType = localStorage.getItem('listingType')
+  if (storedType === 'freelancer' || storedType === 'agency') {
+    listingType.value = storedType
+  } else {
+    router.push('/expert/signup')
+  }
 
-//   const saved = localStorage.getItem('contactInfo')
-//   if (saved) Object.assign(formData, JSON.parse(saved))
+  const saved = localStorage.getItem('contactInfo')
+  if (saved) Object.assign(formData, JSON.parse(saved))
 
-//   const emailError = route.query['email-error']
-//   if (typeof emailError === 'string') {
-//     errors.email = decodeURIComponent(emailError)
-//     router.replace({ query: { ...route.query, 'email-error': undefined } })
-//   }
-// })
+  // const emailError = route.query['email-error']
+  // if (typeof emailError === 'string') {
+  //   errors.email = decodeURIComponent(emailError)
+  //   router.replace({ query: { ...route.query, 'email-error': undefined } })
+  // }
+
+  const apiEmailError = localStorage.getItem('apiEmailError')
+  const apiLinkedinError = localStorage.getItem('apiLinkedinError')
+  if (apiEmailError) {
+    errors.email = apiEmailError
+    localStorage.removeItem('apiEmailError') // Clean up
+  }
+
+  if (apiLinkedinError) {
+    errors.linkedIn = apiLinkedinError
+    localStorage.removeItem('apiLinkedinError') // Clean up
+  }
+
+})
+
 
 const formData = reactive({
   firstName: '',
@@ -180,28 +193,4 @@ const back = () => {
   router.push('/expert/signup')
 }
 
-onMounted(() => {
-  const storedType = localStorage.getItem('listingType')
-  if (storedType === 'freelancer' || storedType === 'agency') {
-    listingType.value = storedType
-  } else {
-    router.push('/expert/signup')
-  }
-
-  const saved = localStorage.getItem('contactInfo')
-  if (saved) Object.assign(formData, JSON.parse(saved))
-
-  // Check for API email error
-  const apiEmailError = localStorage.getItem('apiEmailError')
-  if (apiEmailError) {
-    errors.email = apiEmailError
-    localStorage.removeItem('apiEmailError') // Clean up
-  }
-})
-
-// watch(() => formData.email, () => {
-//   if (errors.email) {
-//     errors.email = ''
-//   }
-// })
 </script>

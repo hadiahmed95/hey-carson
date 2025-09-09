@@ -7,7 +7,7 @@
         </h1>
         <p class="mt-1">
           Encourage past clients to share their feedback. Positive reviews and testimonials
-          <br>are powerful social proof that can boost your profile’s attractiveness..
+          <br>are powerful social proof that can boost your profile’s attractiveness.
         </p>
       </div>
 

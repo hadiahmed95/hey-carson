@@ -92,28 +92,28 @@ const currentSelectedLead = computed(() => {
 
       <div class="text-gray-500 space-y-2">
         <div class="flex items-center justify-between">
-          <h4>Store: </h4>
+          <h5 class="text-light-grey font-normal">Store: </h5>
           <a
               v-if="currentSelectedLead.websiteUrl !== '#'"
               :href="currentSelectedLead.websiteUrl"
               target="_blank"
-              class="text-h4 text-link hover:underline flex items-center gap-1"
+              class="text-h5 text-link hover:underline flex items-center gap-1"
           >
             {{ props.leadDetail?.client?.url || 'N/A' }}
             <ExternalLink />
           </a>
-          <span v-else class="text-h4 text-primary">N/A</span>
+          <span v-else class="text-h5 text-primary">N/A</span>
         </div>
 
         <div class="flex items-center justify-between">
-          <h4 class="text-tertiary font-normal">Shopify Plan: </h4>
-          <h4 class="text-primary font-normal">{{ currentSelectedLead.shopifyPlan ? currentSelectedLead.shopifyPlan : '-' }}</h4>
+          <h5 class="text-light-grey font-normal">Shopify Plan: </h5>
+          <h5 class="text-primary font-normal text-right">{{ currentSelectedLead.shopifyPlan ? currentSelectedLead.shopifyPlan : '-' }}</h5>
         </div>
 
         <div class="flex items-center justify-between">
-          <h4 class="text-tertiary font-normal">Lead Type: </h4>
-          <h4
-              class="text-primary font-semibold px-2 py-0.5 rounded"
+          <h5 class="text-light-grey font-normal">Lead Type: </h5>
+          <h5
+              class="text-primary font-normal px-2 py-0.5 rounded"
               :class="{
               'bg-babyBlue text-deepBlue': currentSelectedLead.leadType === 'Quote Request',
               'bg-lightApricot text-earthyOrangeBrown': currentSelectedLead.leadType === 'Matched',
@@ -121,31 +121,31 @@ const currentSelectedLead = computed(() => {
             }"
           >
             {{ currentSelectedLead.leadType }}
-          </h4>
+          </h5>
         </div>
 
         <div class="flex items-center justify-between">
-          <h4 class="text-tertiary font-normal">Budget: </h4>
-          <h4 class="text-primary font-normal">{{ currentSelectedLead.budget ? '$' + currentSelectedLead.budget : '-' }}</h4>
+          <h5 class="text-light-grey font-normal">Budget: </h5>
+          <h5 class="text-primary font-normal text-right">{{ currentSelectedLead.budget ? '$' + currentSelectedLead.budget : '-' }}</h5>
         </div>
 
         <div class="flex items-center justify-between">
-          <h4 class="text-tertiary font-normal">Conversation Started: </h4>
-          <h4 class="text-primary font-normal">{{ currentSelectedLead.conversationStarted }}</h4>
+          <h5 class="text-light-grey font-normal">Conversation Started: </h5>
+          <h5 class="text-primary font-normal text-right">{{ currentSelectedLead.conversationStarted }}</h5>
         </div>
 
         <div class="flex items-center justify-between">
-          <h4 class="text-tertiary ">Lead ID: </h4>
-          <h4 class="text-primary font-normal">#{{ currentSelectedLead.leadId }}</h4>
+          <h5 class="text-light-grey font-normal">Lead ID: </h5>
+          <h5 class="text-primary font-normal text-right">#{{ currentSelectedLead.leadId }}</h5>
         </div>
 
-        <div class="pt-2 text-h4 text-tertiary">
+        <div class="pt-2 text-h5 text-tertiary">
           Lead Status:
           <div class="mt-1 border border-grey p-4 rounded-sm">
             <div class="flex items-center justify-between">
                 <span class="flex items-center gap-2">
                   <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
-                  <h4 class="font-medium text-primary">{{ currentSelectedLead.leadStatus }}</h4>
+                  <h5 class="font-medium text-primary">{{ currentSelectedLead.leadStatus }}</h5>
                 </span>
               <DownArrow/>
             </div>

@@ -5,10 +5,12 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -40,6 +42,7 @@ class User extends Authenticatable
         'timezone',
         'company_type',
         'shopify_plan',
+        'usertype',
         'source',
         'availability_status'
     ];
@@ -166,14 +169,46 @@ class User extends Authenticatable
         return $this->role->name === 'client';
     }
 
-    public function isExpert()
-    {
-        return $this->role->name === 'expert';
-    }
-
     public function serviceCategories()
     {
         return $this->belongsToMany(ServiceCategory::class, 'expert_service_categories', 'user_id', 'category_id');
     }
 
+    public function generateUserSlug()
+    {
+        return Str::slug($this->first_name . ' ' . $this->last_name);
+    }
+
+    public function isExpert()
+    {
+        return $this->role->name === 'expert';
+    }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function clients(): BelongsToMany
+    {
+        return $this->belongsToMany(Lead::class, 'expert_lead', 'expert_id', 'lead_id');
+    }
+
+    /**
+     * Get the direct message requests for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function requests(): HasMany
+    {
+        return $this->hasMany(Request::class, 'client_id');
+    }
+
+    /**
+     * Get the paid payments for this user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function paidPayments()
+    {
+        return $this->hasMany(Payment::class, 'user_id')->where('status', 'paid');
+    }
 }

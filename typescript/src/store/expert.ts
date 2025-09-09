@@ -16,6 +16,8 @@ export const useExpertStore = defineStore('expert', {
             expert_stats: IExpertStat
         } | null,
         user: null as any,
+        payouts: [] as any[],
+        balance: 0 as number,
     }),
 
     actions: {
@@ -96,6 +98,26 @@ export const useExpertStore = defineStore('expert', {
 
         async searchUsers(searchTerm: string) {
             const response = await ExpertService.searchUsers(searchTerm);
+            return response.data;
+        },
+
+        async fetchExpertProfile(searchTerm: string) {
+            const response = await ExpertService.fetchExpertProfile(searchTerm);
+            return response.data;
+        },
+
+        async setExpertPayout(data: any) {
+            const response = await ExpertService.setExpertPayout(data);
+            return response.data;
+        },
+
+        async fetchCountries() {
+            const response = await ExpertService.fetchCountries();
+            return response.data;
+        },
+
+        async fetchFaqs() {
+            const response = await ExpertService.fetchFaqs();
             return response.data;
         },
     },

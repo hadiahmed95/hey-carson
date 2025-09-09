@@ -22,7 +22,6 @@
             v-model="formData.bio"
             textarea
             :rows="6"
-            :error="errors.bio"
         />
 
         <!-- Navigation Buttons -->
@@ -46,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, reactive, ref} from 'vue'
+import {onMounted, reactive, ref, watch} from 'vue'
 import { useRouter } from 'vue-router'
 import BaseInput from '../../common/InputFields/BaseInput.vue'
 import BaseButton from '../../common/InputFields/BaseButton.vue'
@@ -59,21 +58,30 @@ const registerStore = useRegisterStore()
 const listingType = ref<'freelancer' | 'agency'>('freelancer')
 const isSuccess = ref<boolean>(false);
 
-onMounted(() => {
-  const type = localStorage.getItem('listingType')
-  if (type === 'freelancer' || type === 'agency') {
-    listingType.value = type
-  } else {
-    // fallback to start
-    router.push('/expert/signup')
-  }
-
-  const saved = localStorage.getItem('experience')
-  if (saved) Object.assign(formData, JSON.parse(saved))
-})
-
 const formData = reactive({
   bio: ''
+})
+
+const errors = reactive({
+  firstName: '',
+  lastName: '', 
+  email: '',
+  country: '',
+  website: '',
+  agencyName: '',
+  linkedIn: '',
+  role: '',
+  services: '',
+  budget: '',
+  partnerLink: '',
+  bio: ''
+})
+
+// Watch specific field and clear only its error when user types
+watch(() => formData.bio, () => {
+  if (errors.bio) {
+    errors.bio = ''
+  }
 })
 
 const validate = () => {
@@ -105,25 +113,12 @@ const validate = () => {
   return true
 }
 
-const errors = reactive({
-  firstName: '',
-  lastName: '', 
-  email: '',
-  country: '',
-  website: '',
-  agencyName: '',
-  linkedIn: '',
-  role: '',
-  services: '',
-  budget: '',
-  partnerLink: '',
-  bio: ''
-})
-
 const submitForm = async () => {
   localStorage.setItem('experience', JSON.stringify(formData))
 
   if (!validate()) return
+
+  Object.keys(errors).forEach(key => (errors[key as keyof typeof errors] = ''))
 
   try {
     const storedType = { company_type: localStorage.getItem('listingType') }
@@ -154,8 +149,6 @@ const submitForm = async () => {
     }
 
     const response = await registerStore.signupExpert(payload)
-    console.log(response)
-    console.log(isSuccess.value)
 
     if (response.data.status) {
       isSuccess.value = true
@@ -169,12 +162,8 @@ const submitForm = async () => {
       }, 8000)
     }
     else {
-      console.log('ERROR BLOCK')  
-      // Handle validation errors when response.data.status is false
       const apiErrors = response.data.errors || {}
-      console.log('🔥 API Errors:', apiErrors)
       
-      // Map API error fields to local error fields
       const fieldMapping = {
         'first_name': 'firstName',
         'last_name': 'lastName',
@@ -200,19 +189,17 @@ const submitForm = async () => {
         }
       })
 
-      console.log('🔥 Final errors object:', errors)
-      console.log('🔥 Email error exists:', !!apiErrors.email)
-
       // Handle email errors specifically - redirect to ContactInfo if it's an email error
-      if (apiErrors.email) {
-        console.log('🔥 Redirecting to contact-info with email error')
+      if (apiErrors.email || apiErrors.linkedIn_url) {
         const emailErrorMessage = Array.isArray(apiErrors.email) ? apiErrors.email[0] : apiErrors.email
+        const linkedInUrlErrorMessage = Array.isArray(apiErrors.linkedIn_url) ? apiErrors.linkedIn_url[0] : apiErrors.linkedIn_url
+        
         localStorage.setItem('apiEmailError', emailErrorMessage)
+        localStorage.setItem('apiLinkedinError', linkedInUrlErrorMessage)
+        
         await router.push('/expert/signup/contact-info')
         return
       }
-
-      console.log('🔥 No email error, checking other fields...')
 
       // For other errors, check which step they belong to and redirect accordingly
       const contactInfoFields = ['firstName', 'lastName', 'email', 'country', 'website', 'agencyName', 'linkedIn']
@@ -238,8 +225,6 @@ const submitForm = async () => {
     if (Array.isArray(emailErrors) && emailErrors.length > 0) {
       const emailErrorMessage = encodeURIComponent(emailErrors[0])
       await router.push(`/expert/signup/contact-info?email-error=${emailErrorMessage}`)
-    } else {
-      console.log('Error submitting form:', error)
     }
   }
 }
@@ -247,4 +232,18 @@ const submitForm = async () => {
 const goToPrevious = () => {
   router.push('/expert/signup/professional-details')
 }
+
+onMounted(() => {
+  const type = localStorage.getItem('listingType')
+  if (type === 'freelancer' || type === 'agency') {
+    listingType.value = type
+  } else {
+    // fallback to start
+    router.push('/expert/signup')
+  }
+
+  const saved = localStorage.getItem('experience')
+  if (saved) Object.assign(formData, JSON.parse(saved))
+
+})
 </script>

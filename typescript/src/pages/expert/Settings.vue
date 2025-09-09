@@ -26,7 +26,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-6 bg-white rounded-lg shadow-sm">
+  <div class="p-6 bg-secondary rounded-lg shadow-sm">
     <h1 class="text-h1 font-bold mb-8">Settings Expert</h1>
 
     <!-- Personal details -->
