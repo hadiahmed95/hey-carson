@@ -27,6 +27,7 @@ use App\Http\Controllers\NewDashboard\Expert\LeadController as ExpertLeadControl
 use App\Http\Controllers\NewDashboard\Expert\SettingsController as ExpertSettingsController;
 use App\Http\Controllers\NewDashboard\Expert\OfferController as ExpertOfferController;
 use App\Http\Controllers\NewDashboard\Expert\PayoutsController as ExpertPayoutsController;
+use App\Http\Controllers\NewDashboard\Expert\MyListing\CustomerStoriesController as ExpertCustomerStoriesController;
 use App\Http\Controllers\NewDashboard\Expert\MyListing\FaqController as ExpertFAQController;
 
 // Admin Resources

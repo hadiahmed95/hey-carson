@@ -72,9 +72,19 @@ class ExpertService {
     }
 
     fetchFaqs() {
-        return ApiService.get(
-            `${this.base}/faqs`
-        );
+        return ApiService.get(`${this.base}/faqs`);
+    }
+
+    createFaq(data: { question: string; answer: string }) {
+        return ApiService.post(`${this.base}/faqs`, data);
+    }
+
+    async updateFaq(id: number, data: { question?: string; answer?: string }) {
+        return ApiService.put(`${this.base}/faqs/${id}`, data);
+    }
+
+    deleteFaq(id: number) {
+        return ApiService.delete(`${this.base}/faqs/${id}`);
     }
 }
 

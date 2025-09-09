@@ -1,6 +1,6 @@
 import {defineStore} from 'pinia';
 import {withLoader} from "@/utils/helpers.ts";
-import type {ExpertReviewsResponse, ILeadd, IExpertStat, IProjectName, ILeadDetail} from "@/types.ts";
+import type {ExpertReviewsResponse, ILeadd, IExpertStat, IProjectName, ILeadDetail, ExpertFaq} from "@/types.ts";
 import ExpertService from "@/services/expert.service.ts";
 
 export const useExpertStore = defineStore('expert', {
@@ -18,6 +18,7 @@ export const useExpertStore = defineStore('expert', {
         user: null as any,
         payouts: [] as any[],
         balance: 0 as number,
+        faqs: [] as ExpertFaq[],
     }),
 
     actions: {
@@ -117,8 +118,37 @@ export const useExpertStore = defineStore('expert', {
         },
 
         async fetchFaqs() {
-            const response = await ExpertService.fetchFaqs();
-            return response.data;
+            return await withLoader(async () => {
+                const response = await ExpertService.fetchFaqs();
+                this.faqs = response.data.data;
+                return response.data;
+            });
+        },
+
+        async createFaq(data: { question: string; answer: string }) {
+            return await withLoader(async () => {
+                const response = await ExpertService.createFaq(data);
+                this.faqs.unshift(response.data.data);
+                return response.data;
+            });
+        },
+
+        async updateFaq(id: number, data: { question?: string; answer?: string }) {
+            return await withLoader(async () => {
+                const response = await ExpertService.updateFaq(id, data);
+                const index = this.faqs.findIndex(faq => faq.id == id);
+                if (index !== -1) {
+                    this.faqs[index] = response.data.data;
+                }
+                return response.data.data;
+            });
+        },
+
+        async deleteFaq(id: number) {
+            return await withLoader(async () => {
+                await ExpertService.deleteFaq(id);
+                this.faqs = this.faqs.filter(faq => faq.id != id);
+            });
         },
     },
 });

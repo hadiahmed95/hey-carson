@@ -12,9 +12,7 @@ class ExpertFaq extends Model
     use SoftDeletes;
 
     protected $table = 'expert_faqs';
-    protected $keyType = 'string';
-    public $incrementing = false;
-
+    
     protected $fillable = [
        'expert_id',
        'question',

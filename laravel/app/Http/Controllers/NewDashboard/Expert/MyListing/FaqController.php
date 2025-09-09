@@ -84,9 +84,9 @@ class FaqController
                 'type'   => 'success',
                 'status' => 201,
                 'data'   => [
-                    'id'         => (string) $faq->id,
-                    'expert_id'  => (string) $faq->expert_id,
-                    'question'   => $faq->question,
+                    'id'         => $faq->id,
+                    'expert_id'  => $faq->expert_id,
+                    'title'   => $faq->question,
                     'answer'     => $faq->answer,
                     'created_at' => optional($faq->created_at)->toIso8601String(),
                     'updated_at' => optional($faq->updated_at)->toIso8601String(),
@@ -136,7 +136,7 @@ class FaqController
                 'data'   => [
                     'id'         => (string) $faq->id,
                     'expert_id'  => (string) $faq->expert_id,
-                    'question'   => $faq->question,
+                    'title'   => $faq->question,
                     'answer'     => $faq->answer,
                     'created_at' => optional($faq->created_at)->toIso8601String(),
                     'updated_at' => optional($faq->updated_at)->toIso8601String(),

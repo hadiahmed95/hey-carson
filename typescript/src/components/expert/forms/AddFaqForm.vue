@@ -36,6 +36,11 @@
       ></textarea>
     </div>
 
+    <!-- Error message -->
+    <div v-if="errorMessage" class="text-danger text-h5">
+      {{ errorMessage }}
+    </div>
+
     <!-- Submit Button -->
     <button
       type="submit"
@@ -49,36 +54,71 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed } from "vue";
+import { useExpertStore } from "@/store/expert.ts";
+import type { ExpertFaq } from '@/types.ts';
+
+const expertStore = useExpertStore();
 
 const emit = defineEmits<{
   (e: "close"): void;
 }>();
 
+const props = defineProps<{
+  faqData?: ExpertFaq | null;
+}>();
+
 // Form reactive state
 const form = reactive({
-  question: "",
-  answer: ""
+  question: props.faqData?.title || "",
+  answer: props.faqData?.answer || ""
 });
 
 // Status management
 const isSubmitting = ref(false);
+const errorMessage = ref("");
 
 // Button text
 const submitButtonText = computed(() => 
-  isSubmitting.value ? "Adding FAQ..." : "Add FAQ"
+  isSubmitting.value 
+    ? (props.faqData ? "Updating FAQ..." : "Adding FAQ...")
+    : (props.faqData ? "Update FAQ" : "Add FAQ")
 );
 
 // Submit function
 const submitForm = async () => {
+  if (isSubmitting.value) return;
+
   isSubmitting.value = true;
+  errorMessage.value = "";
 
   try {
-    // Here we would typically make an API call
-    
-    // For now, just close the modal
+    if (props.faqData) {
+      // Update existing FAQ
+      await expertStore.updateFaq(props.faqData.id, {
+        question: form.question,
+        answer: form.answer
+      });
+    } else {
+      // Create new FAQ
+      await expertStore.createFaq({
+        question: form.question,
+        answer: form.answer
+      });
+    }
+
+    // Reset form and close modal on success
+    form.question = "";
+    form.answer = "";
     emit("close");
   } catch (error: any) {
     console.error('Error adding FAQ:', error);
+    
+    // Handle validation errors from backend
+    if (error.response?.data?.message) {
+      errorMessage.value = error.response.data.message;
+    } else {
+      errorMessage.value = "An error occurred while adding the FAQ. Please try again.";
+    }
   } finally {
     isSubmitting.value = false;
   }
