@@ -135,7 +135,7 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from "vue";
 import { useExpertStore } from "@/store/expert.ts";
-import type { ExpertCustomerStoryForm, ExpertStories } from "@/types";
+import type { ExpertCustomerStoryForm } from "@/types";
 import { getS3URL } from '@/utils/helpers.ts'
 
 // Props for edit mode
@@ -189,32 +189,49 @@ const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const files = target.files;
 
-  if (!files) return;
+  if (!files || files.length === 0) return;
 
   // Convert FileList to Array and limit to 3 images
   const selectedFiles = Array.from(files).slice(0, 3);
-  form.images = selectedFiles;
+  
+  errorMessage.value = "";
+  
+  const validFiles: File[] = [];
+  let hasError = false;
 
-  // Create previews
-  imagesPreviews.value = [];
-  selectedFiles.forEach(file => {
-    // Check file size (8MB limit per file)
+  for (const file of selectedFiles) {
     if (file.size > 8 * 1024 * 1024) {
-      console.error('File size exceeds 8MB:', file.name);
       errorMessage.value = `File ${file.name} exceeds 8MB limit. Please choose a smaller image.`;
-      return;
+      hasError = true;
+      break;
     }
 
-    // Check file type
     if (!file.type.startsWith('image/')) {
-      console.error('Please select image files only:', file.name);
       errorMessage.value = 'Please select image files only.';
-      return;
+      hasError = true;
+      break;
     }
 
+    validFiles.push(file);
+  }
+
+  if (hasError) return;
+
+  form.images = validFiles;
+  
+  imagesPreviews.value = [];
+  const newPreviews: string[] = [];
+  let processedCount = 0;
+
+  validFiles.forEach((file, index) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      imagesPreviews.value.push(e.target?.result as string);
+      newPreviews[index] = e.target?.result as string;
+      processedCount++;
+      
+      if (processedCount === validFiles.length) {
+        imagesPreviews.value = newPreviews;
+      }
     };
     reader.readAsDataURL(file);
   });
@@ -234,23 +251,19 @@ const submitForm = async () => {
     formData.append('solution', form.solution);
     formData.append('result', form.result);
 
-    // Add images if present
+    // Only add images if new files were selected
     if (form.images.length > 0) {
-        form.images.forEach((image, index) => {
-            formData.append(`images[${index}]`, image);
-        });
-    } else if (isEditMode.value && props.storyData?.images && props.storyData.images.length > 0) {
-        formData.append('keep_existing_images', '1');
+      form.images.forEach((image, index) => {
+        formData.append(`images[${index}]`, image);
+      });
     }
+
     if (isEditMode.value && props.storyData) {
-      // Update existing customer story
       await expertStore.updateCustomerStory(props.storyData.id, formData);
     } else {
-      // Create new customer story
       await expertStore.createCustomerStory(formData);
     }
 
-    // Reset form and close modal on success
     Object.assign(form, {
       title: "",
       problem: "",
@@ -260,13 +273,13 @@ const submitForm = async () => {
     });
     imagesPreviews.value = [];
     emit("close");
+    
   } catch (error: any) {
     console.error('Error submitting customer story:', error);
-    // Handle validation errors from backend
+    
     if (error.response?.data?.message) {
       errorMessage.value = error.response.data.message;
     } else if (error.response?.data?.errors) {
-      // Handle field-specific validation errors
       const errors = error.response.data.errors;
       const firstError = Object.values(errors)[0] as string[];
       errorMessage.value = firstError[0] || "Validation error occurred.";

@@ -96,7 +96,8 @@ class ExpertService {
     }
 
     updateCustomerStory(id: number, data: FormData) {
-        return ApiService.put(`${this.base}/customer-stories/${id}`, data, true); // true for multipart
+        data.append('_method', 'PUT');
+        return ApiService.post(`${this.base}/customer-stories/${id}`, data, true);
     }
 
     deleteCustomerStory(id: number) {

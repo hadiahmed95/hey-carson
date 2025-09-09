@@ -565,7 +565,7 @@ export interface ExpertStories {
     problem: string
     solution: string
     result: string
-    images: string[]
+    images: Array<{url: string, alt: string}>
     duration?: string
     created_at: string
     updated_at: string

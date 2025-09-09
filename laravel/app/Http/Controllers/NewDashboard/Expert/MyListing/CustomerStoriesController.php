@@ -94,7 +94,7 @@ class CustomerStoriesController extends Controller
         }
     }
 
-    /** PUT /api/v2/expert/{expert_id}/customer-stories/{id}  (multipart/form-data allowed) */
+    /** PUT /api/v2/expert/{expert_id}/customer-stories/{id} */
     public function update(Request $request, string $id): JsonResponse
     {
         $expert_id = auth()->id();
@@ -108,16 +108,11 @@ class CustomerStoriesController extends Controller
         ];
 
         if ($request->hasFile('images')) {
-            $rules['images'] = ['sometimes','array','max:3'];
+            $rules['images'] = ['array','max:3'];
             $rules['images.*'] = ['file','image','mimes:jpg,jpeg,png,webp','max:8192'];
         }
 
         $data = $request->validate($rules);
-        return response()->json([
-                'type'   => 'success',
-                'status' => 200,
-                'data'   => $request->all(),
-            ]);
 
         try {
             $story = ExpertCustomerStory::where('id', $id)
@@ -128,26 +123,14 @@ class CustomerStoriesController extends Controller
                 return response()->json(['type' => 'error','status' => 404,'message' => 'Not found'], 404);
             }
 
-            // Replace images if new ones were provided (default behavior)
             if ($request->hasFile('images')) {
                 foreach (($story->images ?? []) as $old) {
                     if ($old && Storage::disk('s3')->exists($old)) {
                         Storage::disk('s3')->delete($old);
                     }
                 }
-                $newImages = $this->storeImages($request, $expert_id);
-                $story->images = $newImages;
-            } elseif (!$request->has('keep_existing_images')) {
-                // No images sent and no keep flag = remove all images
-                foreach (($story->images ?? []) as $old) {
-                    if ($old && Storage::disk('s3')->exists($old)) {
-                        Storage::disk('s3')->delete($old);
-                    }
-                }
-                $story->images = [];
+                $story->images = $this->storeImages($request, $expert_id);
             }
-
-            // Save all changes including images
             $story->fill(collect($data)->except(['images'])->toArray());
             $story->save();
 
