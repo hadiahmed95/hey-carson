@@ -27,10 +27,6 @@ onMounted(async () => {
 });
 
 const handleEditFaq = (faq: ExpertFaq) => {
-  console.log('Edit FAQ called with:', faq);
-  console.log('FAQ ID:', faq.id);
-  console.log('FAQ ID type:', typeof faq.id);
-
   currentFaqData.value = faq;
   showAddFaqModal.value = true;
 };

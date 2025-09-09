@@ -294,7 +294,7 @@ Route::prefix('v2')->group(function () {
                 Route::delete('/{id}', [ExpertOfferedServicesController::class, 'destroy']);
             });
 
-            Route::prefix('customer-stories')->group(function () {
+            Route::prefix('/customer-stories')->group(function () {
                 Route::get('/', [ExpertCustomerStoriesController::class, 'index']);
                 Route::post('/', [ExpertCustomerStoriesController::class, 'store']);
                 Route::put('/{id}', [ExpertCustomerStoriesController::class, 'update']);

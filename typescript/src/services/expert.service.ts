@@ -79,12 +79,28 @@ class ExpertService {
         return ApiService.post(`${this.base}/faqs`, data);
     }
 
-    async updateFaq(id: number, data: { question?: string; answer?: string }) {
+    updateFaq(id: number, data: { question?: string; answer?: string }) {
         return ApiService.put(`${this.base}/faqs/${id}`, data);
     }
 
     deleteFaq(id: number) {
         return ApiService.delete(`${this.base}/faqs/${id}`);
+    }
+
+    fetchCustomerStories() {
+        return ApiService.get(`${this.base}/customer-stories`);
+    }
+
+    createCustomerStory(data: FormData) {
+        return ApiService.post(`${this.base}/customer-stories`, data, true); // true for multipart
+    }
+
+    updateCustomerStory(id: number, data: FormData) {
+        return ApiService.put(`${this.base}/customer-stories/${id}`, data, true); // true for multipart
+    }
+
+    deleteCustomerStory(id: number) {
+        return ApiService.delete(`${this.base}/customer-stories/${id}`);
     }
 }
 

@@ -560,23 +560,19 @@ export interface ExpertServiceCategory {
 
 export interface ExpertStories {
     id: number
+    expert_id: string
     title: string
-    duration: string
-    status: string
-    images: Array<{
-        url: string
-        alt?: string
-    }>
+    problem: string
+    solution: string
+    result: string
+    images: string[]
+    duration?: string
+    created_at: string
+    updated_at: string
 }
 
 export interface ExpertCustomerStoryForm {
-    storyData?: {
-        id?: number;
-        title?: string;
-        duration?: string;
-        status?: string;
-        images?: Array<{ url: string; alt: string }>;
-    }
+    storyData?: ExpertStories
 }
 
 export interface ExpertPackagedService {

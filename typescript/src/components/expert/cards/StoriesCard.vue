@@ -4,6 +4,7 @@ import Pencil from '@/assets/icons/pencil.svg'
 import Badge from '@/assets/icons/hired_on_shopify.svg'
 import ConfirmationModal from '../modals/ConfirmationModal.vue'
 import { ref } from 'vue'
+import { getS3URL } from '@/utils/helpers.ts'
 import type { ExpertStories } from '@/types.ts'
 
 const showDeleteModal = ref(false)
@@ -12,16 +13,14 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'edit', project: typeof props.project): void
-  (e: 'delete', projectId: number): void
+  (e: 'edit', story: ExpertStories): void
+  (e: 'delete', storyId: number): void
 }>()
 
-// Handle edit button click
 const handleEdit = () => {
   emit('edit', props.project)
 }
 
-// Handle delete button click
 const handleDelete = () => {
   showDeleteModal.value = true
 }
@@ -59,9 +58,9 @@ const confirmDelete = () => {
           class="flex-1"
       >
         <img
-            :src="image.url"
-            :alt="image.alt || `Project image ${index + 1}`"
-            class="w-full h-42 object-cover rounded-md"
+          :src="getS3URL(image.url)"
+          :alt="image.alt || `Project image ${index + 1}`"
+          class="w-[265px] h-[150px] object-cover rounded-md"
         />
       </div>
     </div>

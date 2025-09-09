@@ -1,6 +1,6 @@
 import {defineStore} from 'pinia';
 import {withLoader} from "@/utils/helpers.ts";
-import type {ExpertReviewsResponse, ILeadd, IExpertStat, IProjectName, ILeadDetail, ExpertFaq} from "@/types.ts";
+import type {ExpertReviewsResponse, ILeadd, IExpertStat, IProjectName, ILeadDetail, ExpertStories, ExpertFaq} from "@/types.ts";
 import ExpertService from "@/services/expert.service.ts";
 
 export const useExpertStore = defineStore('expert', {
@@ -18,6 +18,7 @@ export const useExpertStore = defineStore('expert', {
         user: null as any,
         payouts: [] as any[],
         balance: 0 as number,
+        customerStories: [] as ExpertStories[],
         faqs: [] as ExpertFaq[],
     }),
 
@@ -148,6 +149,40 @@ export const useExpertStore = defineStore('expert', {
             return await withLoader(async () => {
                 await ExpertService.deleteFaq(id);
                 this.faqs = this.faqs.filter(faq => faq.id != id);
+            });
+        },
+
+        async fetchCustomerStories() {
+            return await withLoader(async () => {
+                const response = await ExpertService.fetchCustomerStories();
+                this.customerStories = response.data.data;
+                return response.data;
+            });
+        },
+
+        async createCustomerStory(data: FormData) {
+            return await withLoader(async () => {
+                const response = await ExpertService.createCustomerStory(data);
+                this.customerStories.unshift(response.data.data);
+                return response.data;
+            });
+        },
+
+        async updateCustomerStory(id: number, data: FormData) {
+            return await withLoader(async () => {
+                const response = await ExpertService.updateCustomerStory(id, data);
+                const index = this.customerStories.findIndex(story => story.id == id);
+                if (index !== -1) {
+                    this.customerStories[index] = response.data.data;
+                }
+                return response.data.data;
+            });
+        },
+
+        async deleteCustomerStory(id: number) {
+            return await withLoader(async () => {
+                await ExpertService.deleteCustomerStory(id);
+                this.customerStories = this.customerStories.filter(story => story.id != id);
             });
         },
     },

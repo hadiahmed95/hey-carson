@@ -88,26 +88,36 @@ class CustomerStoriesController extends Controller
             return response()->json(
                 [
                 'type' => 'error',
-                'status' => 500,'
-                message' => 'Failed to create customer story.'],
-                500
-            );
+                'status' => 500,
+                'message' => 'Failed to create customer story.'
+            ], 500);
         }
     }
 
     /** PUT /api/v2/expert/{expert_id}/customer-stories/{id}  (multipart/form-data allowed) */
-    public function update(Request $request, string $expert_id, string $id): JsonResponse
+    public function update(Request $request, string $id): JsonResponse
     {
+        $expert_id = auth()->id();
         $this->ensureOwner($request, $expert_id);
 
-        $data = $request->validate([
+        $rules = [
             'title'   => ['sometimes','required','string','max:255'],
             'problem' => ['sometimes','required','string','max:10000'],
-            'solution'       => ['sometimes','required','string','max:20000'],
-            'result'         => ['sometimes','required','string','max:10000'],
-            'images'         => ['sometimes','array','max:3'],
-            'images.*'       => ['file','image','mimes:jpg,jpeg,png,webp','max:8192'],
-        ]);
+            'solution' => ['sometimes','required','string','max:20000'],
+            'result'   => ['sometimes','required','string','max:10000'],
+        ];
+
+        if ($request->hasFile('images')) {
+            $rules['images'] = ['sometimes','array','max:3'];
+            $rules['images.*'] = ['file','image','mimes:jpg,jpeg,png,webp','max:8192'];
+        }
+
+        $data = $request->validate($rules);
+        return response()->json([
+                'type'   => 'success',
+                'status' => 200,
+                'data'   => $request->all(),
+            ]);
 
         try {
             $story = ExpertCustomerStory::where('id', $id)
@@ -120,16 +130,26 @@ class CustomerStoriesController extends Controller
 
             // Replace images if new ones were provided (default behavior)
             if ($request->hasFile('images')) {
-                // delete old files
                 foreach (($story->images ?? []) as $old) {
-                    if ($old && Storage::disk('public')->exists($old)) {
-                        Storage::disk('public')->delete($old);
+                    if ($old && Storage::disk('s3')->exists($old)) {
+                        Storage::disk('s3')->delete($old);
                     }
                 }
-                $story->images = $this->storeImages($request, $expert_id);
+                $newImages = $this->storeImages($request, $expert_id);
+                $story->images = $newImages;
+            } elseif (!$request->has('keep_existing_images')) {
+                // No images sent and no keep flag = remove all images
+                foreach (($story->images ?? []) as $old) {
+                    if ($old && Storage::disk('s3')->exists($old)) {
+                        Storage::disk('s3')->delete($old);
+                    }
+                }
+                $story->images = [];
             }
 
-            $story->fill(collect($data)->except(['images'])->toArray())->save();
+            // Save all changes including images
+            $story->fill(collect($data)->except(['images'])->toArray());
+            $story->save();
 
             return response()->json([
                 'type'   => 'success',
@@ -144,8 +164,9 @@ class CustomerStoriesController extends Controller
     }
 
     /** DELETE /api/v2/expert/{expert_id}/customer-stories/{id} */
-    public function destroy(Request $request, string $expert_id, string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
+        $expert_id = auth()->id();
         $this->ensureOwner($request, $expert_id);
 
         try {
@@ -159,8 +180,8 @@ class CustomerStoriesController extends Controller
 
             // remove files
             foreach (($story->images ?? []) as $old) {
-                if ($old && Storage::disk('public')->exists($old)) {
-                    Storage::disk('public')->delete($old);
+                if ($old && Storage::disk('s3')->exists($old)) {
+                    Storage::disk('s3')->delete($old);
                 }
             }
 
@@ -188,27 +209,26 @@ class CustomerStoriesController extends Controller
             }
             $ext  = $file->getClientOriginalExtension() ?: 'jpg';
             $name = Str::uuid()->toString().'.'.$ext;
-            $path = $file->storeAs("customer-stories/{$expertId}/images", $name, 'public');
-            $stored[] = $path; // store relative path
+            $path = $file->storeAs("customer-stories/{$expertId}/images", $name, 's3');
+            $stored[] = $path;
         }
         return $stored;
-    }
-
-    protected function publicUrls(?array $paths): array
-    {
-        return collect($paths ?: [])->map(fn ($p) => Storage::disk('public')->url($p))->all();
     }
 
     protected function transform(ExpertCustomerStory $s): array
     {
         return [
-            'id'             => (string) $s->id,
+            'id'             => $s->id,
             'expert_id'      => (string) $s->expert_id,
             'title'          => $s->title,
             'problem'        => $s->problem,
-            'images'         => $this->publicUrls($s->images),
             'solution'       => $s->solution,
             'result'         => $s->result,
+            'images'         => collect($s->images ?: [])->map(fn($path) => [
+                                    'url' => $path,
+                                    'alt' => ''
+                                ])->toArray(),
+            'duration'       => optional($s->created_at)->format('M Y'),
             'created_at'     => optional($s->created_at)->toIso8601String(),
             'updated_at'     => optional($s->updated_at)->toIso8601String(),
         ];
