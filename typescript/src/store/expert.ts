@@ -1,6 +1,6 @@
 import {defineStore} from 'pinia';
 import {withLoader} from "@/utils/helpers.ts";
-import type {ExpertReviewsResponse, ILeadd, IExpertStat, IProjectName, ILeadDetail, ExpertStories, ExpertFaq} from "@/types.ts";
+import type {ExpertReviewsResponse, ILeadd, IExpertStat, IProjectName, ILeadDetail, ExpertServiceCategory, ExpertStories, ExpertFaq} from "@/types.ts";
 import ExpertService from "@/services/expert.service.ts";
 
 export const useExpertStore = defineStore('expert', {
@@ -18,6 +18,7 @@ export const useExpertStore = defineStore('expert', {
         user: null as any,
         payouts: [] as any[],
         balance: 0 as number,
+        offeredServices: [] as ExpertServiceCategory[],
         customerStories: [] as ExpertStories[],
         faqs: [] as ExpertFaq[],
     }),
@@ -183,6 +184,40 @@ export const useExpertStore = defineStore('expert', {
             return await withLoader(async () => {
                 await ExpertService.deleteCustomerStory(id);
                 this.customerStories = this.customerStories.filter(story => story.id != id);
+            });
+        },
+
+        async fetchOfferedServices() {
+            return await withLoader(async () => {
+                const response = await ExpertService.fetchOfferedServices();
+                this.offeredServices = response.data.data;
+                return response.data;
+            });
+        },
+
+        async createOfferedService(data: { title: string; serviceCategory: string; subcategories: string[] }) {
+            return await withLoader(async () => {
+                const response = await ExpertService.createOfferedService(data);
+                this.offeredServices.unshift(response.data.data);
+                return response.data;
+            });
+        },
+
+        async updateOfferedService(id: number, data: { title?: string; serviceCategory?: string; subcategories?: string[] }) {
+            return await withLoader(async () => {
+                const response = await ExpertService.updateOfferedService(id, data);
+                const index = this.offeredServices.findIndex(service => service.id == id);
+                if (index !== -1) {
+                    this.offeredServices[index] = response.data.data;
+                }
+                return response.data.data;
+            });
+        },
+
+        async deleteOfferedService(id: number) {
+            return await withLoader(async () => {
+                await ExpertService.deleteOfferedService(id);
+                this.offeredServices = this.offeredServices.filter(service => service.id != id);
             });
         },
     },

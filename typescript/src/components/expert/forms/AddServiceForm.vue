@@ -90,6 +90,7 @@
 <script setup lang="ts">
 import { reactive, ref, onMounted, computed } from "vue";
 import type { ExpertServiceForm } from "@/types.ts";
+import { useExpertStore } from "@/store/expert.ts";
 
 // Props for edit mode
 const props = withDefaults(defineProps<ExpertServiceForm>(), {
@@ -99,6 +100,8 @@ const props = withDefaults(defineProps<ExpertServiceForm>(), {
 const emit = defineEmits<{
   (e: "close"): void;
 }>();
+
+const expertStore = useExpertStore();
 
 // Form reactive state
 const form = reactive({
@@ -137,6 +140,29 @@ const submitForm = async () => {
   isSubmitting.value = true;
 
   try {
+    // Filter out empty subservices
+    const filteredSubservices = form.subservices.filter(sub => sub.trim() !== "");
+
+    // Map serviceCategory to title for backend
+    const categoryTitleMap: Record<string, string> = {
+      "shopify-development-troubleshooting": "Shopify Development and Troubleshooting",
+      "shopify-marketing-sales": "Shopify Marketing and Sales",
+      "technical-support-maintenance": "Technical Support and Maintenance",
+      "shopify-design-customization": "Shopify Design and Customization",
+      "ecommerce-strategy-consulting": "E-commerce Strategy and Consulting"
+    };
+
+    const payload = {
+      title: categoryTitleMap[form.serviceCategory] || form.serviceCategory,
+      serviceCategory: form.serviceCategory,
+      subcategories: filteredSubservices
+    };
+
+    if (isEditMode.value && props.serviceData?.id) {
+      await expertStore.updateOfferedService(props.serviceData.id, payload);
+    } else {
+      await expertStore.createOfferedService(payload);
+    }
     emit("close");
   } catch (error: any) {
     console.error('Error adding service:', error);

@@ -9,7 +9,7 @@
       <div class="flex flex-row">
         <h4
             class="font-normal py-1 px-2 border border-grey mr-2 rounded-sm"
-            v-for="(subcategory, index) in category.subcategories"
+            v-for="(subcategory, index) in displaySubcategories"
             :key="index"
         >
           {{ subcategory }}
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import Trash from '../../../assets/icons/trash.svg'
 import Pencil from '../../../assets/icons/pencil.svg'
 import ConfirmationModal from '../modals/ConfirmationModal.vue'
@@ -53,6 +53,29 @@ const emit = defineEmits<{
   (e: 'edit', category: typeof props.category): void
   (e: 'delete', categoryId: number): void
 }>()
+
+// Map slug values to display names
+const subcategoryDisplayMap: Record<string, string> = {
+  'shopify-development': 'Shopify Development',
+  'shopify-troubleshooting': 'Shopify Troubleshooting',
+  'shopify-ux-enhancement': 'Shopify UX Enhancement',
+  'shopify-seo-services': 'Shopify SEO Services',
+  'shopify-email-marketing': 'Shopify Email Marketing',
+  'shopify-banner-ads': 'Shopify Banner Ads',
+  'store-maintenance-monitoring': 'Store Maintenance & Monitoring',
+  'app-updates-integrations': 'App Updates & Integrations',
+  'performance-optimization': 'Performance Optimization',
+  'shopify-security-audits': 'Shopify Security Audits',
+  'shopify-performance-monitoring': 'Shopify Performance Monitoring',
+  'shopify-disaster-recovery-planning': 'Shopify Disaster Recovery Planning'
+};
+
+// Convert stored subcategory slugs to display names
+const displaySubcategories = computed(() => {
+  return props.category.subcategories.map(slug => 
+    subcategoryDisplayMap[slug] || slug
+  );
+});
 
 // Handle edit button click
 const handleEdit = () => {

@@ -28,6 +28,7 @@ use App\Http\Controllers\NewDashboard\Expert\SettingsController as ExpertSetting
 use App\Http\Controllers\NewDashboard\Expert\OfferController as ExpertOfferController;
 use App\Http\Controllers\NewDashboard\Expert\PayoutsController as ExpertPayoutsController;
 use App\Http\Controllers\NewDashboard\Expert\MyListing\OfferedServicesController as ExpertOfferedServicesController;
+use App\Http\Controllers\NewDashboard\Expert\MyListing\PackagedServiceController as ExpertPackagedServiceController;
 use App\Http\Controllers\NewDashboard\Expert\MyListing\CustomerStoriesController as ExpertCustomerStoriesController;
 use App\Http\Controllers\NewDashboard\Expert\MyListing\FaqController as ExpertFAQController;
 
@@ -280,19 +281,19 @@ Route::prefix('v2')->group(function () {
             Route::get('/expert-profile', [ExpertSettingsController::class, 'profile']);
             Route::post('/payouts', [ExpertPayoutsController::class, 'create']);
 
-            Route::prefix('/packaged-services')->group(function () {
-                Route::get('/', [ExpertPackagedServiceController::class, 'index']);
-                Route::post('/', [ExpertPackagedServiceController::class, 'store']);
-                Route::put('/{id}', [ExpertPackagedServiceController::class, 'update']);
-                Route::delete('/{id}', [ExpertPackagedServiceController::class, 'destroy']);
-            });
-
             Route::prefix('/offered-services')->group(function () {
                 Route::get('/', [ExpertOfferedServicesController::class, 'index']);
                 Route::post('/', [ExpertOfferedServicesController::class, 'store']);
                 Route::put('/{id}', [ExpertOfferedServicesController::class, 'update']);
                 Route::get('/{id}', [ExpertOfferedServicesController::class, 'show']);
                 Route::delete('/{id}', [ExpertOfferedServicesController::class, 'destroy']);
+            });
+
+            Route::prefix('/packaged-services')->group(function () {
+                Route::get('/', [ExpertPackagedServiceController::class, 'index']);
+                Route::post('/', [ExpertPackagedServiceController::class, 'store']);
+                Route::put('/{id}', [ExpertPackagedServiceController::class, 'update']);
+                Route::delete('/{id}', [ExpertPackagedServiceController::class, 'destroy']);
             });
 
             Route::prefix('/customer-stories')->group(function () {

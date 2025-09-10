@@ -7,6 +7,7 @@ use App\Models\ExpertOfferedService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OfferedServicesController extends Controller
 {
@@ -20,8 +21,9 @@ class OfferedServicesController extends Controller
     }
 
     /** GET /api/v2/expert/{expert_id}/offered-services */
-    public function index(Request $request, string $expert_id): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $expert_id = auth()->id();
         $this->ensureOwner($request, $expert_id);
 
         try {
@@ -42,8 +44,9 @@ class OfferedServicesController extends Controller
     }
 
     /** GET /api/v2/expert/{expert_id}/offered-services/{id} */
-    public function show(Request $request, string $expert_id, string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
+        $expert_id = auth()->id();
         $this->ensureOwner($request, $expert_id);
 
         $row = ExpertOfferedService::where('id', $id)->where('expert_id', $expert_id)->first();
@@ -59,33 +62,33 @@ class OfferedServicesController extends Controller
     }
 
     /** POST /api/v2/expert/{expert_id}/offered-services */
-    public function store(Request $request, string $expert_id): JsonResponse
+    public function store(Request $request): JsonResponse
     {
+        $expert_id = auth()->id();
         $this->ensureOwner($request, $expert_id);
 
         $data = $request->validate([
-            'category_id'   => ['required','string','max:64'],
-            'category_name' => ['required','string','max:180'],
-
-            'subservices'           => ['nullable','array','max:3'],
-            'subservices.*.id'      => ['nullable','string','max:64'],
-            'subservices.*.name'    => ['required_with:subservices.*.id','nullable','string','max:180'],
+            'title'        => ['required','string','max:180'],
+            'serviceCategory' => ['required','string','max:180'],
+            'subcategories'   => ['nullable','array','max:3'],
+            'subcategories.*' => ['nullable','string','max:180'],
         ]);
 
         try {
-            [$s1, $s2, $s3] = $this->normalizeSubservices($data['subservices'] ?? []);
+            // Normalize subcategories to exactly 3 items
+            $subcategories = $this->normalizeSubcategories($data['subcategories'] ?? []);
 
             $row = ExpertOfferedService::create([
                 'expert_id'       => $expert_id,
-                'category_id'     => $data['category_id'],
-                'category_name'   => $data['category_name'],
+                'category_id'     => Str::uuid()->toString(),
+                'category_name'   => $data['title'],
 
-                'subservice1_id'   => $s1['id'] ?? null,
-                'subservice1_name' => $s1['name'] ?? null,
-                'subservice2_id'   => $s2['id'] ?? null,
-                'subservice2_name' => $s2['name'] ?? null,
-                'subservice3_id'   => $s3['id'] ?? null,
-                'subservice3_name' => $s3['name'] ?? null,
+                'subservice1_id'   => null,
+                'subservice1_name' => $subcategories[0] ?? null,
+                'subservice2_id'   => null,
+                'subservice2_name' => $subcategories[1] ?? null,
+                'subservice3_id'   => null,
+                'subservice3_name' => $subcategories[2] ?? null,
             ]);
 
             return response()->json([
@@ -100,20 +103,17 @@ class OfferedServicesController extends Controller
         }
     }
 
-    /**
- * PUT /api/v2/expert/{expert_id}/offered-services/{id}
- */
-    public function update(Request $request, string $expert_id, string $id): JsonResponse
+    /** PUT /api/v2/expert/{expert_id}/offered-services/{id} */
+    public function update(Request $request, string $id): JsonResponse
     {
+        $expert_id = auth()->id();
         $this->ensureOwner($request, $expert_id);
 
         $data = $request->validate([
-            'category_id'        => ['sometimes','required','string','max:64'],
-            'category_name'      => ['sometimes','required','string','max:180'],
-
-            'subservices'        => ['sometimes','array','max:3'],
-            'subservices.*.id'   => ['nullable','string','max:64'],
-            'subservices.*.name' => ['required_with:subservices.*.id','nullable','string','max:180'],
+            'title'        => ['sometimes','required','string','max:180'],
+            'serviceCategory' => ['sometimes','required','string','max:180'],
+            'subcategories'   => ['sometimes','array','max:3'],
+            'subcategories.*' => ['nullable','string','max:180'],
         ]);
 
         try {
@@ -125,23 +125,17 @@ class OfferedServicesController extends Controller
                 return response()->json(['type' => 'error','status' => 404,'message' => 'Not found'], 404);
             }
 
-            // Update category if provided
-            if (array_key_exists('category_id', $data)) {
-                $row->category_id   = $data['category_id'];
-            }
-            if (array_key_exists('category_name', $data)) {
-                $row->category_name = $data['category_name'];
+            // Update category name if provided
+            if (array_key_exists('title', $data)) {
+                $row->category_name = $data['title'];
             }
 
-            // Update subservices if provided (0–3)
-            if (array_key_exists('subservices', $data)) {
-                [$s1, $s2, $s3] = $this->normalizeSubservices($data['subservices'] ?? []);
-                $row->subservice1_id   = $s1['id']   ?? null;
-                $row->subservice1_name = $s1['name'] ?? null;
-                $row->subservice2_id   = $s2['id']   ?? null;
-                $row->subservice2_name = $s2['name'] ?? null;
-                $row->subservice3_id   = $s3['id']   ?? null;
-                $row->subservice3_name = $s3['name'] ?? null;
+            // Update subcategories if provided
+            if (array_key_exists('subcategories', $data)) {
+                $subcategories = $this->normalizeSubcategories($data['subcategories'] ?? []);
+                $row->subservice1_name = $subcategories[0] ?? null;
+                $row->subservice2_name = $subcategories[1] ?? null;
+                $row->subservice3_name = $subcategories[2] ?? null;
             }
 
             $row->save();
@@ -158,10 +152,10 @@ class OfferedServicesController extends Controller
         }
     }
 
-
     /** DELETE /api/v2/expert/{expert_id}/offered-services/{id} */
-    public function destroy(Request $request, string $expert_id, string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
+        $expert_id = auth()->id();
         $this->ensureOwner($request, $expert_id);
 
         try {
@@ -182,41 +176,29 @@ class OfferedServicesController extends Controller
 
     /* ---------------- helpers ---------------- */
 
-    /** Ensure exactly 0–3 objects like [{id,name}] */
-    protected function normalizeSubservices(array $subs): array
+    /** Ensure exactly 3 subcategories, null padded */
+    protected function normalizeSubcategories(array $subcategories): array
     {
-        $subs = array_values($subs);
-        $subs = array_map(function ($s) {
-            if (is_string($s)) {
-                return ['id' => null, 'name' => $s];
-            }
-            return [
-                'id'   => $s['id']   ?? null,
-                'name' => $s['name'] ?? null,
-            ];
-        }, $subs);
-        while (count($subs) < 3) {
-            $subs[] = null;
+        $subcategories = array_values(array_filter($subcategories, fn($s) => !empty($s)));
+        while (count($subcategories) < 3) {
+            $subcategories[] = null;
         }
-        return $subs;
+        return array_slice($subcategories, 0, 3);
     }
 
     protected function transform(ExpertOfferedService $r): array
     {
-        $subservices = array_values(array_filter([
-            $r->subservice1_name ? ['id' => $r->subservice1_id, 'name' => $r->subservice1_name] : null,
-            $r->subservice2_name ? ['id' => $r->subservice2_id, 'name' => $r->subservice2_name] : null,
-            $r->subservice3_name ? ['id' => $r->subservice3_id, 'name' => $r->subservice3_name] : null,
+        $subcategories = array_values(array_filter([
+            $r->subservice1_name,
+            $r->subservice2_name,
+            $r->subservice3_name,
         ]));
 
         return [
             'id'           => (string) $r->id,
-            'expert_id'    => (string) $r->expert_id,
-            'category'     => [
-                'id'   => $r->category_id,
-                'name' => $r->category_name,
-            ],
-            'subservices'  => $subservices,
+            'title'        => $r->category_name,
+            'subcategories' => $subcategories,
+            'serviceCategory' => $r->category_name, // Keep both for compatibility
             'created_at'   => optional($r->created_at)->toIso8601String(),
             'updated_at'   => optional($r->updated_at)->toIso8601String(),
         ];

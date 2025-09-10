@@ -12,10 +12,11 @@
       </LeftIconButton>
     </div>
 
-    <EmptyState v-if="!serviceCategories.length" class="w-full" :icon="Box" content="Create your first packaged service like “Shopify Store Setup – $499”<br/> and show leads exactly what they’ll get."/>
+    <LoadingCard v-if="isLoading" />
+    <EmptyState v-else-if="!offeredServices.length" class="w-full" :icon="Box" content="No offered services yet - but showcasing your expertise builds trust!<br/>Add services to highlight what you can do for clients."/>
     <ServiceCategoryCard
         v-else
-        v-for="category in serviceCategories"
+        v-for="category in offeredServices"
         :key="category.id"
         :category="category"
         @edit="handleEditService"
@@ -41,56 +42,42 @@ import EmptyState from "@/components/expert/listing-settings/EmptyState.vue";
 import Box from "@/assets/icons/box.svg";
 import GreenPlus from "@/assets/icons/green-plus.svg";
 import LeftIconButton from "@/components/common/buttons/LeftIconButton.vue";
-import {ref} from "vue";
+import LoadingCard from "@/components/common/LoadingCard.vue";
 import ServiceCategoryCard from "@/components/expert/cards/ServiceCategoryCard.vue";
 import BaseModal from "@/components/expert/BaseModal.vue";
 import AddServiceForm from "@/components/expert/forms/AddServiceForm.vue";
+import { ref, onMounted, computed } from "vue";
+import { useExpertStore } from "@/store/expert.ts";
+import { useLoaderStore } from "@/store/loader.ts";
+import type { ExpertServiceCategory } from '@/types.ts';
+
+const expertStore = useExpertStore();
+const loader = useLoaderStore();
 
 const showAddServiceModal = ref(false);
-const currentServiceData = ref(null);
-const serviceCategories = ref([
-  {
-    id: 1,
-    title: "Shopify Development and Troubleshooting",
-    subcategories: [
-      'Shopify Development',
-      'Shopify Troubleshooting',
-      'Shopify UX Enhancement',
-    ],
-    serviceCategory: "shopify-development-troubleshooting"
-  },
-  {
-    id: 2,
-    title: "Shopify Marketing and Sales",
-    subcategories: [
-      'Shopify SEO Services',
-      'Shopify Email Marketing',
-      'Shopify Banner Ads',
-    ],
-    serviceCategory: "shopify-marketing-sales"
-  },
-  {
-    id: 3,
-    title: "Technical Support and Maintenance",
-    subcategories: [
-      'Shopify Security Audits',
-      'Shopify Performance Monitoring',
-      'Shopify Disaster Recovery Planning',
-    ],
-    serviceCategory: "technical-support-maintenance"
-  },
-]);
+const currentServiceData = ref<ExpertServiceCategory | null>(null);
+const offeredServices = computed(() => {
+  return expertStore.offeredServices || [];
+});
+const isLoading = computed(() => loader.isLoadingState);
+
+onMounted(async () => {
+  await expertStore.fetchOfferedServices();
+});
 
 // Handle edit service
-const handleEditService = (service: any) => {
+const handleEditService = (service: ExpertServiceCategory) => {
   currentServiceData.value = service;
   showAddServiceModal.value = true;
 };
 
 // Handle delete service
-const handleDeleteService = (serviceId: number) => {
-  serviceCategories.value = serviceCategories.value.filter(service => service.id !== serviceId);
-  console.log('Service category deleted:', serviceId);
+const handleDeleteService = async (serviceId: number) => {
+  try {
+    await expertStore.deleteOfferedService(serviceId);
+  } catch (error) {
+    console.error('Error deleting offered service:', error);
+  }
 };
 
 // Close modal and reset data

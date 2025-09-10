@@ -103,6 +103,22 @@ class ExpertService {
     deleteCustomerStory(id: number) {
         return ApiService.delete(`${this.base}/customer-stories/${id}`);
     }
+
+    fetchOfferedServices() {
+        return ApiService.get(`${this.base}/offered-services`);
+    }
+
+    createOfferedService(data: { title: string; serviceCategory: string; subcategories: string[] }) {
+        return ApiService.post(`${this.base}/offered-services`, data);
+    }
+
+    updateOfferedService(id: number, data: { title?: string; serviceCategory?: string; subcategories?: string[] }) {
+        return ApiService.put(`${this.base}/offered-services/${id}`, data);
+    }
+
+    deleteOfferedService(id: number) {
+        return ApiService.delete(`${this.base}/offered-services/${id}`);
+    }
 }
 
 export default new ExpertService();
